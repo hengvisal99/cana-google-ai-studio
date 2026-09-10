@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Individual, 
   DesignTheme, 
@@ -39,7 +39,15 @@ import {
   Lock,
   Phone,
   Mail,
-  HelpCircle
+  HelpCircle,
+  Camera,
+  UploadCloud,
+  FileCheck,
+  Eye,
+  X,
+  FileImage,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +81,9 @@ export function IndividualInsertScreen({
   const [securitiesKnowledge, setSecuritiesKnowledge] = useState<SecuritiesKnowledge>('Intermediate');
   const [riskCategory, setRiskCategory] = useState<RiskRating>('moderate');
   const [investmentExperience, setInvestmentExperience] = useState<InvestmentExperience>('3 - 5 years');
-  const [avatarUrl, setAvatarUrl] = useState('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Tab 2: Identification & Residency
   const [residency, setResidency] = useState<ResidencyStatus>('Resident');
@@ -90,7 +100,6 @@ export function IndividualInsertScreen({
       fileName: 'Signature_Specimen_Card.pdf',
       fileSize: '1.2 MB',
       uploadedAt: '2026-09-09',
-      remark: 'Account specimen card prepared.',
     },
     {
       id: 'DOC-NEW-2',
@@ -98,9 +107,19 @@ export function IndividualInsertScreen({
       fileName: 'Identification_Card_Copy.pdf',
       fileSize: '2.5 MB',
       uploadedAt: '2026-09-09',
-      remark: 'Clear color scan.',
     },
   ]);
+
+  // Tab 2: Supporting Documents Dropzone states & inputs
+  const [isDraggingSpecimen, setIsDraggingSpecimen] = useState(false);
+  const [isDraggingIdDoc, setIsDraggingIdDoc] = useState(false);
+  const [isDraggingOtherDoc, setIsDraggingOtherDoc] = useState(false);
+  const [otherDocType, setOtherDocType] = useState<string>('Proof of Residential Address');
+  const [otherDocRemark, setOtherDocRemark] = useState<string>('');
+
+  const specimenInputRef = useRef<HTMLInputElement>(null);
+  const idDocInputRef = useRef<HTMLInputElement>(null);
+  const otherDocInputRef = useRef<HTMLInputElement>(null);
 
   // Tab 3: Contact & Address
   const [email, setEmail] = useState('');
@@ -127,8 +146,7 @@ export function IndividualInsertScreen({
   const [savingAccount, setSavingAccount] = useState('Premier Savings Account');
   const [accountNumber, setAccountNumber] = useState('');
 
-  // Tab 5: Family & Related Persons
-  const [hasSpouse, setHasSpouse] = useState(false);
+  // Tab 5: Family & Related Persons (No checkbox required - always editable)
   const [spouseName, setSpouseName] = useState('');
   const [spouseLatin, setSpouseLatin] = useState('');
   const [spouseEmail, setSpouseEmail] = useState('');
@@ -141,7 +159,6 @@ export function IndividualInsertScreen({
   const [spouseOfficePhone, setSpouseOfficePhone] = useState('');
   const [spouseAddress, setSpouseAddress] = useState('');
 
-  const [hasRelatedPerson, setHasRelatedPerson] = useState(false);
   const [relName, setRelName] = useState('');
   const [relLatin, setRelLatin] = useState('');
   const [relEmail, setRelEmail] = useState('');
@@ -167,27 +184,52 @@ export function IndividualInsertScreen({
   // Validation
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Document management
-  const [newDocType, setNewDocType] = useState<'Account Specimen' | 'ID Card / Passport' | 'Other'>('Other');
-  const [newDocName, setNewDocName] = useState('');
-  const [newDocRemark, setNewDocRemark] = useState('');
-
-  const handleAddDocument = () => {
-    if (!newDocName.trim()) {
-      alert('Please specify the file name for this document.');
+  // Photo Upload Handler (Local file to Data URL with preview)
+  const handlePhotoUpload = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, JPEG, WEBP).');
       return;
     }
-    const newDoc: SupportingDocument = {
-      id: `DOC-NEW-${Date.now()}`,
-      type: newDocType,
-      fileName: newDocName.trim().endsWith('.pdf') ? newDocName.trim() : `${newDocName.trim()}.pdf`,
-      fileSize: '1.5 MB',
-      uploadedAt: new Date().toISOString().slice(0, 10),
-      remark: newDocRemark || 'Uploaded supporting file.',
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setAvatarUrl(result);
     };
-    setDocuments((prev) => [...prev, newDoc]);
-    setNewDocName('');
-    setNewDocRemark('');
+    reader.readAsDataURL(file);
+  };
+
+  // Supporting Document Upload Handler
+  const handleFileUpload = (
+    files: FileList | File[],
+    docType: 'Account Specimen' | 'ID Card / Passport' | 'Other',
+    customRemark?: string
+  ) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    const newDocs: SupportingDocument[] = fileArray.map((file) => {
+      const formattedSize =
+        file.size > 1024 * 1024
+          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+          : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+
+      return {
+        id: `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        type: docType,
+        fileName: file.name,
+        fileSize: formattedSize,
+        uploadedAt: new Date().toISOString().slice(0, 10),
+        remark:
+          customRemark ||
+          (docType === 'Account Specimen'
+            ? 'Account signature specimen document'
+            : docType === 'ID Card / Passport'
+            ? 'Official identity card / passport copy'
+            : `${otherDocType} supporting document`),
+      };
+    });
+
+    setDocuments((prev) => [...prev, ...newDocs]);
   };
 
   const handleRemoveDocument = (docId: string) => {
@@ -222,6 +264,27 @@ export function IndividualInsertScreen({
     const generatedCid = `CID-00${Math.floor(9000 + Math.random() * 1000)}`;
     const fullEN = `${givenNameEN.trim()} ${surnameEN.trim()}`;
     const fullKH = surnameKH.trim() && givenNameKH.trim() ? `${givenNameKH.trim()} ${surnameKH.trim()}` : fullEN;
+
+    // Check if spouse information has any entered data
+    const hasSpouseData = !!(
+      spouseName.trim() ||
+      spouseLatin.trim() ||
+      spouseEmail.trim() ||
+      spouseOccupation.trim() ||
+      spousePosition.trim() ||
+      spouseBusiness.trim() ||
+      spouseMobile.trim() ||
+      spouseAddress.trim()
+    );
+
+    // Check if related person has any entered data
+    const hasRelatedPersonData = !!(
+      relName.trim() ||
+      relLatin.trim() ||
+      relEmail.trim() ||
+      relMobile.trim() ||
+      relAddress.trim()
+    );
 
     const newRecord: Individual = {
       id: generatedId,
@@ -277,7 +340,7 @@ export function IndividualInsertScreen({
         accountNumber: accountNumber.trim() || `001 ${Math.floor(100000000 + Math.random() * 900000000)}`,
       },
 
-      spouse: hasSpouse ? {
+      spouse: hasSpouseData ? {
         fullName: spouseName,
         latin: spouseLatin || spouseName,
         email: spouseEmail,
@@ -291,7 +354,7 @@ export function IndividualInsertScreen({
         address: spouseAddress,
       } : undefined,
 
-      relatedPerson: hasRelatedPerson ? {
+      relatedPerson: hasRelatedPersonData ? {
         fullName: relName,
         latin: relLatin || relName,
         email: relEmail,
@@ -683,18 +746,104 @@ export function IndividualInsertScreen({
                       <option value="5+ years">5+ years</option>
                     </select>
                   </div>
+                </div>
+              </div>
 
+              {/* Customer Photo Upload Section */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Avatar URL (Photo)
-                    </label>
-                    <input
-                      type="text"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                      Customer Profile Photo (Portrait / Avatar)
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Upload a front-facing formal portrait of the customer for biometric profile verification.
+                    </span>
+                  </div>
+                  {avatarUrl && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Photo Uploaded
+                    </span>
+                  )}
+                </div>
+
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePhotoUpload(file);
+                  }}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                  {/* Dropzone container */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingPhoto(true);
+                    }}
+                    onDragLeave={() => setIsDraggingPhoto(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingPhoto(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handlePhotoUpload(file);
+                    }}
+                    onClick={() => photoInputRef.current?.click()}
+                    className={cn(
+                      'md:col-span-2 border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group',
+                      isDraggingPhoto
+                        ? 'border-blue-500 bg-blue-50/60 shadow-xs'
+                        : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-400'
+                    )}
+                  >
+                    <div className="w-11 h-11 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-blue-100 transition-all">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800 mb-0.5">
+                      Drag & drop customer portrait photo here, or <span className="text-blue-600 underline">Browse</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Supports JPG, PNG, WEBP (Formal front-facing photo, Max 5MB)
+                    </p>
+                  </div>
+
+                  {/* Preview Card */}
+                  <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/70 flex flex-col items-center justify-center text-center">
+                    {avatarUrl ? (
+                      <div className="relative group/avatar">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatarUrl}
+                          alt="Customer Portrait"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-sm ring-2 ring-blue-500/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAvatarUrl('');
+                            if (photoInputRef.current) photoInputRef.current.value = '';
+                          }}
+                          className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-sm transition"
+                          title="Remove photo"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        <p className="text-[11px] font-semibold text-slate-700 mt-2">Selected Photo</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-2">
+                        <div className="w-16 h-16 rounded-full bg-slate-200/80 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400 mb-2">
+                          <User className="w-7 h-7" />
+                        </div>
+                        <span className="text-[11px] font-medium text-slate-400">No Photo Selected</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -813,99 +962,330 @@ export function IndividualInsertScreen({
                 </div>
               </div>
 
-              {/* Supporting Documents Section */}
+              {/* Supporting Documents Section with Integrated Card Upload UI */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                      Supporting Documents (Specimen, ID Card, Proof of Address)
+                      Supporting Documents (Account Specimen, ID / Passport, Other)
                     </span>
                     <span className="text-[11px] text-slate-500">
-                      Attach verified customer signatures and identity scans for SECC and internal compliance.
+                      Upload verified customer signatures and identity documents directly into each card.
                     </span>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                    {documents.length} attached
-                  </span>
+                  {documents.length > 0 && (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      {documents.length} {documents.length === 1 ? 'file attached' : 'files attached'}
+                    </span>
+                  )}
                 </div>
 
-                {/* Upload / Add Form */}
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs items-end">
+                {/* Hidden File Inputs */}
+                <input
+                  ref={specimenInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleFileUpload(e.target.files, 'Account Specimen');
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <input
+                  ref={idDocInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleFileUpload(e.target.files, 'ID Card / Passport');
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <input
+                  ref={otherDocInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleFileUpload(e.target.files, 'Other', otherDocRemark);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+
+                {/* 3 Unified Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* 1. Account Specimen Card (Unified Upload & Uploaded State) */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Document Type</label>
-                    <select
-                      value={newDocType}
-                      onChange={(e) => setNewDocType(e.target.value as any)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    >
-                      <option value="Account Specimen">Account Specimen</option>
-                      <option value="ID Card / Passport">ID Card / Passport</option>
-                      <option value="Other">Other Supporting Document</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">File Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Utility_Bill_Proof.pdf"
-                      value={newDocName}
-                      onChange={(e) => setNewDocName(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Remark / Notes</label>
-                    <input
-                      type="text"
-                      placeholder="E.g. Certified by notary"
-                      value={newDocRemark}
-                      onChange={(e) => setNewDocRemark(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleAddDocument}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs hover:bg-blue-700 flex items-center justify-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add File</span>
-                  </button>
-                </div>
-
-                {/* Attached Document List */}
-                <div className="space-y-2">
-                  {documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg text-xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-800">{doc.fileName}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 font-semibold">
-                              {doc.type}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
-                          </div>
-                          {doc.remark && <p className="text-[11px] text-slate-500 mt-0.5">{doc.remark}</p>}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDocument(doc.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 rounded"
+                    {documents.filter((d) => d.type === 'Account Specimen').length === 0 ? (
+                      /* Empty State: Upload Dropzone matching Image 1 without subtitle */
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDraggingSpecimen(true);
+                        }}
+                        onDragLeave={() => setIsDraggingSpecimen(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDraggingSpecimen(false);
+                          if (e.dataTransfer.files) {
+                            handleFileUpload(e.dataTransfer.files, 'Account Specimen');
+                          }
+                        }}
+                        onClick={() => specimenInputRef.current?.click()}
+                        className={cn(
+                          'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative min-h-[170px]',
+                          isDraggingSpecimen
+                            ? 'border-blue-500 bg-blue-50/70 shadow-xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-blue-400'
+                        )}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-blue-100 transition-all">
+                          <FileCheck className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 mb-2">Account Specimen</span>
+                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-blue-600 shadow-2xs group-hover:border-blue-300">
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload Specimen</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
+                      </div>
+                    ) : (
+                      /* Uploaded State: Direct card matching Image 2 */
+                      <div className="space-y-2">
+                        {documents
+                          .filter((d) => d.type === 'Account Specimen')
+                          .map((doc) => (
+                            <div
+                              key={doc.id}
+                              className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all group min-h-[90px]"
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-bold text-slate-800 truncate text-xs" title={doc.fileName}>
+                                    {doc.fileName}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                                      Account Specimen
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveDocument(doc.id);
+                                  }}
+                                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                                  title="Delete document"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        <button
+                          type="button"
+                          onClick={() => specimenInputRef.current?.click()}
+                          className="w-full py-1.5 border border-dashed border-slate-200 rounded-xl text-[11px] font-semibold text-blue-600 hover:border-blue-400 hover:bg-blue-50/50 transition flex items-center justify-center gap-1"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload another specimen</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. ID / Passport Card (Unified Upload & Uploaded State) */}
+                  <div>
+                    {documents.filter((d) => d.type === 'ID Card / Passport').length === 0 ? (
+                      /* Empty State: Upload Dropzone matching Image 1 without subtitle */
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDraggingIdDoc(true);
+                        }}
+                        onDragLeave={() => setIsDraggingIdDoc(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDraggingIdDoc(false);
+                          if (e.dataTransfer.files) {
+                            handleFileUpload(e.dataTransfer.files, 'ID Card / Passport');
+                          }
+                        }}
+                        onClick={() => idDocInputRef.current?.click()}
+                        className={cn(
+                          'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative min-h-[170px]',
+                          isDraggingIdDoc
+                            ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-emerald-400'
+                        )}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-emerald-100 transition-all">
+                          <ShieldCheck className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 mb-2">ID / Passport</span>
+                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-emerald-600 shadow-2xs group-hover:border-emerald-300">
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload ID / Passport</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
+                      </div>
+                    ) : (
+                      /* Uploaded State: Direct card matching Image 2 */
+                      <div className="space-y-2">
+                        {documents
+                          .filter((d) => d.type === 'ID Card / Passport')
+                          .map((doc) => (
+                            <div
+                              key={doc.id}
+                              className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all group min-h-[90px]"
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                  <ShieldCheck className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-bold text-slate-800 truncate text-xs" title={doc.fileName}>
+                                    {doc.fileName}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                      ID / Passport
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveDocument(doc.id);
+                                  }}
+                                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                                  title="Delete document"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        <button
+                          type="button"
+                          onClick={() => idDocInputRef.current?.click()}
+                          className="w-full py-1.5 border border-dashed border-slate-200 rounded-xl text-[11px] font-semibold text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50/50 transition flex items-center justify-center gap-1"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload another ID / Passport</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Other Supporting Documents Card (Unified Upload & Uploaded State) */}
+                  <div>
+                    {documents.filter((d) => d.type === 'Other').length === 0 ? (
+                      /* Empty State: Upload Dropzone matching Card 1 and Card 2 */
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDraggingOtherDoc(true);
+                        }}
+                        onDragLeave={() => setIsDraggingOtherDoc(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDraggingOtherDoc(false);
+                          if (e.dataTransfer.files) {
+                            handleFileUpload(e.dataTransfer.files, 'Other');
+                          }
+                        }}
+                        onClick={() => otherDocInputRef.current?.click()}
+                        className={cn(
+                          'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative min-h-[170px]',
+                          isDraggingOtherDoc
+                            ? 'border-purple-500 bg-purple-50/70 shadow-xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-purple-400'
+                        )}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-purple-100 transition-all">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-800 mb-2">Other Supporting Docs</span>
+                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-purple-600 shadow-2xs group-hover:border-purple-300">
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload Supporting Doc</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
+                      </div>
+                    ) : (
+                      /* Uploaded State for Other Docs */
+                      <div className="space-y-2">
+                        {documents
+                          .filter((d) => d.type === 'Other')
+                          .map((doc) => (
+                            <div
+                              key={doc.id}
+                              className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all group min-h-[90px]"
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-bold text-slate-800 truncate text-xs" title={doc.fileName}>
+                                    {doc.fileName}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                                      Other Supporting Doc
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveDocument(doc.id);
+                                  }}
+                                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                                  title="Delete document"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        <button
+                          type="button"
+                          onClick={() => otherDocInputRef.current?.click()}
+                          className="w-full py-1.5 border border-dashed border-slate-200 rounded-xl text-[11px] font-semibold text-purple-600 hover:border-purple-400 hover:bg-purple-50/50 transition flex items-center justify-center gap-1"
+                        >
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload another document</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1223,144 +1603,212 @@ export function IndividualInsertScreen({
                 </p>
               </div>
 
-              {/* Spouse Section */}
+              {/* Spouse Section - Always visible */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Spouse Information
+                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Spouse Information
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    Optional (Provide if legally married)
                   </span>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={hasSpouse}
-                      onChange={(e) => setHasSpouse(e.target.checked)}
-                      className="rounded text-blue-600"
-                    />
-                    <span>Customer has spouse details</span>
-                  </label>
                 </div>
 
-                {hasSpouse ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-2">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        value={spouseName}
-                        onChange={(e) => setSpouseName(e.target.value)}
-                        placeholder="e.g. Julian Vance"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Latin Name</label>
-                      <input
-                        type="text"
-                        value={spouseLatin}
-                        onChange={(e) => setSpouseLatin(e.target.value)}
-                        placeholder="Julian Vance"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={spouseEmail}
-                        onChange={(e) => setSpouseEmail(e.target.value)}
-                        placeholder="spouse@techinvest.kh"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Occupation</label>
-                      <input
-                        type="text"
-                        value={spouseOccupation}
-                        onChange={(e) => setSpouseOccupation(e.target.value)}
-                        placeholder="Architect"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Position</label>
-                      <input
-                        type="text"
-                        value={spousePosition}
-                        onChange={(e) => setSpousePosition(e.target.value)}
-                        placeholder="Partner"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Mobile</label>
-                      <input
-                        type="text"
-                        value={spouseMobile}
-                        onChange={(e) => setSpouseMobile(e.target.value)}
-                        placeholder="+855 12 887 651"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Full Name (English / Khmer)</label>
+                    <input
+                      type="text"
+                      value={spouseName}
+                      onChange={(e) => setSpouseName(e.target.value)}
+                      placeholder="e.g. Julian Vance"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic">No spouse information recorded.</p>
-                )}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Latin Name</label>
+                    <input
+                      type="text"
+                      value={spouseLatin}
+                      onChange={(e) => setSpouseLatin(e.target.value)}
+                      placeholder="e.g. Julian Vance"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Relationship</label>
+                    <input
+                      type="text"
+                      value={spouseRelationship}
+                      onChange={(e) => setSpouseRelationship(e.target.value)}
+                      placeholder="Spouse / Partner"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={spouseEmail}
+                      onChange={(e) => setSpouseEmail(e.target.value)}
+                      placeholder="spouse@techinvest.kh"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Mobile Phone</label>
+                    <input
+                      type="text"
+                      value={spouseMobile}
+                      onChange={(e) => setSpouseMobile(e.target.value)}
+                      placeholder="+855 12 887 651"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Office Telephone</label>
+                    <input
+                      type="text"
+                      value={spouseOfficePhone}
+                      onChange={(e) => setSpouseOfficePhone(e.target.value)}
+                      placeholder="+855 23 881 992"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Occupation</label>
+                    <input
+                      type="text"
+                      value={spouseOccupation}
+                      onChange={(e) => setSpouseOccupation(e.target.value)}
+                      placeholder="e.g. Architect"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Position / Title</label>
+                    <input
+                      type="text"
+                      value={spousePosition}
+                      onChange={(e) => setSpousePosition(e.target.value)}
+                      placeholder="e.g. Partner"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Type of Business</label>
+                    <input
+                      type="text"
+                      value={spouseBusiness}
+                      onChange={(e) => setSpouseBusiness(e.target.value)}
+                      placeholder="e.g. Architecture & Design"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 md:col-span-3">
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Residential / Working Address</label>
+                    <input
+                      type="text"
+                      value={spouseAddress}
+                      onChange={(e) => setSpouseAddress(e.target.value)}
+                      placeholder="e.g. No. 42B, Street 310, Boeung Keng Kang 1, Phnom Penh"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Related Person Section */}
+              {/* Related Person Section - Always visible */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Related Person / Emergency Contact
+                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Related Person / Emergency Contact
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    Optional (Designated emergency or affiliate party)
                   </span>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={hasRelatedPerson}
-                      onChange={(e) => setHasRelatedPerson(e.target.checked)}
-                      className="rounded text-blue-600"
-                    />
-                    <span>Customer has related person</span>
-                  </label>
                 </div>
 
-                {hasRelatedPerson ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-2">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        value={relName}
-                        onChange={(e) => setRelName(e.target.value)}
-                        placeholder="e.g. Sokha Vance"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Relationship</label>
-                      <input
-                        type="text"
-                        value={relRelationship}
-                        onChange={(e) => setRelRelationship(e.target.value)}
-                        placeholder="Sibling / Business Partner"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-600 mb-1">Mobile</label>
-                      <input
-                        type="text"
-                        value={relMobile}
-                        onChange={(e) => setRelMobile(e.target.value)}
-                        placeholder="+855 17 992 001"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg"
-                      />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={relName}
+                      onChange={(e) => setRelName(e.target.value)}
+                      placeholder="e.g. Sokha Vance"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic">No related person recorded.</p>
-                )}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Latin Name</label>
+                    <input
+                      type="text"
+                      value={relLatin}
+                      onChange={(e) => setRelLatin(e.target.value)}
+                      placeholder="e.g. Sokha Vance"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Gender</label>
+                    <select
+                      value={relGender}
+                      onChange={(e) => setRelGender(e.target.value as any)}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Relationship</label>
+                    <input
+                      type="text"
+                      value={relRelationship}
+                      onChange={(e) => setRelRelationship(e.target.value)}
+                      placeholder="e.g. Sibling / Business Partner / Parent"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Mobile Phone</label>
+                    <input
+                      type="text"
+                      value={relMobile}
+                      onChange={(e) => setRelMobile(e.target.value)}
+                      placeholder="+855 17 992 001"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={relEmail}
+                      onChange={(e) => setRelEmail(e.target.value)}
+                      placeholder="sokha.vance@gmail.com"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 md:col-span-3">
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Residential Address</label>
+                    <input
+                      type="text"
+                      value={relAddress}
+                      onChange={(e) => setRelAddress(e.target.value)}
+                      placeholder="e.g. Building 12, Street 200, Daun Penh, Phnom Penh"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

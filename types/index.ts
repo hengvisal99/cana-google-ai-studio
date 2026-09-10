@@ -34,7 +34,7 @@ export interface SupportingDocument {
   fileUrl?: string;
   fileSize?: string;
   uploadedAt: string;
-  remark: string;
+  remark?: string;
 }
 
 export interface EmploymentInfo {
@@ -109,6 +109,7 @@ export interface AuthorizationTimelineItem {
   role: WorkflowRole;
   comment: string;
   reason?: string;
+  requestType?: RequestType;
 }
 
 export interface CloseAccountInfo {

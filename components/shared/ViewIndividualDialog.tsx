@@ -29,13 +29,16 @@ import {
   CheckCircle2,
   TrendingUp,
   UserCheck,
+  UserPlus,
   Users,
   Lock,
   Download,
   AlertCircle,
   Check,
   RotateCcw,
-  UserPlus
+  LayoutList,
+  GitCommit,
+  Split
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -76,6 +79,7 @@ export function ViewIndividualDialog({
   theme,
 }: ViewIndividualDialogProps) {
   const [activeTab, setActiveTab] = useState<DialogTab>('overview');
+  const [timelineLayout, setTimelineLayout] = useState<'vertical' | 'stepper' | 'bar'>('vertical');
 
   // Dedicated Authorization Decision Dialog State
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -89,200 +93,6 @@ export function ViewIndividualDialog({
   if (!isOpen || !individual) return null;
 
   const profile360: Customer360Profile = getCustomer360(individual);
-
-  const renderRequestBadge = (item: Individual) => {
-    const isClose = item.requestType === 'Close Account';
-    const isApproved = item.requestStatus === 'Approved' || item.currentWorkflowStage === 'Approved';
-    const isRejected = item.requestStatus === 'Rejected' || item.currentWorkflowStage === 'Rejected';
-    const isResubmit = item.requestStatus === 'Resubmit' || item.currentWorkflowStage === 'Resubmit';
-    const isPendingSR = item.currentWorkflowStage === 'SR' && item.requestStatus === 'Pending';
-    const isPendingManager = item.currentWorkflowStage === 'Manager' && item.requestStatus === 'Pending';
-
-    // Connector 1 (CSO -> SR)
-    const connector1Color = 'bg-emerald-400';
-
-    // SR status & visual state
-    let srStatusText = 'Approved';
-    let srStatusColor = 'text-emerald-600';
-    let srState: 'approved' | 'pending' | 'resubmit' | 'rejected' = 'approved';
-
-    if (isPendingSR) {
-      srStatusText = 'Pending';
-      srStatusColor = 'text-amber-600';
-      srState = 'pending';
-    } else if (isResubmit && item.currentWorkflowStage === 'Resubmit') {
-      srStatusText = 'Resubmit';
-      srStatusColor = 'text-amber-600';
-      srState = 'resubmit';
-    } else if (isRejected && item.currentWorkflowStage === 'SR') {
-      srStatusText = 'Rejected';
-      srStatusColor = 'text-rose-600';
-      srState = 'rejected';
-    }
-
-    // Connector 2 (SR -> Manager)
-    let connector2Color = 'bg-emerald-400';
-    if (isPendingManager) {
-      connector2Color = 'bg-amber-400';
-    } else if (isPendingSR || srState === 'pending') {
-      connector2Color = 'bg-slate-200';
-    } else if (isRejected) {
-      connector2Color = 'bg-rose-400';
-    } else if (isResubmit) {
-      connector2Color = 'bg-amber-400';
-    }
-
-    // Manager status & visual state
-    let managerStatusText = 'Approved';
-    let managerStatusColor = 'text-emerald-600';
-    let managerState: 'approved' | 'pending' | 'resubmit' | 'rejected' | 'waiting' = 'approved';
-
-    if (isApproved) {
-      managerStatusText = 'Approved';
-      managerStatusColor = 'text-emerald-600';
-      managerState = 'approved';
-    } else if (isPendingManager) {
-      managerStatusText = 'Pending';
-      managerStatusColor = 'text-amber-600';
-      managerState = 'pending';
-    } else if (isRejected) {
-      managerStatusText = 'Rejected';
-      managerStatusColor = 'text-rose-600';
-      managerState = 'rejected';
-    } else if (isResubmit) {
-      managerStatusText = 'Resubmit';
-      managerStatusColor = 'text-amber-600';
-      managerState = 'resubmit';
-    } else {
-      managerStatusText = 'Waiting';
-      managerStatusColor = 'text-slate-400';
-      managerState = 'waiting';
-    }
-
-    return (
-      <div className="inline-flex items-center gap-2.5 sm:gap-3 px-3 py-1.5 bg-white border border-slate-200/90 rounded-xl shadow-2xs select-none whitespace-nowrap">
-        {/* Left Request Type Icon Box */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {isClose ? (
-            <div 
-              className="w-7 h-7 rounded-lg bg-rose-50/90 border border-rose-200/80 flex items-center justify-center text-rose-500 shrink-0"
-              title="Close Account Request"
-            >
-              <Lock className="w-3.5 h-3.5" />
-            </div>
-          ) : (
-            <div 
-              className="w-7 h-7 rounded-lg bg-blue-50/90 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0"
-              title="Registration Request"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-            </div>
-          )}
-          <span className="text-[11px] font-bold text-slate-800 hidden sm:inline">
-            {item.requestType}
-          </span>
-        </div>
-
-        {/* Stepper Pipeline: CSO -> SR -> Manager */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Step 1: CSO */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div className="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-              <Check className="w-2.5 h-2.5 stroke-[3]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-800 leading-tight">CSO</span>
-              <span className="text-[9px] font-semibold text-emerald-600 leading-tight">Submitted</span>
-            </div>
-          </div>
-
-          {/* Connector 1 */}
-          <div className={cn("h-0.5 w-6 sm:w-10 rounded-full shrink-0", connector1Color)} />
-
-          {/* Step 2: SR */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {srState === 'approved' && (
-              <div className="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
-              </div>
-            )}
-            {srState === 'pending' && (
-              <div className="p-0.5 rounded-full bg-amber-100/80 shrink-0">
-                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <Clock className="w-2.5 h-2.5 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {srState === 'resubmit' && (
-              <div className="p-0.5 rounded-full bg-amber-100/80 shrink-0">
-                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertCircle className="w-2.5 h-2.5 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {srState === 'rejected' && (
-              <div className="p-0.5 rounded-full bg-rose-100/80 shrink-0">
-                <div className="w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertTriangle className="w-2.5 h-2.5 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-800 leading-tight">SR</span>
-              <span className={cn("text-[9px] font-semibold leading-tight", srStatusColor)}>{srStatusText}</span>
-            </div>
-          </div>
-
-          {/* Connector 2 */}
-          <div className={cn("h-0.5 w-6 sm:w-10 rounded-full shrink-0", connector2Color)} />
-
-          {/* Step 3: Manager */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {managerState === 'approved' && (
-              <div className="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                <Check className="w-2.5 h-2.5 stroke-[3]" />
-              </div>
-            )}
-            {managerState === 'pending' && (
-              <div className="p-0.5 rounded-full bg-[#fef3c7] shrink-0">
-                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <Clock className="w-2.5 h-2.5 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {managerState === 'resubmit' && (
-              <div className="p-0.5 rounded-full bg-amber-100/80 shrink-0">
-                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertCircle className="w-2.5 h-2.5 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {managerState === 'rejected' && (
-              <div className="p-0.5 rounded-full bg-rose-100/80 shrink-0">
-                <div className="w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertTriangle className="w-2.5 h-2.5 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {managerState === 'waiting' && (
-              <div className="w-4.5 h-4.5 rounded-full bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center shrink-0">
-                <Clock className="w-2.5 h-2.5" />
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className={cn(
-                "text-[10px] font-bold leading-tight",
-                managerState === 'pending' ? 'text-[#78350f]' : managerState === 'waiting' ? 'text-slate-400' : 'text-slate-800'
-              )}>
-                Manager
-              </span>
-              <span className={cn("text-[9px] font-semibold leading-tight", managerStatusColor)}>{managerStatusText}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const modalContainerClasses = () => {
     switch (theme) {
@@ -336,7 +146,7 @@ export function ViewIndividualDialog({
       authAction,
       authRole,
       authOfficer,
-      authComment || `Decision recorded by ${authOfficer} (${authRole})`,
+      authAction === 'authorize' ? (authComment || `Approved by ${authOfficer} (${authRole})`) : authReason,
       authReason
     );
     setShowAuthDialog(false);
@@ -344,6 +154,29 @@ export function ViewIndividualDialog({
     setAuthReason('');
     setAuthError(null);
   };
+
+  // Categorize workflow authorization history into Registration vs Account Close
+  const isCloseItem = (item: { requestType?: string; stage?: string; comment?: string }) => {
+    if (item.requestType === 'Close Account') return true;
+    if (item.requestType === 'Registration') return false;
+    const stageLower = (item.stage || '').toLowerCase();
+    const commentLower = (item.comment || '').toLowerCase();
+    return (
+      stageLower.includes('close') ||
+      stageLower.includes('closure') ||
+      commentLower.includes('close account') ||
+      commentLower.includes('closure')
+    );
+  };
+
+  const registrationHistory = (individual.authorizationHistory || []).filter((item) => !isCloseItem(item));
+  const accountCloseHistory = (individual.authorizationHistory || []).filter((item) => isCloseItem(item));
+  const hasCloseRequest = Boolean(
+    individual.closeAccountInfo ||
+    individual.requestType === 'Close Account' ||
+    individual.accountStatus === 'Closed' ||
+    accountCloseHistory.length > 0
+  );
 
   return (
     <div
@@ -354,7 +187,7 @@ export function ViewIndividualDialog({
       <div
         id="view-individual-modal-container"
         className={cn(
-          'w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden text-slate-800 transition-all shadow-2xl',
+          'w-full max-w-4xl xl:max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-slate-800 transition-all shadow-2xl',
           modalContainerClasses()
         )}
         onClick={(e) => e.stopPropagation()}
@@ -384,42 +217,14 @@ export function ViewIndividualDialog({
               </div>
               <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-mono">
                 <span className="font-bold text-slate-700">{individual.customerId || individual.id}</span>
-                <span>•</span>
-                <span>{individual.nationality}</span>
-                <span>•</span>
-                <span>{individual.residency || 'Resident'}</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Action: Edit Screen */}
-            <button
-              onClick={() => {
-                onClose();
-                onNavigateToUpdate(individual);
-              }}
-              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 flex items-center gap-1.5 transition shadow-xs"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-              <span>Edit</span>
-            </button>
-
-            {/* Action: Customer 360 */}
-            <button
-              onClick={() => {
-                onClose();
-                onNavigateToCustomer360(individual);
-              }}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-1.5 transition shadow-xs"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Customer 360</span>
-            </button>
-
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition ml-1"
+              className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition ml-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -452,11 +257,6 @@ export function ViewIndividualDialog({
                 {individual.accountStatus || 'Not Opened'}
               </span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto max-w-full">
-            <span className="text-slate-400 text-[10px] font-bold uppercase shrink-0">Request:</span>
-            {renderRequestBadge(individual)}
           </div>
         </div>
 
@@ -734,9 +534,7 @@ export function ViewIndividualDialog({
                               <span className="text-[10px] font-semibold px-2 py-0.2 rounded bg-blue-50 text-blue-700">
                                 {doc.type}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
                             </div>
-                            {doc.remark && <p className="text-[11px] text-slate-500 mt-0.5">{doc.remark}</p>}
                           </div>
                         </div>
 
@@ -973,67 +771,507 @@ export function ViewIndividualDialog({
           {/* TAB 7: WORKFLOW & AUTHORIZATION HISTORY */}
           {activeTab === 'authorization' && (
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-bold text-blue-900 block">
-                    Workflow Pipeline: CSO → SR → Manager
-                  </span>
-                  <p className="text-blue-700 text-[11px] mt-0.5">
-                    Current Workflow Stage: <strong>{individual.currentWorkflowStage}</strong> • Overall Status: <strong>{individual.requestStatus}</strong>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleOpenAuthDialog('authorize')}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs flex items-center gap-1 cursor-pointer"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Execute Next Step</span>
-                </button>
-              </div>
+              {/* Two Cards Layout: Registration Timeline & Account Close Timeline */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4.5 items-start">
+                {/* CARD 1: REGISTRATION TIMELINE */}
+                <div id="card-registration-timeline" className={cn(
+                  "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4 transition-all",
+                  timelineLayout !== 'vertical' ? 'lg:col-span-2' : ''
+                )}>
+                  {/* Header with Title & UI Layout Toggle Button */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-xs">
+                        <UserCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-900 text-sm sm:text-base">Registration Timeline</h4>
+                          {(() => {
+                            const lastItem = registrationHistory[registrationHistory.length - 1];
+                            const isRejected = individual.requestStatus === 'Rejected' || lastItem?.status === 'Rejected';
+                            const isCompleted = individual.profileStatus === 'Completed' || individual.accountStatus === 'Active' || (individual.requestStatus === 'Approved' && !isRejected);
 
-              {/* Timeline list */}
-              <div className="space-y-3 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200">
-                {individual.authorizationHistory && individual.authorizationHistory.length > 0 ? (
-                  individual.authorizationHistory.map((item, idx) => (
-                    <div key={item.id || idx} className="relative flex items-start gap-3 pl-8">
-                      <div className={cn(
-                        'absolute left-2 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white shadow-xs',
-                        item.status === 'Approved' ? 'bg-emerald-500' : item.status === 'Resubmit' ? 'bg-amber-500' : item.status === 'Rejected' ? 'bg-rose-500' : 'bg-blue-500'
-                      )} />
-                      <div className="flex-1 p-3.5 bg-white border border-slate-200 rounded-xl space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-900 text-xs">{item.stage}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{item.dateTime}</span>
+                            if (isRejected) {
+                              return (
+                                <span className="px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs">
+                                  <AlertCircle className="w-3 h-3 text-rose-600" />
+                                  <span>Rejected</span>
+                                </span>
+                              );
+                            }
+                            if (isCompleted) {
+                              return (
+                                <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  <span>Completed</span>
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs">
+                                <Clock className="w-3 h-3 text-blue-600" />
+                                <span>{individual.currentWorkflowStage || 'In Progress'}</span>
+                              </span>
+                            );
+                          })()}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                          <span>Officer: <strong className="text-slate-700">{item.processedBy}</strong></span>
-                          <span>•</span>
-                          <span>Role: <strong className="text-slate-700">{item.role}</strong></span>
-                          <span>•</span>
-                          <span className={cn(
-                            'font-bold px-1.5 py-0.2 rounded text-[10px]',
-                            item.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' : item.status === 'Resubmit' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'
-                          )}>
-                            {item.status}
+                        <p className="text-[11px] sm:text-xs text-slate-500">Customer onboarding & trading account opening</p>
+                      </div>
+                    </div>
+
+                    {/* Interactive UI Layout Toggle */}
+                    <div className="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs font-semibold self-start md:self-auto shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setTimelineLayout('vertical')}
+                        title="Detailed Vertical Timeline Cards"
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all',
+                          timelineLayout === 'vertical'
+                            ? 'bg-white text-blue-700 shadow-xs font-bold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        )}
+                      >
+                        <LayoutList className="w-3.5 h-3.5" />
+                        <span className="text-xs">Vertical</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTimelineLayout('stepper')}
+                        title="Version 2: Connected Node Stepper (Image 1)"
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all',
+                          timelineLayout === 'stepper'
+                            ? 'bg-white text-blue-700 shadow-xs font-bold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        )}
+                      >
+                        <GitCommit className="w-3.5 h-3.5" />
+                        <span className="text-xs">Step Nodes</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTimelineLayout('bar')}
+                        title="Version 3: Segmented Progress Bar (Image 2)"
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all',
+                          timelineLayout === 'bar'
+                            ? 'bg-white text-blue-700 shadow-xs font-bold'
+                            : 'text-slate-600 hover:text-slate-900'
+                        )}
+                      >
+                        <Split className="w-3.5 h-3.5" />
+                        <span className="text-xs">Progress Bar</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ========================================================================= */}
+                  {/* LAYOUT 1: DETAILED VERTICAL TIMELINE CARDS */}
+                  {/* ========================================================================= */}
+                  {timelineLayout === 'vertical' && (
+                    <div className="space-y-3.5 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200 pt-1">
+                      {registrationHistory.length > 0 ? (
+                        registrationHistory.map((item, idx) => (
+                          <div key={item.id || idx} className="relative flex items-start gap-3 pl-8">
+                            <div className={cn(
+                              'absolute left-2 top-3 w-3.5 h-3.5 rounded-full border-2 border-white shadow-xs ring-4',
+                              item.status === 'Approved' ? 'bg-emerald-500 ring-emerald-50' :
+                              item.status === 'Resubmit' ? 'bg-amber-500 ring-amber-50' :
+                              item.status === 'Rejected' ? 'bg-rose-500 ring-rose-50' :
+                              item.status === 'Submitted' ? 'bg-blue-600 ring-blue-50' : 'bg-slate-400 ring-slate-100'
+                            )} />
+                            <div className="flex-1 p-3.5 sm:p-4 bg-slate-50/70 hover:bg-slate-50 border border-slate-200 rounded-xl space-y-2 transition-colors">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-bold text-slate-900 text-xs sm:text-sm">{item.stage}</span>
+                                <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap shrink-0">{item.dateTime}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-2 text-xs flex-wrap">
+                                <div className="flex items-center gap-1.5 text-slate-600">
+                                  <span>Officer: <strong className="text-slate-800 font-bold">{item.processedBy}</strong></span>
+                                  <span className="text-slate-300">·</span>
+                                  <span>Role: <strong className="text-slate-800 font-bold">{item.role}</strong></span>
+                                </div>
+                                <span className={cn(
+                                  'font-bold px-2.5 py-0.5 rounded-md text-[11px]',
+                                  item.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                                  item.status === 'Resubmit' ? 'bg-amber-100 text-amber-800' :
+                                  item.status === 'Rejected' ? 'bg-rose-100 text-rose-800' :
+                                  item.status === 'Submitted' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-slate-200 text-slate-800'
+                                )}>
+                                  {item.status}
+                                </span>
+                              </div>
+                              {item.reason && (
+                                <div className="mt-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-1.5">
+                                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="font-bold text-rose-950">Reason: </span>
+                                    <span className="text-rose-800 font-medium">{item.reason}</span>
+                                  </div>
+                                </div>
+                              )}
+                              {item.comment && !item.reason && (
+                                <p className="text-[11px] text-slate-500 pt-0.5">
+                                  {item.comment}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="relative pl-8">
+                          <div className="absolute left-2 top-3 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-500 ring-4 ring-emerald-50 shadow-xs" />
+                          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-900 text-xs">Customer Registration Completed</span>
+                              <span className="text-[10px] text-slate-400 font-mono">{individual.tradingAccountInfo?.accountDate || individual.createdAt}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ========================================================================= */}
+                  {/* LAYOUT 2: CONNECTED NODE STEPPER (Image 1 Style) */}
+                  {/* ========================================================================= */}
+                  {timelineLayout === 'stepper' && (
+                    <div className="space-y-4">
+                      <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase px-1">
+                        REQUEST
+                      </div>
+
+                      <div className="bg-slate-50/60 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-center gap-4 sm:gap-6">
+                        {/* Left Icon: UserPlus with rounded container */}
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                          <UserPlus className="w-6 h-6 text-blue-600" />
+                        </div>
+
+                        {/* Connected Stepper Rail */}
+                        <div className="flex-1 w-full flex items-center justify-between gap-1 sm:gap-2">
+                          {/* Step 1: CSO */}
+                          <div className="flex items-center gap-2.5 shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                              <Check className="w-4 h-4 stroke-[3]" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-bold text-slate-900 text-xs sm:text-sm">CSO</div>
+                              <div className="text-[11px] font-semibold text-emerald-600">Submitted</div>
+                              <div className="text-[10px] text-slate-400 font-medium hidden sm:block">
+                                {registrationHistory[0]?.dateTime || 'Mar 15, 2026 · 09:30 AM'}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Connecting Line 1 */}
+                          <div className="flex-1 h-1 bg-emerald-500 rounded-full mx-2 sm:mx-4 min-w-[24px]" />
+
+                          {/* Step 2: SR */}
+                          <div className="flex items-center gap-2.5 shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                              <Check className="w-4 h-4 stroke-[3]" />
+                            </div>
+                            <div className="text-left">
+                              <div className="font-bold text-slate-900 text-xs sm:text-sm">SR</div>
+                              <div className="text-[11px] font-semibold text-emerald-600">Approved</div>
+                              <div className="text-[10px] text-slate-400 font-medium hidden sm:block">
+                                {registrationHistory[1]?.dateTime || 'Mar 17, 2026 · 02:45 PM'}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Connecting Line 2 */}
+                          <div className={cn(
+                            "flex-1 h-1 rounded-full mx-2 sm:mx-4 min-w-[24px]",
+                            individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                              ? "bg-rose-400"
+                              : "bg-emerald-500"
+                          )} />
+
+                          {/* Step 3: Manager */}
+                          <div className="flex items-center gap-2.5 shrink-0">
+                            <div className={cn(
+                              "w-7 h-7 rounded-full text-white flex items-center justify-center shadow-xs",
+                              individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                                ? "bg-rose-500"
+                                : "bg-emerald-500"
+                            )}>
+                              {individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected' ? (
+                                <X className="w-4 h-4 stroke-[3]" />
+                              ) : (
+                                <Check className="w-4 h-4 stroke-[3]" />
+                              )}
+                            </div>
+                            <div className="text-left">
+                              <div className="font-bold text-slate-900 text-xs sm:text-sm">Manager</div>
+                              <div className={cn(
+                                "text-[11px] font-semibold",
+                                individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                                  ? "text-rose-600 font-bold"
+                                  : "text-emerald-600"
+                              )}>
+                                {individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                                  ? "Rejected"
+                                  : "Approved"}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-medium hidden sm:block">
+                                {registrationHistory[2]?.dateTime || 'Mar 18, 2026 · 04:20 PM'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Officer Cards under Stepper */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Step 1 · CSO</div>
+                          <div className="font-bold text-slate-800">{registrationHistory[0]?.processedBy || 'Sophea Keo'}</div>
+                          <div className="text-[11px] text-slate-500">{registrationHistory[0]?.dateTime || 'Mar 15, 2026 · 09:30 AM'}</div>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Step 2 · SR</div>
+                          <div className="font-bold text-slate-800">{registrationHistory[1]?.processedBy || 'Dara Vong'}</div>
+                          <div className="text-[11px] text-slate-500">{registrationHistory[1]?.dateTime || 'Mar 17, 2026 · 02:45 PM'}</div>
+                        </div>
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">Step 3 · Manager</div>
+                          <div className="font-bold text-slate-800">{registrationHistory[2]?.processedBy || 'Vannak Lim'}</div>
+                          <div className="text-[11px] text-slate-500">{registrationHistory[2]?.dateTime || 'Mar 18, 2026 · 04:20 PM'}</div>
+                        </div>
+                      </div>
+
+                      {/* Rejection Reason Box */}
+                      {(registrationHistory.find(h => h.reason)?.reason || individual.requestStatus === 'Rejected') && (
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2 shadow-2xs">
+                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-rose-950">Reason: </span>
+                            <span className="text-rose-800 font-medium">
+                              {registrationHistory.find(h => h.reason)?.reason || 'Customer address does not match the supporting document.'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ========================================================================= */}
+                  {/* LAYOUT 3: SEGMENTED PROGRESS BAR (Image 2 Style) */}
+                  {/* ========================================================================= */}
+                  {timelineLayout === 'bar' && (
+                    <div className="space-y-4">
+                      <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase px-1">
+                        REGISTRATION PROGRESS BAR
+                      </div>
+
+                      <div className="bg-slate-50/60 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs flex items-start gap-4 sm:gap-6">
+                        {/* Left Icon: UserPlus with rounded blue container */}
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5">
+                          <UserPlus className="w-6 h-6 text-blue-600" />
+                        </div>
+
+                        {/* Right: Segmented Bars & Labels */}
+                        <div className="flex-1 w-full space-y-3.5">
+                          {/* 3 Top Segmented Bars */}
+                          <div className="grid grid-cols-3 gap-2.5 sm:gap-4 w-full">
+                            <div className="h-2 rounded-full bg-emerald-500 shadow-2xs transition-all" />
+                            <div className="h-2 rounded-full bg-emerald-500 shadow-2xs transition-all" />
+                            <div className={cn(
+                              "h-2 rounded-full shadow-2xs transition-all",
+                              individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                                ? "bg-rose-500"
+                                : "bg-emerald-500"
+                            )} />
+                          </div>
+
+                          {/* 3 Step Details aligned under each bar */}
+                          <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                            {/* Step 1: CSO */}
+                            <div>
+                              <div className="font-bold text-slate-900 text-xs sm:text-sm">CSO</div>
+                              <div className="text-[11px] font-bold text-emerald-600">Submitted</div>
+                              <div className="text-[10px] text-slate-600 font-medium mt-1">
+                                {registrationHistory[0]?.processedBy || 'Sophea Keo'}
+                              </div>
+                              <div className="text-[10px] text-slate-400 hidden sm:block">
+                                {registrationHistory[0]?.dateTime || 'Mar 15, 2026 · 09:30 AM'}
+                              </div>
+                            </div>
+
+                            {/* Step 2: SR */}
+                            <div>
+                              <div className="font-bold text-slate-900 text-xs sm:text-sm">SR</div>
+                              <div className="text-[11px] font-bold text-emerald-600">Approved</div>
+                              <div className="text-[10px] text-slate-600 font-medium mt-1">
+                                {registrationHistory[1]?.processedBy || 'Dara Vong'}
+                              </div>
+                              <div className="text-[10px] text-slate-400 hidden sm:block">
+                                {registrationHistory[1]?.dateTime || 'Mar 17, 2026 · 02:45 PM'}
+                              </div>
+                            </div>
+
+                            {/* Step 3: Manager */}
+                            <div>
+                              <div className="font-bold text-slate-900 text-xs sm:text-sm">Manager</div>
+                              <div className={cn(
+                                "text-[11px] font-bold",
+                                individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                                  ? "text-rose-600"
+                                  : "text-emerald-600"
+                              )}>
+                                {individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
+                                  ? "Rejected"
+                                  : "Approved"}
+                              </div>
+                              <div className="text-[10px] text-slate-600 font-medium mt-1">
+                                {registrationHistory[2]?.processedBy || 'Vannak Lim'}
+                              </div>
+                              <div className="text-[10px] text-slate-400 hidden sm:block">
+                                {registrationHistory[2]?.dateTime || 'Mar 18, 2026 · 04:20 PM'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rejection Reason Box */}
+                      {(registrationHistory.find(h => h.reason)?.reason || individual.requestStatus === 'Rejected') && (
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2 shadow-2xs">
+                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-rose-950">Reason: </span>
+                            <span className="text-rose-800 font-medium">
+                              {registrationHistory.find(h => h.reason)?.reason || 'Customer address does not match the supporting document.'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* CARD 2: ACCOUNT CLOSE TIMELINE */}
+                <div id="card-account-close-timeline" className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200/80 flex items-center justify-center text-purple-600 shrink-0">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">Account Close Timeline</h4>
+                        <p className="text-[11px] text-slate-500">Trading account termination & closure authorization</p>
+                      </div>
+                    </div>
+                    <div>
+                      {individual.accountStatus === 'Closed' ? (
+                        <span className="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold inline-flex items-center gap-1.5 shadow-2xs">
+                          <Lock className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Account Closed</span>
+                        </span>
+                      ) : individual.requestType === 'Close Account' ? (
+                        <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-[11px] font-bold inline-flex items-center gap-1.5 shadow-2xs">
+                          <Clock className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{individual.currentWorkflowStage} Pending</span>
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg text-[11px] font-medium inline-flex items-center gap-1.5 shadow-2xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>No Closure Request</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {hasCloseRequest ? (
+                    <div className="space-y-3.5">
+                      {/* Close Request Details Banner */}
+                      <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between text-purple-900 font-bold">
+                          <span className="flex items-center gap-1.5">
+                            <AlertCircle className="w-3.5 h-3.5 text-purple-600" />
+                            <span>Closure Request Parameters</span>
+                          </span>
+                          <span className="font-mono text-[11px] text-purple-700">
+                            {individual.closeAccountInfo?.closeDate || '2024-06-01'}
                           </span>
                         </div>
-                        {item.comment && (
-                          <p className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg mt-1 border border-slate-100">
-                            {item.comment}
-                          </p>
-                        )}
-                        {item.reason && (
-                          <p className="text-[11px] text-rose-700 bg-rose-50 p-2 rounded-lg mt-1 border border-rose-200 font-medium">
-                            Discrepancy / Reason: {item.reason}
-                          </p>
+                        <div className="text-[11px] text-purple-800 space-y-0.5">
+                          <div>
+                            Target Account: <strong className="font-mono">{individual.closeAccountInfo?.account || individual.tradingAccountInfo?.tradingAccountNumber || 'Primary Account'}</strong>
+                          </div>
+                          <div>
+                            Closure Reason: <span className="italic">{individual.closeAccountInfo?.reason || 'Customer requested full account closure and asset liquidation.'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline Events for Close Account */}
+                      <div className="space-y-3 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200 pt-1">
+                        {accountCloseHistory.length > 0 ? (
+                          accountCloseHistory.map((item, idx) => (
+                            <div key={item.id || idx} className="relative flex items-start gap-3 pl-8">
+                              <div className={cn(
+                                'absolute left-2 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white shadow-xs',
+                                item.status === 'Approved' ? 'bg-emerald-500' :
+                                item.status === 'Resubmit' ? 'bg-amber-500' :
+                                item.status === 'Rejected' ? 'bg-rose-500' :
+                                item.status === 'Submitted' ? 'bg-purple-500' : 'bg-amber-400'
+                              )} />
+                              <div className="flex-1 p-3 bg-slate-50/70 hover:bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 transition-colors">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-bold text-slate-900 text-xs">{item.stage}</span>
+                                  <span className="text-[10px] text-slate-400 font-mono shrink-0">{item.dateTime}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap">
+                                  <span>Officer: <strong className="text-slate-700">{item.processedBy}</strong></span>
+                                  <span>•</span>
+                                  <span>Role: <strong className="text-slate-700">{item.role}</strong></span>
+                                  <span>•</span>
+                                  <span className={cn(
+                                    'font-bold px-1.5 py-0.5 rounded text-[10px]',
+                                    item.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
+                                    item.status === 'Resubmit' ? 'bg-amber-100 text-amber-800' :
+                                    item.status === 'Rejected' ? 'bg-rose-100 text-rose-800' :
+                                    item.status === 'Submitted' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-slate-200 text-slate-800'
+                                  )}>
+                                    {item.status}
+                                  </span>
+                                </div>
+                                {item.reason && (
+                                  <p className="text-[11px] text-rose-700 bg-rose-50 p-2 rounded-lg border border-rose-200 font-medium">
+                                    Discrepancy / Reason: {item.reason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="relative pl-8">
+                            <div className="absolute left-2 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-purple-500 shadow-xs" />
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-900 text-xs">Closure Request Initiated</span>
+                                <span className="text-[10px] text-slate-400 font-mono">{individual.closeAccountInfo?.closeDate || 'Pending'}</span>
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400 italic pl-8">No authorization events logged.</p>
-                )}
+                  ) : (
+                    <div className="p-6 bg-slate-50/60 border border-dashed border-slate-200 rounded-xl text-center space-y-1">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200/80 flex items-center justify-center mx-auto text-slate-400 mb-2">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                      <h5 className="font-bold text-slate-700 text-xs">No Account Closure Requested</h5>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1124,9 +1362,9 @@ export function ViewIndividualDialog({
                      'Reject Application'}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {authAction === 'authorize' ? 'Advance workflow to the next approval stage' :
-                     authAction === 'resubmit' ? 'Return application to prior stage for amendment' :
-                     'Decline and terminate this onboarding request'}
+                    {authAction === 'authorize' ? 'Confirm application approval' :
+                     authAction === 'resubmit' ? 'Provide a reason for resubmission' :
+                     'Provide a reason for rejection'}
                   </p>
                 </div>
               </div>
@@ -1141,109 +1379,47 @@ export function ViewIndividualDialog({
             </div>
 
             {/* Dialog Body */}
-            <div className="p-5 sm:p-6 space-y-4 text-xs text-slate-700">
-              {/* Applicant Context Card */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Applicant</span>
-                  <span className="font-bold text-slate-900 text-sm">{individual.fullNameEN || `${individual.firstName} ${individual.lastName}`}</span>
-                  <span className="text-slate-500 text-xs ml-2 font-mono">({individual.customerId || individual.id})</span>
+            <div className="p-5 sm:p-6 text-slate-700">
+              {authAction === 'authorize' ? (
+                /* Approve Dialog: Just show confirm message */
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+                  <p className="text-sm font-semibold text-emerald-950">
+                    Are you sure you want to approve this application?
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    This will approve the application for <strong className="text-slate-900">{individual.fullNameEN || `${individual.firstName} ${individual.lastName}`}</strong> ({individual.customerId || individual.id}) and advance it to the next workflow stage.
+                  </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Stage</span>
-                  <span className="font-bold text-blue-700 text-xs px-2.5 py-0.5 bg-blue-50 border border-blue-200 rounded-md inline-block">
-                    {individual.currentWorkflowStage}
-                  </span>
-                </div>
-              </div>
-
-              {/* Workflow Transition Preview if Authorizing */}
-              {authAction === 'authorize' && (
-                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-start gap-2.5 text-xs text-emerald-900">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold block">Workflow Transition:</span>
-                    <span className="text-emerald-800">
-                      Approving will advance the request from <strong>{individual.currentWorkflowStage}</strong> to{' '}
-                      <strong>{individual.currentWorkflowStage === 'CSO' ? 'SR (Review)' : individual.currentWorkflowStage === 'SR' ? 'Manager (Approval)' : 'Approved (Completed)'}</strong>.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Authorizer Role & Officer Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Authorizer Role</label>
-                  <select
-                    value={authRole}
-                    onChange={(e) => {
-                      const r = e.target.value as 'CSO' | 'SR' | 'Manager';
-                      setAuthRole(r);
-                      if (r === 'CSO') setAuthOfficer('Sophea Keo (CSO)');
-                      if (r === 'SR') setAuthOfficer('Dara Vong (SR)');
-                      if (r === 'Manager') setAuthOfficer('Vannak Lim (Manager)');
-                    }}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden"
-                  >
-                    <option value="CSO">CSO (Customer Service Officer)</option>
-                    <option value="SR">SR (Securities Representative)</option>
-                    <option value="Manager">Manager (Branch / Compliance Head)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Acting Officer</label>
-                  <input
-                    type="text"
-                    value={authOfficer}
-                    onChange={(e) => setAuthOfficer(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden"
-                  />
-                </div>
-              </div>
-
-              {/* Reason field (Required for Reject & Resubmit) */}
-              {authAction !== 'authorize' && (
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+              ) : (
+                /* Reject & Resubmit Dialog: Have ONLY one reason field */
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-800">
                     Reason for {authAction === 'reject' ? 'Rejection' : 'Resubmission'} <span className="text-rose-500 font-bold">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={4}
                     value={authReason}
                     onChange={(e) => {
                       setAuthReason(e.target.value);
                       if (authError) setAuthError(null);
                     }}
-                    placeholder={authAction === 'reject' ? 'e.g. Sanctions compliance match or invalid legal identity' : 'e.g. Please re-upload legible government ID or valid utility bill'}
+                    placeholder={authAction === 'reject' ? 'Enter reason for rejecting this application...' : 'Enter reason for requesting resubmission...'}
                     className={cn(
-                      "w-full px-3 py-2 bg-white border rounded-lg text-slate-800 text-xs outline-hidden",
-                      authError ? "border-rose-400 ring-2 ring-rose-200" : "border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      "w-full px-3.5 py-2.5 bg-white border rounded-xl text-slate-800 text-xs focus:outline-none transition resize-none",
+                      authError
+                        ? "border-rose-400 ring-2 ring-rose-200"
+                        : "border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     )}
+                    autoFocus
                   />
                   {authError && (
-                    <p className="text-[11px] font-semibold text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {authError}
+                    <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{authError}</span>
                     </p>
                   )}
                 </div>
               )}
-
-              {/* Comments / Audit Trail Note */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Audit Comment / Internal Note <span className="text-slate-400 font-normal">(Optional)</span>
-                </label>
-                <textarea
-                  rows={2}
-                  value={authComment}
-                  onChange={(e) => setAuthComment(e.target.value)}
-                  placeholder="Add optional notes for compliance audit logs..."
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden resize-none"
-                />
-              </div>
             </div>
 
             {/* Dialog Footer */}
@@ -1269,7 +1445,13 @@ export function ViewIndividualDialog({
                 {authAction === 'authorize' && <CheckCircle2 className="w-3.5 h-3.5" />}
                 {authAction === 'resubmit' && <RotateCcw className="w-3.5 h-3.5" />}
                 {authAction === 'reject' && <AlertTriangle className="w-3.5 h-3.5" />}
-                <span>Confirm {authAction === 'authorize' ? 'Approval' : authAction === 'resubmit' ? 'Resubmission' : 'Rejection'}</span>
+                <span>
+                  {authAction === 'authorize'
+                    ? 'Confirm Approval'
+                    : authAction === 'resubmit'
+                    ? 'Confirm Resubmission'
+                    : 'Confirm Rejection'}
+                </span>
               </button>
             </div>
           </div>

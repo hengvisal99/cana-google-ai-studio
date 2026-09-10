@@ -88,26 +88,6 @@ export function SoftFintechShell({
 
   return (
     <div id="soft-fintech-layout" className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col antialiased">
-      {/* Precision Top Ticker Strip (Soft FinTech specific) - Crisp Light Mode */}
-      <div className="bg-slate-100 text-slate-600 text-[11px] px-4 py-1.5 flex items-center justify-between border-b border-slate-200">
-        <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap">
-          <span className="font-bold text-blue-700 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            NEXUS FINTECH CORE
-          </span>
-          <span className="text-slate-300">|</span>
-          <span className="text-slate-600">EUR/USD: <strong className="text-slate-900">1.0842</strong> (+0.18%)</span>
-          <span className="text-slate-600">GBP/USD: <strong className="text-slate-900">1.2715</strong> (-0.05%)</span>
-          <span className="text-slate-600">SOFR 30D: <strong className="text-slate-900">4.82%</strong></span>
-          <span className="text-slate-600">SYSTEM LATENCY: <strong className="text-emerald-600">12ms</strong></span>
-        </div>
-        <div className="hidden sm:flex items-center gap-3 text-slate-500 shrink-0">
-          <span>SECURE PROTOCOL 256-BIT</span>
-          <span>•</span>
-          <span className="text-slate-700 font-medium">NEW YORK (EST)</span>
-        </div>
-      </div>
-
       <div className="flex flex-1 overflow-hidden">
         {/* =========================================================================
             SOFT FINTECH SIDEBAR: Solid Classic High-Density Left Enterprise Sidebar
@@ -172,22 +152,15 @@ export function SoftFintechShell({
                   type="button"
                   onClick={() => onNavigate('customer-360')}
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all relative',
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     currentPage === 'customer-360'
                       ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-600'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Customer 360 (Left Customer Sidebar)"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Users className="w-4 h-4 shrink-0 text-blue-600" />
-                    {!sidebarCollapsed && <span className="truncate">Customer 360</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 font-bold">
-                      360°
-                    </span>
-                  )}
+                  <Users className="w-4 h-4 shrink-0 text-blue-600" />
+                  {!sidebarCollapsed && <span className="truncate">Customer 360</span>}
                 </button>
 
                 {/* Individual */}
@@ -196,22 +169,15 @@ export function SoftFintechShell({
                   type="button"
                   onClick={() => onNavigate('individual-list')}
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2.5 rounded-lg font-semibold transition-all relative',
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     currentPage === 'individual-list' || currentPage === 'individual-insert' || currentPage === 'individual-update'
                       ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-600'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Individual (Directory)"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <User className="w-4 h-4 shrink-0 text-blue-600" />
-                    {!sidebarCollapsed && <span className="truncate">Individual</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold">
-                      Directory
-                    </span>
-                  )}
+                  <User className="w-4 h-4 shrink-0 text-blue-600" />
+                  {!sidebarCollapsed && <span className="truncate">Individual</span>}
                 </button>
               </div>
             </div>

@@ -358,25 +358,15 @@ export function AuroraShell({
                   type="button"
                   onClick={() => onNavigate('customer-360')}
                   className={cn(
-                    'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
                     currentPage === 'customer-360'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Customer 360"
                 >
-                  <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 shrink-0" />
-                    {!sidebarCollapsed && <span>Customer 360</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <span className={cn(
-                      'text-[10px] px-2 py-0.5 rounded-md font-bold',
-                      currentPage === 'customer-360' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                    )}>
-                      Radar
-                    </span>
-                  )}
+                  <Users className="w-4 h-4 shrink-0" />
+                  {!sidebarCollapsed && <span>Customer 360</span>}
                 </button>
                 {/* Individual */}
                 <button
@@ -384,27 +374,15 @@ export function AuroraShell({
                   type="button"
                   onClick={() => onNavigate('individual-list')}
                   className={cn(
-                    'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
                     currentPage === 'individual-list' || currentPage === 'individual-insert' || currentPage === 'individual-update'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Individual (Directory)"
                 >
-                  <div className="flex items-center gap-3">
-                    <User className="w-4 h-4 shrink-0" />
-                    {!sidebarCollapsed && <span>Individual</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <span className={cn(
-                      'text-[10px] px-2 py-0.5 rounded-md font-bold',
-                      currentPage === 'individual-list' || currentPage === 'individual-insert' || currentPage === 'individual-update'
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-100 text-slate-700'
-                    )}>
-                      Directory
-                    </span>
-                  )}
+                  <User className="w-4 h-4 shrink-0" />
+                  {!sidebarCollapsed && <span>Individual</span>}
                 </button>
               </div>
             </div>

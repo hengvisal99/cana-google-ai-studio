@@ -31,7 +31,11 @@ import {
   CreditCard,
   Building2,
   FileCheck,
-  UserCheck
+  UserCheck,
+  UserPlus,
+  LayoutList,
+  GitCommit,
+  Split
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +66,7 @@ export function Customer360Screen({
 
   // Product View Mode Toggle
   const [productViewMode, setProductViewMode] = useState<'table' | 'cards'>('table');
+  const [timelineLayout, setTimelineLayout] = useState<'vertical' | 'stepper' | 'bar'>('vertical');
 
   // Active customer resolution
   const activeIndividual = useMemo(() => {
@@ -961,87 +966,294 @@ export function Customer360Screen({
           <section
             id="c360-activity-timeline-section"
             className={cn(
-              'p-5 bg-white border border-slate-200',
+              'p-5 bg-white border border-slate-200 space-y-4',
               theme === 'glassmorphism'
                 ? 'rounded-2xl bg-white/85 backdrop-blur-md shadow-xs'
                 : 'rounded-xl shadow-xs'
             )}
           >
-            <div className="flex items-center gap-2 mb-5 pb-3 border-b border-slate-100">
-              <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
-                <Clock className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Activity Timeline</h3>
+                  <p className="text-[11px] text-slate-400">Complete audit trail & authorization history</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Activity Timeline</h3>
-                <p className="text-[11px] text-slate-400">Complete audit trail & authorization history</p>
+
+              {/* Layout Toggle Buttons */}
+              <div className="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs font-semibold self-start sm:self-auto shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setTimelineLayout('vertical')}
+                  title="Version 1: Detailed Vertical Cards"
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all',
+                    timelineLayout === 'vertical'
+                      ? 'bg-white text-blue-700 shadow-xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  )}
+                >
+                  <LayoutList className="w-3.5 h-3.5" />
+                  <span className="text-xs">Vertical</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimelineLayout('stepper')}
+                  title="Version 2: Connected Node Stepper (Image 1)"
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all',
+                    timelineLayout === 'stepper'
+                      ? 'bg-white text-blue-700 shadow-xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  )}
+                >
+                  <GitCommit className="w-3.5 h-3.5" />
+                  <span className="text-xs">Step Nodes</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimelineLayout('bar')}
+                  title="Version 3: Segmented Progress Bar (Image 2)"
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all',
+                    timelineLayout === 'bar'
+                      ? 'bg-white text-blue-700 shadow-xs font-bold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  )}
+                >
+                  <Split className="w-3.5 h-3.5" />
+                  <span className="text-xs">Progress Bar</span>
+                </button>
               </div>
             </div>
 
-            {/* Vertical Timeline Structure */}
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-              {customer360Data.activities.map((act) => {
-                const isApproved = act.activity.toLowerCase().includes('approved') || act.activity.toLowerCase().includes('registered');
-                const isChecked = act.activity.toLowerCase().includes('checked');
-                const isSubmitted = act.activity.toLowerCase().includes('submitted');
+            {/* =======================================================================
+                LAYOUT 1: VERTICAL TIMELINE
+               ======================================================================= */}
+            {timelineLayout === 'vertical' && (
+              <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 pt-2">
+                {customer360Data.activities.map((act) => {
+                  const isRejected = act.activity.toLowerCase().includes('rejected');
+                  const isApproved = !isRejected && (act.activity.toLowerCase().includes('approved') || act.activity.toLowerCase().includes('registered'));
+                  const isChecked = !isRejected && act.activity.toLowerCase().includes('checked');
+                  const isSubmitted = !isRejected && act.activity.toLowerCase().includes('submitted');
 
-                return (
-                  <div key={act.id} className="relative group">
-                    {/* Node Dot */}
-                    <div className={cn(
-                      'absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ring-2 ring-slate-100 transition',
-                      isApproved
-                        ? 'bg-blue-600 ring-blue-100'
-                        : isChecked
-                        ? 'bg-emerald-500 ring-emerald-100'
-                        : isSubmitted
-                        ? 'bg-purple-500 ring-purple-100'
-                        : 'bg-slate-400 ring-slate-100'
-                    )} />
+                  return (
+                    <div key={act.id} className="relative group">
+                      {/* Node Dot */}
+                      <div className={cn(
+                        'absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white ring-2 ring-slate-100 transition',
+                        isRejected
+                          ? 'bg-rose-500 ring-rose-100'
+                          : isApproved
+                          ? 'bg-blue-600 ring-blue-100'
+                          : isChecked
+                          ? 'bg-emerald-500 ring-emerald-100'
+                          : isSubmitted
+                          ? 'bg-purple-500 ring-purple-100'
+                          : 'bg-slate-400 ring-slate-100'
+                      )} />
 
-                    {/* Timeline Item Content Box */}
-                    <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 transition-all">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
-                        <span className="text-[11px] font-semibold text-slate-400">
-                          {act.dateTime}
-                        </span>
-                        {act.referenceId && (
-                          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white text-blue-700 border border-slate-200 self-start sm:self-auto">
-                            {act.referenceId}
+                      {/* Timeline Item Content Box */}
+                      <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 transition-all">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                          <span className="text-[11px] font-semibold text-slate-400">
+                            {act.dateTime}
                           </span>
-                        )}
-                      </div>
-
-                      <h4 className="text-xs font-bold text-slate-900 mt-0.5">
-                        {act.activity}
-                      </h4>
-
-                      {/* Processed By & Role info */}
-                      {(act.processedBy || act.role) && (
-                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 text-[11px]">
-                          {act.processedBy && (
-                            <span className="text-slate-600">
-                              By: <strong>{act.processedBy}</strong>
-                            </span>
-                          )}
-                          {act.role && (
-                            <span className={cn(
-                              'px-2 py-0.2 rounded-full font-bold text-[10px]',
-                              act.role === 'Manager'
-                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                                : act.role === 'Senior' || act.role === 'SR'
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            )}>
-                              {act.role}
+                          {act.referenceId && (
+                            <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-white text-blue-700 border border-slate-200 self-start sm:self-auto">
+                              {act.referenceId}
                             </span>
                           )}
                         </div>
-                      )}
+
+                        <h4 className="text-xs font-bold text-slate-900 mt-0.5">
+                          {act.activity}
+                        </h4>
+
+                        {/* Processed By & Role info */}
+                        {(act.processedBy || act.role) && (
+                          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/60 text-[11px]">
+                            {act.processedBy && (
+                              <span className="text-slate-600">
+                                By: <strong>{act.processedBy}</strong>
+                              </span>
+                            )}
+                            {act.role && (
+                              <span className={cn(
+                                'px-2 py-0.2 rounded-full font-bold text-[10px]',
+                                act.role === 'Manager'
+                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                  : act.role === 'Senior' || act.role === 'SR'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              )}>
+                                {act.role}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* =======================================================================
+                LAYOUT 2: CONNECTED NODE STEPPER (Image 1 Style)
+               ======================================================================= */}
+            {timelineLayout === 'stepper' && (
+              <div className="space-y-4">
+                <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase px-1">
+                  REQUEST
+                </div>
+
+                <div className="bg-slate-50/60 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-center gap-4 sm:gap-6">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
+                    <UserPlus className="w-6 h-6 text-blue-600" />
+                  </div>
+
+                  <div className="flex-1 w-full flex items-center justify-between gap-1 sm:gap-2">
+                    {/* Step 1: CSO */}
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                        <Check className="w-4 h-4 stroke-[3]" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">CSO</div>
+                        <div className="text-[11px] font-semibold text-emerald-600">Submitted</div>
+                        <div className="text-[10px] text-slate-400 font-medium hidden sm:block">Mar 15, 2026 · 09:30 AM</div>
+                      </div>
+                    </div>
+
+                    {/* Connecting Line 1 */}
+                    <div className="flex-1 h-1 bg-emerald-500 rounded-full mx-2 sm:mx-4 min-w-[24px]" />
+
+                    {/* Step 2: SR */}
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                        <Check className="w-4 h-4 stroke-[3]" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">SR</div>
+                        <div className="text-[11px] font-semibold text-emerald-600">Approved</div>
+                        <div className="text-[10px] text-slate-400 font-medium hidden sm:block">Mar 17, 2026 · 02:45 PM</div>
+                      </div>
+                    </div>
+
+                    {/* Connecting Line 2 */}
+                    <div className={cn(
+                      "flex-1 h-1 rounded-full mx-2 sm:mx-4 min-w-[24px]",
+                      activeIndividual?.requestStatus === 'Rejected' ? "bg-rose-400" : "bg-emerald-500"
+                    )} />
+
+                    {/* Step 3: Manager */}
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <div className={cn(
+                        "w-7 h-7 rounded-full text-white flex items-center justify-center shadow-xs",
+                        activeIndividual?.requestStatus === 'Rejected' ? "bg-rose-500" : "bg-emerald-500"
+                      )}>
+                        {activeIndividual?.requestStatus === 'Rejected' ? (
+                          <X className="w-4 h-4 stroke-[3]" />
+                        ) : (
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">Manager</div>
+                        <div className={cn(
+                          "text-[11px] font-semibold",
+                          activeIndividual?.requestStatus === 'Rejected' ? "text-rose-600 font-bold" : "text-emerald-600"
+                        )}>
+                          {activeIndividual?.requestStatus === 'Rejected' ? "Rejected" : "Approved"}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-medium hidden sm:block">Mar 18, 2026 · 04:20 PM</div>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                {activeIndividual?.requestStatus === 'Rejected' && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2 shadow-2xs">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-rose-950">Reason: </span>
+                      <span className="text-rose-800 font-medium">Customer address does not match the supporting document.</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* =======================================================================
+                LAYOUT 3: SEGMENTED PROGRESS BAR (Image 2 Style)
+               ======================================================================= */}
+            {timelineLayout === 'bar' && (
+              <div className="space-y-4">
+                <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase px-1">
+                  REGISTRATION PROGRESS BAR
+                </div>
+
+                <div className="bg-slate-50/60 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs flex items-start gap-4 sm:gap-6">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5">
+                    <UserPlus className="w-6 h-6 text-blue-600" />
+                  </div>
+
+                  <div className="flex-1 w-full space-y-3.5">
+                    <div className="grid grid-cols-3 gap-2.5 sm:gap-4 w-full">
+                      <div className="h-2 rounded-full bg-emerald-500 shadow-2xs" />
+                      <div className="h-2 rounded-full bg-emerald-500 shadow-2xs" />
+                      <div className={cn(
+                        "h-2 rounded-full shadow-2xs",
+                        activeIndividual?.requestStatus === 'Rejected' ? "bg-rose-500" : "bg-emerald-500"
+                      )} />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">CSO</div>
+                        <div className="text-[11px] font-bold text-emerald-600">Submitted</div>
+                        <div className="text-[10px] text-slate-600 font-medium mt-1">Sophea Keo</div>
+                        <div className="text-[10px] text-slate-400 hidden sm:block">Mar 15, 2026 · 09:30 AM</div>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">SR</div>
+                        <div className="text-[11px] font-bold text-emerald-600">Approved</div>
+                        <div className="text-[10px] text-slate-600 font-medium mt-1">Dara Vong</div>
+                        <div className="text-[10px] text-slate-400 hidden sm:block">Mar 17, 2026 · 02:45 PM</div>
+                      </div>
+
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">Manager</div>
+                        <div className={cn(
+                          "text-[11px] font-bold",
+                          activeIndividual?.requestStatus === 'Rejected' ? "text-rose-600" : "text-emerald-600"
+                        )}>
+                          {activeIndividual?.requestStatus === 'Rejected' ? "Rejected" : "Approved"}
+                        </div>
+                        <div className="text-[10px] text-slate-600 font-medium mt-1">Vannak Lim</div>
+                        <div className="text-[10px] text-slate-400 hidden sm:block">Mar 18, 2026 · 04:20 PM</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {activeIndividual?.requestStatus === 'Rejected' && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2 shadow-2xs">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-rose-950">Reason: </span>
+                      <span className="text-rose-800 font-medium">Customer address does not match the supporting document.</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </main>
       </div>

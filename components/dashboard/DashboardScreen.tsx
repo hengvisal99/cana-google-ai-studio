@@ -191,13 +191,7 @@ export function DashboardScreen({
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 uppercase tracking-wider">
-                Executive Overview
-              </span>
-              <span className="text-xs text-slate-400">Securities & Exchange Commission Compliance</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
               Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">

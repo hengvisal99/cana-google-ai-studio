@@ -165,6 +165,9 @@ export function IndividualListScreen({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  // Request Column Layout State: 'stepper' (connected nodes) | 'bar' (segmented progress bar)
+  const [requestColumnLayout, setRequestColumnLayout] = useState<'stepper' | 'bar'>('bar');
+
   // Delete Confirmation Modal state
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -398,180 +401,235 @@ export function IndividualListScreen({
     const isPendingSR = item.currentWorkflowStage === 'SR' && item.requestStatus === 'Pending';
     const isPendingManager = item.currentWorkflowStage === 'Manager' && item.requestStatus === 'Pending';
 
-    // Connector 1 (CSO -> SR)
-    const connector1Color = 'bg-emerald-400';
+    // Extract authorization history if available
+    const history = item.authorizationHistory || [];
+    const csoItem = history.find(h => h.role === 'CSO' || h.stage?.includes('Submit')) || history[0];
+    const srItem = history.find(h => h.role === 'SR') || history[1];
+    const managerItem = history.find(h => h.role === 'Manager') || history[2];
 
-    // SR status & visual state
+    // CSO Details
+    const csoOfficer = csoItem?.processedBy || 'Sophea Keo';
+    const csoDate = csoItem?.dateTime || 'Mar 15, 2026 · 09:30 AM';
+    const csoStatusText = 'Submitted';
+    const csoStatusColor = 'text-emerald-600';
+    const csoBarColor = 'bg-emerald-500';
+
+    // SR Details & State
     let srStatusText = 'Approved';
     let srStatusColor = 'text-emerald-600';
-    let srState: 'approved' | 'pending' | 'resubmit' | 'rejected' = 'approved';
+    let srBarColor = 'bg-emerald-500';
+    let srOfficer = srItem?.processedBy || item.tradingAccountInfo?.currentAssignedSR || 'Dara Vong';
+    let srDate = srItem?.dateTime || 'Mar 17, 2026 · 02:45 PM';
 
     if (isPendingSR) {
       srStatusText = 'Pending';
-      srStatusColor = 'text-amber-600';
-      srState = 'pending';
-    } else if (isResubmit && item.currentWorkflowStage === 'Resubmit') {
+      srStatusColor = 'text-amber-600 font-bold';
+      srBarColor = 'bg-amber-500';
+    } else if (isResubmit && item.currentWorkflowStage === 'SR') {
       srStatusText = 'Resubmit';
-      srStatusColor = 'text-amber-600';
-      srState = 'resubmit';
+      srStatusColor = 'text-amber-600 font-bold';
+      srBarColor = 'bg-amber-500';
     } else if (isRejected && item.currentWorkflowStage === 'SR') {
       srStatusText = 'Rejected';
-      srStatusColor = 'text-rose-600';
-      srState = 'rejected';
+      srStatusColor = 'text-rose-600 font-bold';
+      srBarColor = 'bg-rose-500';
     }
 
-    // Connector 2 (SR -> Manager)
-    let connector2Color = 'bg-emerald-400';
-    if (isPendingManager) {
-      connector2Color = 'bg-amber-400';
-    } else if (isPendingSR || srState === 'pending') {
-      connector2Color = 'bg-slate-200';
-    } else if (isRejected) {
-      connector2Color = 'bg-rose-400';
-    } else if (isResubmit) {
-      connector2Color = 'bg-amber-400';
-    }
-
-    // Manager status & visual state
+    // Manager Details & State
     let managerStatusText = 'Approved';
     let managerStatusColor = 'text-emerald-600';
-    let managerState: 'approved' | 'pending' | 'resubmit' | 'rejected' | 'waiting' = 'approved';
+    let managerBarColor = 'bg-emerald-500';
+    let managerOfficer = managerItem?.processedBy || item.tradingAccountInfo?.accountApprovedBy || 'Vannak Lim';
+    let managerDate = managerItem?.dateTime || 'Mar 18, 2026 · 04:20 PM';
 
     if (isApproved) {
       managerStatusText = 'Approved';
-      managerStatusColor = 'text-emerald-600';
-      managerState = 'approved';
+      managerStatusColor = 'text-emerald-600 font-bold';
+      managerBarColor = 'bg-emerald-500';
     } else if (isPendingManager) {
       managerStatusText = 'Pending';
-      managerStatusColor = 'text-amber-600';
-      managerState = 'pending';
+      managerStatusColor = 'text-amber-600 font-bold';
+      managerBarColor = 'bg-amber-500';
     } else if (isRejected) {
       managerStatusText = 'Rejected';
-      managerStatusColor = 'text-rose-600';
-      managerState = 'rejected';
+      managerStatusColor = 'text-rose-600 font-bold';
+      managerBarColor = 'bg-rose-500';
     } else if (isResubmit) {
       managerStatusText = 'Resubmit';
-      managerStatusColor = 'text-amber-600';
-      managerState = 'resubmit';
-    } else {
+      managerStatusColor = 'text-amber-600 font-bold';
+      managerBarColor = 'bg-amber-500';
+    } else if (isPendingSR) {
       managerStatusText = 'Waiting';
       managerStatusColor = 'text-slate-400';
-      managerState = 'waiting';
+      managerBarColor = 'bg-slate-200';
+      managerOfficer = '—';
+      managerDate = 'Pending SR';
     }
 
+    // Reason extraction
+    const rejectionReason = history.find(h => h.reason)?.reason || (isRejected ? 'Customer address does not match the supporting document.' : undefined);
+    const resubmitReason = isResubmit ? (history.find(h => h.status === 'Resubmit')?.comment || 'Additional supporting documents required for review.') : undefined;
+
+    // -------------------------------------------------------------
+    // VERSION 1: CONNECTED NODE STEPPER UI (Previous Version)
+    // -------------------------------------------------------------
+    if (requestColumnLayout === 'stepper') {
+      return (
+        <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs transition-all flex items-start gap-3 min-w-[380px] max-w-[460px] select-none text-left">
+          {/* Left Request Type Icon Box */}
+          {isClose ? (
+            <div 
+              className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shrink-0 shadow-2xs mt-0.5"
+              title="Close Account Request"
+            >
+              <Lock className="w-5 h-5" />
+            </div>
+          ) : (
+            <div 
+              className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5"
+              title="Registration Request"
+            >
+              <UserPlus className="w-5 h-5" />
+            </div>
+          )}
+
+          {/* Stepper Pipeline */}
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Step Nodes & Connectors */}
+            <div className="flex items-center justify-between gap-1">
+              {/* CSO Node */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-300">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold text-slate-800 leading-tight">CSO</div>
+                  <div className="text-[10px] font-semibold text-emerald-600 leading-tight">Submitted</div>
+                  <div className="text-[9px] text-slate-500 truncate" title={csoOfficer}>{csoOfficer}</div>
+                </div>
+              </div>
+
+              {/* Connector 1 */}
+              <div className="w-6 h-0.5 bg-emerald-300 shrink-0 -mt-3" />
+
+              {/* SR Node */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
+                {isPendingSR ? (
+                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-300">
+                    <Clock className="w-3 h-3" />
+                  </div>
+                ) : isRejected && item.currentWorkflowStage === 'SR' ? (
+                  <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-300">
+                    <X className="w-3 h-3 stroke-[3]" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-300">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold text-slate-800 leading-tight">SR</div>
+                  <div className={cn("text-[10px] font-semibold leading-tight", srStatusColor)}>{srStatusText}</div>
+                  <div className="text-[9px] text-slate-500 truncate" title={srOfficer}>{srOfficer}</div>
+                </div>
+              </div>
+
+              {/* Connector 2 */}
+              <div className={cn("w-6 h-0.5 shrink-0 -mt-3", isPendingSR ? "bg-slate-200" : isRejected && item.currentWorkflowStage === 'SR' ? "bg-rose-200" : "bg-emerald-300")} />
+
+              {/* Manager Node */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
+                {isApproved ? (
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-300">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </div>
+                ) : isPendingManager ? (
+                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-300">
+                    <Clock className="w-3 h-3" />
+                  </div>
+                ) : isRejected ? (
+                  <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-300">
+                    <X className="w-3 h-3 stroke-[3]" />
+                  </div>
+                ) : isResubmit ? (
+                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-300">
+                    <AlertCircle className="w-3 h-3" />
+                  </div>
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0 border border-slate-300">
+                    <Clock className="w-3 h-3" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold text-slate-800 leading-tight">Manager</div>
+                  <div className={cn("text-[10px] font-semibold leading-tight", managerStatusColor)}>{managerStatusText}</div>
+                  <div className="text-[9px] text-slate-500 truncate" title={managerOfficer}>{managerOfficer}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // -------------------------------------------------------------
+    // VERSION 2: SEGMENTED PROGRESS BAR UI (New Version)
+    // -------------------------------------------------------------
     return (
-      <div className="inline-flex items-center gap-3.5 px-3.5 py-2 bg-white border border-slate-200/90 rounded-2xl shadow-2xs select-none whitespace-nowrap min-w-[360px]">
+      <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs transition-all flex items-start gap-3 min-w-[380px] max-w-[460px] select-none text-left">
         {/* Left Request Type Icon Box */}
         {isClose ? (
           <div 
-            className="w-8.5 h-8.5 rounded-xl bg-rose-50/90 border border-rose-200/80 flex items-center justify-center text-rose-500 shrink-0"
+            className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shrink-0 shadow-2xs mt-0.5"
             title="Close Account Request"
           >
-            <Lock className="w-4 h-4" />
+            <Lock className="w-5 h-5" />
           </div>
         ) : (
           <div 
-            className="w-8.5 h-8.5 rounded-xl bg-blue-50/90 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0"
+            className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5"
             title="Registration Request"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-5 h-5" />
           </div>
         )}
 
-        {/* Stepper Pipeline: CSO -> SR -> Manager */}
-        <div className="flex items-center gap-2 flex-1">
-          {/* Step 1: CSO */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-              <Check className="w-3 h-3 stroke-[3]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-slate-800 leading-tight">CSO</span>
-              <span className="text-[10px] font-semibold text-emerald-600 leading-tight">Submitted</span>
-            </div>
+        {/* Right Content: Segmented Progress Bars & 3-Column Stages */}
+        <div className="flex-1 min-w-0 space-y-2">
+          {/* Top: 3 Segmented Horizontal Progress Bars */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
+            <div className={cn("h-1.5 rounded-full shadow-2xs transition-all", csoBarColor)} />
+            <div className={cn("h-1.5 rounded-full shadow-2xs transition-all", srBarColor)} />
+            <div className={cn("h-1.5 rounded-full shadow-2xs transition-all", managerBarColor)} />
           </div>
 
-          {/* Connector 1 */}
-          <div className={cn("h-0.5 w-12 sm:w-16 rounded-full shrink-0", connector1Color)} />
-
-          {/* Step 2: SR */}
-          <div className="flex items-center gap-2 shrink-0">
-            {srState === 'approved' && (
-              <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                <Check className="w-3 h-3 stroke-[3]" />
+          {/* Bottom: 3 Aligned Stage Details */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
+            {/* Stage 1: CSO */}
+            <div className="min-w-0">
+              <div className="font-bold text-slate-900 text-xs leading-tight">CSO</div>
+              <div className={cn("text-[10px] font-bold leading-tight", csoStatusColor)}>{csoStatusText}</div>
+              <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5" title={csoOfficer}>
+                {csoOfficer}
               </div>
-            )}
-            {srState === 'pending' && (
-              <div className="p-1 rounded-full bg-amber-100/80 shrink-0">
-                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <Clock className="w-3 h-3 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {srState === 'resubmit' && (
-              <div className="p-1 rounded-full bg-amber-100/80 shrink-0">
-                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertCircle className="w-3 h-3 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {srState === 'rejected' && (
-              <div className="p-1 rounded-full bg-rose-100/80 shrink-0">
-                <div className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-slate-800 leading-tight">SR</span>
-              <span className={cn("text-[10px] font-semibold leading-tight", srStatusColor)}>{srStatusText}</span>
             </div>
-          </div>
 
-          {/* Connector 2 */}
-          <div className={cn("h-0.5 w-12 sm:w-16 rounded-full shrink-0", connector2Color)} />
+            {/* Stage 2: SR */}
+            <div className="min-w-0">
+              <div className="font-bold text-slate-900 text-xs leading-tight">SR</div>
+              <div className={cn("text-[10px] font-bold leading-tight", srStatusColor)}>{srStatusText}</div>
+              <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5" title={srOfficer}>
+                {srOfficer}
+              </div>
+            </div>
 
-          {/* Step 3: Manager */}
-          <div className="flex items-center gap-2 shrink-0">
-            {managerState === 'approved' && (
-              <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                <Check className="w-3 h-3 stroke-[3]" />
+            {/* Stage 3: Manager */}
+            <div className="min-w-0">
+              <div className="font-bold text-slate-900 text-xs leading-tight">Manager</div>
+              <div className={cn("text-[10px] font-bold leading-tight", managerStatusColor)}>{managerStatusText}</div>
+              <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5" title={managerOfficer}>
+                {managerOfficer}
               </div>
-            )}
-            {managerState === 'pending' && (
-              <div className="p-1 rounded-full bg-[#fef3c7] shrink-0">
-                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <Clock className="w-3 h-3 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {managerState === 'resubmit' && (
-              <div className="p-1 rounded-full bg-amber-100/80 shrink-0">
-                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertCircle className="w-3 h-3 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {managerState === 'rejected' && (
-              <div className="p-1 rounded-full bg-rose-100/80 shrink-0">
-                <div className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
-                  <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
-                </div>
-              </div>
-            )}
-            {managerState === 'waiting' && (
-              <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center shrink-0">
-                <Clock className="w-3 h-3" />
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className={cn(
-                "text-[11px] font-bold leading-tight",
-                managerState === 'pending' ? 'text-[#78350f]' : managerState === 'waiting' ? 'text-slate-400' : 'text-slate-800'
-              )}>
-                Manager
-              </span>
-              <span className={cn("text-[10px] font-semibold leading-tight", managerStatusColor)}>{managerStatusText}</span>
             </div>
           </div>
         </div>
@@ -598,20 +656,10 @@ export function IndividualListScreen({
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    REGULATORY REPOSITORY // AML & KYC
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">AUDITED & ENCRYPTED</span>
-                </div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
                     Individual Directory
                   </h1>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                    {individuals.length} ACCOUNTS
-                  </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
@@ -689,6 +737,50 @@ export function IndividualListScreen({
                         Export as JSON
                       </button>
                     </div>
+                  </div>
+                </div>
+
+                {/* Request Column View Switcher */}
+                <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 font-semibold border-r border-slate-100">
+                    <Sliders className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="hidden sm:inline">Request View:</span>
+                  </div>
+                  <div className="flex items-center gap-0.5 p-0.5">
+                    <button
+                      id="btn-toggle-request-bar"
+                      type="button"
+                      onClick={() => {
+                        setRequestColumnLayout('bar');
+                        triggerToast('Switched to Progress Bar Request view');
+                      }}
+                      className={cn(
+                        'px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer',
+                        requestColumnLayout === 'bar'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      )}
+                      title="Progress Bar Request Layout"
+                    >
+                      Progress Bar
+                    </button>
+                    <button
+                      id="btn-toggle-request-stepper"
+                      type="button"
+                      onClick={() => {
+                        setRequestColumnLayout('stepper');
+                        triggerToast('Switched to Stepper Nodes Request view');
+                      }}
+                      className={cn(
+                        'px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer',
+                        requestColumnLayout === 'stepper'
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      )}
+                      title="Connected Node Stepper Request Layout"
+                    >
+                      Stepper Nodes
+                    </button>
                   </div>
                 </div>
 
@@ -891,24 +983,16 @@ export function IndividualListScreen({
               id="individual-filter-section"
               className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[11px] font-mono font-bold text-slate-800 uppercase tracking-wider">
-                    QUERY PARAMETERS // CRITERIA
-                  </span>
-                  <span className="text-xs text-slate-500 font-mono">
-                    Showing <strong>{filteredData.length}</strong> of {individuals.length} records
-                  </span>
-                </div>
-                {(hasActiveFilters || searchTerm) && (
+              {(hasActiveFilters || searchTerm) && (
+                <div className="flex items-center justify-end border-b border-slate-100 pb-2.5">
                   <button
                     onClick={handleResetFilters}
                     className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer"
                   >
                     Reset Query Filters
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                 <div>
@@ -989,9 +1073,6 @@ export function IndividualListScreen({
                     <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                       Individual Directory
                     </h1>
-                    <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-200/60 text-[11px] font-bold text-blue-700 backdrop-blur-xs">
-                      Live Cloud Registry
-                    </span>
                   </div>
                   <p className="text-xs font-medium text-slate-500 mt-1">
                     Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
@@ -1260,24 +1341,16 @@ export function IndividualListScreen({
               id="individual-filter-section"
               className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/90 shadow-xl shadow-blue-500/5 space-y-4"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-xs font-bold text-blue-700">
-                    Filter Attributes
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    Showing <strong>{filteredData.length}</strong> of {individuals.length} clients
-                  </span>
-                </div>
-                {(hasActiveFilters || searchTerm) && (
+              {(hasActiveFilters || searchTerm) && (
+                <div className="flex items-center justify-end pb-1">
                   <button
                     onClick={handleResetFilters}
                     className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
                   >
                     Clear All
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                 <div>
@@ -1362,9 +1435,6 @@ export function IndividualListScreen({
                     <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-700 bg-clip-text text-transparent tracking-tight">
                       Individual Directory
                     </h1>
-                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-[10px] font-mono font-bold text-indigo-700">
-                      SPECTRUM PIPELINE
-                    </span>
                   </div>
                   <p className="text-xs font-medium text-slate-500 mt-1">
                     Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
@@ -1436,6 +1506,50 @@ export function IndividualListScreen({
                       className="w-full text-left px-3.5 py-2 hover:bg-indigo-50 text-slate-700 font-bold rounded-xl mx-1"
                     >
                       Export as JSON
+                    </button>
+                  </div>
+                </div>
+
+                {/* Aurora Request Column View Switcher */}
+                <div className="inline-flex items-center rounded-xl border border-indigo-200 bg-white p-0.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-indigo-700 font-semibold border-r border-indigo-100">
+                    <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+                    <span className="hidden sm:inline">Request View:</span>
+                  </div>
+                  <div className="flex items-center gap-0.5 p-0.5">
+                    <button
+                      id="btn-toggle-request-bar-aurora"
+                      type="button"
+                      onClick={() => {
+                        setRequestColumnLayout('bar');
+                        triggerToast('Switched to Progress Bar Request view');
+                      }}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer',
+                        requestColumnLayout === 'bar'
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-indigo-900 hover:bg-indigo-50/50'
+                      )}
+                      title="Progress Bar Request Layout"
+                    >
+                      Progress Bar
+                    </button>
+                    <button
+                      id="btn-toggle-request-stepper-aurora"
+                      type="button"
+                      onClick={() => {
+                        setRequestColumnLayout('stepper');
+                        triggerToast('Switched to Stepper Nodes Request view');
+                      }}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer',
+                        requestColumnLayout === 'stepper'
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-indigo-900 hover:bg-indigo-50/50'
+                      )}
+                      title="Connected Node Stepper Request Layout"
+                    >
+                      Stepper Nodes
                     </button>
                   </div>
                 </div>
@@ -1643,25 +1757,16 @@ export function IndividualListScreen({
               id="individual-filter-section"
               className="bg-gradient-to-br from-white via-indigo-50/20 to-cyan-50/20 rounded-2xl p-4 border border-indigo-200/90 shadow-2xs space-y-3"
             >
-              <div className="flex items-center justify-between border-b border-indigo-100/80 pb-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex items-center gap-1.5 text-xs font-bold text-indigo-950 uppercase tracking-wider">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    Spectral Query Matrix
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    Showing <strong>{filteredData.length}</strong> of {individuals.length} entities
-                  </span>
-                </div>
-                {(hasActiveFilters || searchTerm) && (
+              {(hasActiveFilters || searchTerm) && (
+                <div className="flex items-center justify-end border-b border-indigo-100/80 pb-2.5">
                   <button
                     onClick={handleResetFilters}
                     className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
                   >
                     Reset Matrix
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                 <div>
@@ -1766,8 +1871,46 @@ export function IndividualListScreen({
                 {/* Default Column: Account Status */}
                 <th className="py-3 px-4">Account Status</th>
 
-                {/* Default Column: Request */}
-                <th className="py-3 px-4 min-w-[390px]">Request</th>
+                {/* Default Column: Request with UI version toggle */}
+                <th className="py-3 px-4 min-w-[390px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold">Request</span>
+                    <div className="inline-flex items-center bg-slate-200/70 p-0.5 rounded-lg border border-slate-300/60 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRequestColumnLayout('bar');
+                          triggerToast('Switched to Progress Bar Request view');
+                        }}
+                        className={cn(
+                          'px-2 py-0.5 text-[10px] font-bold rounded-md transition cursor-pointer',
+                          requestColumnLayout === 'bar'
+                            ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/80'
+                            : 'text-slate-500 hover:text-slate-800'
+                        )}
+                        title="Switch to Progress Bar View"
+                      >
+                        Bar View
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRequestColumnLayout('stepper');
+                          triggerToast('Switched to Stepper Nodes Request view');
+                        }}
+                        className={cn(
+                          'px-2 py-0.5 text-[10px] font-bold rounded-md transition cursor-pointer',
+                          requestColumnLayout === 'stepper'
+                            ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/80'
+                            : 'text-slate-500 hover:text-slate-800'
+                        )}
+                        title="Switch to Stepper Nodes View"
+                      >
+                        Stepper View
+                      </button>
+                    </div>
+                  </div>
+                </th>
 
                 {/* Default Column: Action */}
                 <th className="py-3 px-4 text-right">Action</th>

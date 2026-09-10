@@ -225,7 +225,9 @@ export function getCustomer360Details(individual: Individual): Customer360Data {
   const authActivities: Customer360Activity[] = (individual.authorizationHistory || []).map((auth) => ({
     id: auth.id,
     dateTime: auth.dateTime,
-    activity: `Registration ${auth.status} By ${auth.processedBy}`,
+    activity: auth.reason 
+      ? `${auth.stage} — ${auth.status} (${auth.reason})`
+      : `${auth.stage} — ${auth.status} By ${auth.processedBy}`,
     processedBy: auth.processedBy,
     role: auth.role,
     referenceId: individual.customerId || individual.id,

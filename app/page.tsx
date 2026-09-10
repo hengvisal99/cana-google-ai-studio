@@ -154,7 +154,10 @@ export default function Home() {
 
         const newTimelineItem = {
           id: `AUTH-${Date.now()}`,
-          stage: `${role} ${action === 'authorize' ? 'Authorization' : action === 'resubmit' ? 'Resubmission Request' : 'Rejection'}`,
+          requestType: ind.requestType,
+          stage: ind.requestType === 'Close Account'
+            ? `Close Account — ${role} ${action === 'authorize' ? 'Authorization' : action === 'resubmit' ? 'Resubmission Request' : 'Rejection'}`
+            : `${role} ${action === 'authorize' ? 'Authorization' : action === 'resubmit' ? 'Resubmission Request' : 'Rejection'}`,
           status: action === 'authorize' ? ('Approved' as const) : action === 'resubmit' ? ('Resubmit' as const) : ('Rejected' as const),
           dateTime: formattedDate,
           processedBy,
@@ -213,6 +216,7 @@ export default function Home() {
             ...ind.authorizationHistory,
             {
               id: `AUTH-${Date.now()}`,
+              requestType: 'Close Account' as const,
               stage: 'Close Account Request — Initiated',
               status: 'Submitted' as const,
               dateTime: formattedDate,
