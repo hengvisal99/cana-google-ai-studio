@@ -126,21 +126,21 @@ export function ThemeSwitcherButton({ currentTheme, onThemeChange }: ThemeSwitch
         </div>
       )}
 
-      {/* Floating fixed trigger button */}
+      {/* Floating fixed trigger button - Crisp Light Mode */}
       <button
         id="fixed-theme-switcher-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900 text-white shadow-xl shadow-slate-900/25 hover:bg-blue-600 hover:shadow-blue-600/30 active:scale-95 transition-all duration-200 border border-slate-700"
+        className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white text-slate-800 shadow-xl shadow-slate-900/10 hover:border-blue-400 hover:bg-blue-50/60 active:scale-95 transition-all duration-200 border border-slate-200"
         title="Switch Design System & Template"
       >
-        <div className="w-6 h-6 rounded-full bg-blue-500/30 flex items-center justify-center text-blue-300 group-hover:text-white transition-colors">
+        <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
           <Palette className="w-3.5 h-3.5" />
         </div>
         <div className="text-left flex flex-col">
-          <span className="text-[10px] text-slate-300 group-hover:text-blue-100 uppercase font-bold tracking-wider leading-none">
+          <span className="text-[10px] text-slate-400 group-hover:text-blue-600 uppercase font-bold tracking-wider leading-none">
             Template Theme
           </span>
-          <span className="text-xs font-semibold text-white capitalize leading-snug">
+          <span className="text-xs font-semibold text-slate-800 capitalize leading-snug">
             {currentTheme === 'soft-fintech' ? 'Soft FinTech' : currentTheme === 'glassmorphism' ? 'Glassmorphism' : 'Aurora / Gradient'}
           </span>
         </div>

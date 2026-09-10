@@ -34,7 +34,8 @@ import {
   Download,
   AlertCircle,
   Check,
-  RotateCcw
+  RotateCcw,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -76,22 +77,212 @@ export function ViewIndividualDialog({
 }: ViewIndividualDialogProps) {
   const [activeTab, setActiveTab] = useState<DialogTab>('overview');
 
-  // Inline Quick Authorization modal/action inside dialog
-  const [showAuthForm, setShowAuthForm] = useState(false);
+  // Dedicated Authorization Decision Dialog State
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authRole, setAuthRole] = useState<'CSO' | 'SR' | 'Manager'>('SR');
   const [authOfficer, setAuthOfficer] = useState('Dara Vong (SR)');
   const [authAction, setAuthAction] = useState<'authorize' | 'resubmit' | 'reject'>('authorize');
   const [authComment, setAuthComment] = useState('');
   const [authReason, setAuthReason] = useState('');
-
-  // Inline Close Account modal/action inside dialog
-  const [showCloseForm, setShowCloseForm] = useState(false);
-  const [closeDate, setCloseDate] = useState('2026-09-09');
-  const [closeReason, setCloseReason] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
 
   if (!isOpen || !individual) return null;
 
   const profile360: Customer360Profile = getCustomer360(individual);
+
+  const renderRequestBadge = (item: Individual) => {
+    const isClose = item.requestType === 'Close Account';
+    const isApproved = item.requestStatus === 'Approved' || item.currentWorkflowStage === 'Approved';
+    const isRejected = item.requestStatus === 'Rejected' || item.currentWorkflowStage === 'Rejected';
+    const isResubmit = item.requestStatus === 'Resubmit' || item.currentWorkflowStage === 'Resubmit';
+    const isPendingSR = item.currentWorkflowStage === 'SR' && item.requestStatus === 'Pending';
+    const isPendingManager = item.currentWorkflowStage === 'Manager' && item.requestStatus === 'Pending';
+
+    // Connector 1 (CSO -> SR)
+    const connector1Color = 'bg-emerald-400';
+
+    // SR status & visual state
+    let srStatusText = 'Approved';
+    let srStatusColor = 'text-emerald-600';
+    let srState: 'approved' | 'pending' | 'resubmit' | 'rejected' = 'approved';
+
+    if (isPendingSR) {
+      srStatusText = 'Pending';
+      srStatusColor = 'text-amber-600';
+      srState = 'pending';
+    } else if (isResubmit && item.currentWorkflowStage === 'Resubmit') {
+      srStatusText = 'Resubmit';
+      srStatusColor = 'text-amber-600';
+      srState = 'resubmit';
+    } else if (isRejected && item.currentWorkflowStage === 'SR') {
+      srStatusText = 'Rejected';
+      srStatusColor = 'text-rose-600';
+      srState = 'rejected';
+    }
+
+    // Connector 2 (SR -> Manager)
+    let connector2Color = 'bg-emerald-400';
+    if (isPendingManager) {
+      connector2Color = 'bg-amber-400';
+    } else if (isPendingSR || srState === 'pending') {
+      connector2Color = 'bg-slate-200';
+    } else if (isRejected) {
+      connector2Color = 'bg-rose-400';
+    } else if (isResubmit) {
+      connector2Color = 'bg-amber-400';
+    }
+
+    // Manager status & visual state
+    let managerStatusText = 'Approved';
+    let managerStatusColor = 'text-emerald-600';
+    let managerState: 'approved' | 'pending' | 'resubmit' | 'rejected' | 'waiting' = 'approved';
+
+    if (isApproved) {
+      managerStatusText = 'Approved';
+      managerStatusColor = 'text-emerald-600';
+      managerState = 'approved';
+    } else if (isPendingManager) {
+      managerStatusText = 'Pending';
+      managerStatusColor = 'text-amber-600';
+      managerState = 'pending';
+    } else if (isRejected) {
+      managerStatusText = 'Rejected';
+      managerStatusColor = 'text-rose-600';
+      managerState = 'rejected';
+    } else if (isResubmit) {
+      managerStatusText = 'Resubmit';
+      managerStatusColor = 'text-amber-600';
+      managerState = 'resubmit';
+    } else {
+      managerStatusText = 'Waiting';
+      managerStatusColor = 'text-slate-400';
+      managerState = 'waiting';
+    }
+
+    return (
+      <div className="inline-flex items-center gap-2.5 sm:gap-3 px-3 py-1.5 bg-white border border-slate-200/90 rounded-xl shadow-2xs select-none whitespace-nowrap">
+        {/* Left Request Type Icon Box */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {isClose ? (
+            <div 
+              className="w-7 h-7 rounded-lg bg-rose-50/90 border border-rose-200/80 flex items-center justify-center text-rose-500 shrink-0"
+              title="Close Account Request"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </div>
+          ) : (
+            <div 
+              className="w-7 h-7 rounded-lg bg-blue-50/90 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0"
+              title="Registration Request"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+            </div>
+          )}
+          <span className="text-[11px] font-bold text-slate-800 hidden sm:inline">
+            {item.requestType}
+          </span>
+        </div>
+
+        {/* Stepper Pipeline: CSO -> SR -> Manager */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Step 1: CSO */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Check className="w-2.5 h-2.5 stroke-[3]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-800 leading-tight">CSO</span>
+              <span className="text-[9px] font-semibold text-emerald-600 leading-tight">Submitted</span>
+            </div>
+          </div>
+
+          {/* Connector 1 */}
+          <div className={cn("h-0.5 w-6 sm:w-10 rounded-full shrink-0", connector1Color)} />
+
+          {/* Step 2: SR */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {srState === 'approved' && (
+              <div className="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              </div>
+            )}
+            {srState === 'pending' && (
+              <div className="p-0.5 rounded-full bg-amber-100/80 shrink-0">
+                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <Clock className="w-2.5 h-2.5 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {srState === 'resubmit' && (
+              <div className="p-0.5 rounded-full bg-amber-100/80 shrink-0">
+                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertCircle className="w-2.5 h-2.5 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {srState === 'rejected' && (
+              <div className="p-0.5 rounded-full bg-rose-100/80 shrink-0">
+                <div className="w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertTriangle className="w-2.5 h-2.5 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-800 leading-tight">SR</span>
+              <span className={cn("text-[9px] font-semibold leading-tight", srStatusColor)}>{srStatusText}</span>
+            </div>
+          </div>
+
+          {/* Connector 2 */}
+          <div className={cn("h-0.5 w-6 sm:w-10 rounded-full shrink-0", connector2Color)} />
+
+          {/* Step 3: Manager */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {managerState === 'approved' && (
+              <div className="w-4.5 h-4.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              </div>
+            )}
+            {managerState === 'pending' && (
+              <div className="p-0.5 rounded-full bg-[#fef3c7] shrink-0">
+                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <Clock className="w-2.5 h-2.5 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {managerState === 'resubmit' && (
+              <div className="p-0.5 rounded-full bg-amber-100/80 shrink-0">
+                <div className="w-4.5 h-4.5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertCircle className="w-2.5 h-2.5 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {managerState === 'rejected' && (
+              <div className="p-0.5 rounded-full bg-rose-100/80 shrink-0">
+                <div className="w-4.5 h-4.5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertTriangle className="w-2.5 h-2.5 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {managerState === 'waiting' && (
+              <div className="w-4.5 h-4.5 rounded-full bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center shrink-0">
+                <Clock className="w-2.5 h-2.5" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className={cn(
+                "text-[10px] font-bold leading-tight",
+                managerState === 'pending' ? 'text-[#78350f]' : managerState === 'waiting' ? 'text-slate-400' : 'text-slate-800'
+              )}>
+                Manager
+              </span>
+              <span className={cn("text-[9px] font-semibold leading-tight", managerStatusColor)}>{managerStatusText}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const modalContainerClasses = () => {
     switch (theme) {
@@ -105,12 +296,7 @@ export function ViewIndividualDialog({
     }
   };
 
-  const handleOpenAuthDrawer = (action: 'authorize' | 'resubmit' | 'reject') => {
-    if (showAuthForm && authAction === action) {
-      setShowAuthForm(false);
-      return;
-    }
-
+  const handleOpenAuthDialog = (action: 'authorize' | 'resubmit' | 'reject') => {
     setAuthAction(action);
     let defaultRole: 'CSO' | 'SR' | 'Manager' = 'SR';
     let defaultOfficer = 'Dara Vong (SR)';
@@ -129,19 +315,19 @@ export function ViewIndividualDialog({
     setAuthRole(defaultRole);
     setAuthOfficer(defaultOfficer);
     setAuthReason('');
+    setAuthError(null);
     setAuthComment(
       action === 'authorize'
         ? `Authorized by ${defaultOfficer} (${defaultRole})`
         : ''
     );
-    setShowAuthForm(true);
-    setShowCloseForm(false);
+    setShowAuthDialog(true);
   };
 
   const handleExecuteAuth = () => {
     if (!onAuthorizeIndividual) return;
     if (authAction !== 'authorize' && !authReason.trim()) {
-      alert('Please state a reason for ' + authAction);
+      setAuthError(`Please provide a reason for ${authAction === 'reject' ? 'rejection' : 'resubmission'}.`);
       return;
     }
 
@@ -153,33 +339,16 @@ export function ViewIndividualDialog({
       authComment || `Decision recorded by ${authOfficer} (${authRole})`,
       authReason
     );
-    setShowAuthForm(false);
+    setShowAuthDialog(false);
     setAuthComment('');
     setAuthReason('');
-  };
-
-  const handleExecuteClose = () => {
-    if (!onCloseAccountIndividual) return;
-    if (!closeReason.trim()) {
-      alert('Please provide a reason for closing the account.');
-      return;
-    }
-
-    onCloseAccountIndividual(
-      individual.id,
-      closeDate,
-      individual.tradingAccountInfo?.tradingAccountNumber || 'Primary Trading Account',
-      closeReason,
-      'Sophea Keo (CSO)'
-    );
-    setShowCloseForm(false);
-    setCloseReason('');
+    setAuthError(null);
   };
 
   return (
     <div
       id="view-individual-modal-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in"
       onClick={onClose}
     >
       <div
@@ -259,7 +428,7 @@ export function ViewIndividualDialog({
 
         {/* Workflow & Status Strip */}
         <div className="px-5 py-2.5 bg-slate-100/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400 text-[10px] font-bold uppercase">Profile Status:</span>
               <span className={cn(
@@ -283,79 +452,13 @@ export function ViewIndividualDialog({
                 {individual.accountStatus || 'Not Opened'}
               </span>
             </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 text-[10px] font-bold uppercase">Request:</span>
-              <span className="px-2 py-0.5 rounded-full font-bold text-[11px] bg-blue-50 text-blue-700 border border-blue-200">
-                {individual.requestType} • {individual.requestStatus} ({individual.currentWorkflowStage})
-              </span>
-            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Quick Close Account Button if Active */}
-            {individual.accountStatus === 'Active' && individual.requestType !== 'Close Account' && (
-              <button
-                onClick={() => {
-                  setShowCloseForm(!showCloseForm);
-                  setShowAuthForm(false);
-                }}
-                className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-lg border border-purple-200 text-xs flex items-center gap-1"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Initiate Close</span>
-              </button>
-            )}
+          <div className="flex items-center gap-2 overflow-x-auto max-w-full">
+            <span className="text-slate-400 text-[10px] font-bold uppercase shrink-0">Request:</span>
+            {renderRequestBadge(individual)}
           </div>
         </div>
-
-        {/* Embedded Close Form Drawer (if opened) */}
-        {showCloseForm && (
-          <div className="p-4 bg-purple-50 border-b border-purple-200 text-xs space-y-3 shrink-0 animate-in slide-in-from-top-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-purple-900 flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-purple-600" />
-                Initiate Close Account Request
-              </span>
-              <button onClick={() => setShowCloseForm(false)} className="text-purple-700 font-bold">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-purple-800 mb-1">Effective Close Date</label>
-                <input
-                  type="date"
-                  value={closeDate}
-                  onChange={(e) => setCloseDate(e.target.value)}
-                  className="w-full px-2 py-1.5 bg-white border border-purple-200 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-purple-800 mb-1">Reason for Closure *</label>
-                <input
-                  type="text"
-                  value={closeReason}
-                  onChange={(e) => setCloseReason(e.target.value)}
-                  placeholder="E.g. Relocated out of jurisdiction"
-                  className="w-full px-2 py-1.5 bg-white border border-purple-200 rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-1">
-              <button
-                type="button"
-                onClick={handleExecuteClose}
-                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-xs"
-              >
-                Confirm Account Closure Request
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Navigation Tabs */}
         <div className="px-5 border-b border-slate-200 flex items-center gap-2 overflow-x-auto bg-white shrink-0 text-xs font-semibold">
@@ -880,8 +983,9 @@ export function ViewIndividualDialog({
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowAuthForm(true)}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs flex items-center gap-1"
+                  type="button"
+                  onClick={() => handleOpenAuthDialog('authorize')}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs flex items-center gap-1 cursor-pointer"
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>Execute Next Step</span>
@@ -935,170 +1039,16 @@ export function ViewIndividualDialog({
           )}
         </div>
 
-        {/* Footer Authorization Confirmation / Input Drawer */}
-        {showAuthForm && (
-          <div className={cn(
-            "p-4 border-t text-xs space-y-3 shrink-0 animate-in slide-in-from-bottom-2",
-            authAction === 'authorize' ? "bg-emerald-50/80 border-emerald-200" :
-            authAction === 'resubmit' ? "bg-amber-50/80 border-amber-200" :
-            "bg-rose-50/80 border-rose-200"
-          )}>
-            <div className="flex items-center justify-between">
-              <span className="font-bold flex items-center gap-1.5 text-xs">
-                {authAction === 'authorize' && (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="text-emerald-900">Approve Application (Advance Stage: CSO → SR → Manager → Approved)</span>
-                  </>
-                )}
-                {authAction === 'resubmit' && (
-                  <>
-                    <RotateCcw className="w-4 h-4 text-amber-700" />
-                    <span className="text-amber-900">Request Application Resubmission (Return for Amendment)</span>
-                  </>
-                )}
-                {authAction === 'reject' && (
-                  <>
-                    <AlertTriangle className="w-4 h-4 text-rose-600" />
-                    <span className="text-rose-900">Reject Application (Terminate Registration)</span>
-                  </>
-                )}
-              </span>
-              <button 
-                type="button"
-                onClick={() => setShowAuthForm(false)} 
-                className="text-slate-400 hover:text-slate-600 p-1"
-                title="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 mb-1">Authorizer Role</label>
-                <select
-                  value={authRole}
-                  onChange={(e) => {
-                    const r = e.target.value as 'CSO' | 'SR' | 'Manager';
-                    setAuthRole(r);
-                    if (r === 'CSO') setAuthOfficer('Sophea Keo (CSO)');
-                    if (r === 'SR') setAuthOfficer('Dara Vong (SR)');
-                    if (r === 'Manager') setAuthOfficer('Vannak Lim (Manager)');
-                  }}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="CSO">CSO (Customer Service Officer)</option>
-                  <option value="SR">SR (Securities Representative)</option>
-                  <option value="Manager">Manager (Compliance / Branch Head)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 mb-1">Acting Officer</label>
-                <input
-                  type="text"
-                  value={authOfficer}
-                  onChange={(e) => setAuthOfficer(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-700 mb-1">
-                  {authAction === 'authorize' ? 'Decision Summary' : `Reason for ${authAction === 'reject' ? 'Rejection' : 'Resubmission'} *`}
-                </label>
-                {authAction === 'authorize' ? (
-                  <div className="text-xs text-emerald-700 font-semibold py-1.5 flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Ready to advance to next workflow stage</span>
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={authReason}
-                    onChange={(e) => setAuthReason(e.target.value)}
-                    placeholder={authAction === 'reject' ? 'e.g. Compliance block / Invalid ID...' : 'e.g. Please upload clear proof of address...'}
-                    className="w-full px-2.5 py-1.5 bg-white border border-rose-300 rounded-lg text-slate-800 text-xs focus:ring-1 focus:ring-rose-500"
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
-              <input
-                type="text"
-                value={authComment}
-                onChange={(e) => setAuthComment(e.target.value)}
-                placeholder="Optional audit log comment / internal note..."
-                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 text-xs"
-              />
-              <div className="flex items-center gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowAuthForm(false)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  id="btn-confirm-auth-decision"
-                  onClick={handleExecuteAuth}
-                  className={cn(
-                    "px-4 py-1.5 text-white font-bold rounded-lg text-xs shadow-xs transition flex items-center gap-1.5",
-                    authAction === 'authorize' ? "bg-emerald-600 hover:bg-emerald-700" :
-                    authAction === 'resubmit' ? "bg-amber-600 hover:bg-amber-700" :
-                    "bg-rose-600 hover:bg-rose-700"
-                  )}
-                >
-                  {authAction === 'authorize' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                  {authAction === 'resubmit' && <RotateCcw className="w-3.5 h-3.5" />}
-                  {authAction === 'reject' && <AlertTriangle className="w-3.5 h-3.5" />}
-                  <span>Confirm {authAction === 'authorize' ? 'Approval' : authAction === 'resubmit' ? 'Resubmission' : 'Rejection'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Footer with Authorization Buttons */}
-        <div className="p-3.5 sm:p-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
-          {/* Left: Workflow Status Indicator */}
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <span className="text-slate-500 font-medium">Stage:</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-white text-slate-800 border border-slate-200 shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>{individual.currentWorkflowStage}</span>
-            </span>
-
-            <span className="text-slate-400">•</span>
-
-            <span className="text-slate-500 font-medium">Status:</span>
-            <span className={cn(
-              "px-2.5 py-1 rounded-md text-xs font-bold border shadow-2xs",
-              individual.requestStatus === 'Approved' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-              individual.requestStatus === 'Resubmit' ? "bg-amber-50 text-amber-800 border-amber-200" :
-              individual.requestStatus === 'Rejected' ? "bg-rose-50 text-rose-700 border-rose-200" :
-              "bg-blue-50 text-blue-700 border-blue-200"
-            )}>
-              {individual.requestStatus}
-            </span>
-          </div>
-
-          {/* Right: Authorization Buttons Group (Reject, Resubmit, Approve) + Close */}
-          <div className="flex items-center gap-2 justify-end flex-wrap">
+        <div className="p-3.5 sm:p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
+          {/* Authorization Buttons Group (Reject, Resubmit, Approve) */}
+          <div className="flex items-center gap-2.5 justify-end flex-wrap">
             {/* Reject Button */}
             <button
               id="btn-view-dialog-reject"
               type="button"
-              onClick={() => handleOpenAuthDrawer('reject')}
-              className={cn(
-                "px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5",
-                showAuthForm && authAction === 'reject'
-                  ? "bg-rose-600 text-white border-rose-600 shadow-xs"
-                  : "bg-white hover:bg-rose-50 text-rose-700 border-rose-300 hover:border-rose-400 shadow-2xs"
-              )}
+              onClick={() => handleOpenAuthDialog('reject')}
+              className="px-3.5 py-1.5 text-xs font-bold rounded-lg border border-rose-300 hover:border-rose-400 bg-white hover:bg-rose-50 text-rose-600 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Reject application"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
@@ -1109,13 +1059,8 @@ export function ViewIndividualDialog({
             <button
               id="btn-view-dialog-resubmit"
               type="button"
-              onClick={() => handleOpenAuthDrawer('resubmit')}
-              className={cn(
-                "px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5",
-                showAuthForm && authAction === 'resubmit'
-                  ? "bg-amber-600 text-white border-amber-600 shadow-xs"
-                  : "bg-white hover:bg-amber-50 text-amber-800 border-amber-300 hover:border-amber-400 shadow-2xs"
-              )}
+              onClick={() => handleOpenAuthDialog('resubmit')}
+              className="px-3.5 py-1.5 text-xs font-bold rounded-lg border border-amber-300 hover:border-amber-400 bg-white hover:bg-amber-50 text-amber-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Request resubmission"
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
@@ -1126,33 +1071,210 @@ export function ViewIndividualDialog({
             <button
               id="btn-view-dialog-approve"
               type="button"
-              onClick={() => handleOpenAuthDrawer('authorize')}
-              className={cn(
-                "px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-xs",
-                showAuthForm && authAction === 'authorize'
-                  ? "bg-emerald-700 text-white ring-2 ring-emerald-400"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
-              )}
+              onClick={() => handleOpenAuthDialog('authorize')}
+              className="px-4 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               title="Approve & advance workflow"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Approve</span>
             </button>
-
-            <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
-
-            {/* Close Button */}
-            <button
-              id="btn-view-dialog-close"
-              type="button"
-              onClick={onClose}
-              className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 shadow-2xs transition"
-            >
-              Close Dialog
-            </button>
           </div>
         </div>
       </div>
+
+      {/* Dedicated Authorization Decision Dialog Modal */}
+      {showAuthDialog && (
+        <div
+          id="auth-decision-dialog-backdrop"
+          className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setShowAuthDialog(false)}
+        >
+          <div
+            id="auth-decision-dialog-card"
+            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={cn(
+              "px-5 py-4 border-b flex items-center justify-between",
+              authAction === 'authorize' ? "bg-emerald-50/80 border-emerald-100" :
+              authAction === 'resubmit' ? "bg-amber-50/80 border-amber-100" :
+              "bg-rose-50/80 border-rose-100"
+            )}>
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center shadow-2xs shrink-0",
+                  authAction === 'authorize' ? "bg-emerald-100 text-emerald-700 border border-emerald-200" :
+                  authAction === 'resubmit' ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                  "bg-rose-100 text-rose-700 border border-rose-200"
+                )}>
+                  {authAction === 'authorize' && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                  {authAction === 'resubmit' && <RotateCcw className="w-5 h-5 text-amber-600" />}
+                  {authAction === 'reject' && <AlertTriangle className="w-5 h-5 text-rose-600" />}
+                </div>
+                <div>
+                  <h3 className={cn(
+                    "text-base font-bold leading-tight",
+                    authAction === 'authorize' ? "text-emerald-950" :
+                    authAction === 'resubmit' ? "text-amber-950" :
+                    "text-rose-950"
+                  )}>
+                    {authAction === 'authorize' ? 'Approve Application' :
+                     authAction === 'resubmit' ? 'Request Resubmission' :
+                     'Reject Application'}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {authAction === 'authorize' ? 'Advance workflow to the next approval stage' :
+                     authAction === 'resubmit' ? 'Return application to prior stage for amendment' :
+                     'Decline and terminate this onboarding request'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAuthDialog(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                title="Close dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Dialog Body */}
+            <div className="p-5 sm:p-6 space-y-4 text-xs text-slate-700">
+              {/* Applicant Context Card */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Applicant</span>
+                  <span className="font-bold text-slate-900 text-sm">{individual.fullNameEN || `${individual.firstName} ${individual.lastName}`}</span>
+                  <span className="text-slate-500 text-xs ml-2 font-mono">({individual.customerId || individual.id})</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Stage</span>
+                  <span className="font-bold text-blue-700 text-xs px-2.5 py-0.5 bg-blue-50 border border-blue-200 rounded-md inline-block">
+                    {individual.currentWorkflowStage}
+                  </span>
+                </div>
+              </div>
+
+              {/* Workflow Transition Preview if Authorizing */}
+              {authAction === 'authorize' && (
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-start gap-2.5 text-xs text-emerald-900">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold block">Workflow Transition:</span>
+                    <span className="text-emerald-800">
+                      Approving will advance the request from <strong>{individual.currentWorkflowStage}</strong> to{' '}
+                      <strong>{individual.currentWorkflowStage === 'CSO' ? 'SR (Review)' : individual.currentWorkflowStage === 'SR' ? 'Manager (Approval)' : 'Approved (Completed)'}</strong>.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Authorizer Role & Officer Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Authorizer Role</label>
+                  <select
+                    value={authRole}
+                    onChange={(e) => {
+                      const r = e.target.value as 'CSO' | 'SR' | 'Manager';
+                      setAuthRole(r);
+                      if (r === 'CSO') setAuthOfficer('Sophea Keo (CSO)');
+                      if (r === 'SR') setAuthOfficer('Dara Vong (SR)');
+                      if (r === 'Manager') setAuthOfficer('Vannak Lim (Manager)');
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden"
+                  >
+                    <option value="CSO">CSO (Customer Service Officer)</option>
+                    <option value="SR">SR (Securities Representative)</option>
+                    <option value="Manager">Manager (Branch / Compliance Head)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Acting Officer</label>
+                  <input
+                    type="text"
+                    value={authOfficer}
+                    onChange={(e) => setAuthOfficer(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Reason field (Required for Reject & Resubmit) */}
+              {authAction !== 'authorize' && (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Reason for {authAction === 'reject' ? 'Rejection' : 'Resubmission'} <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={authReason}
+                    onChange={(e) => {
+                      setAuthReason(e.target.value);
+                      if (authError) setAuthError(null);
+                    }}
+                    placeholder={authAction === 'reject' ? 'e.g. Sanctions compliance match or invalid legal identity' : 'e.g. Please re-upload legible government ID or valid utility bill'}
+                    className={cn(
+                      "w-full px-3 py-2 bg-white border rounded-lg text-slate-800 text-xs outline-hidden",
+                      authError ? "border-rose-400 ring-2 ring-rose-200" : "border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    )}
+                  />
+                  {authError && (
+                    <p className="text-[11px] font-semibold text-rose-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {authError}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Comments / Audit Trail Note */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Audit Comment / Internal Note <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={authComment}
+                  onChange={(e) => setAuthComment(e.target.value)}
+                  placeholder="Add optional notes for compliance audit logs..."
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowAuthDialog(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-auth-dialog"
+                onClick={handleExecuteAuth}
+                className={cn(
+                  "px-4.5 py-2 text-white font-bold rounded-xl text-xs shadow-xs transition flex items-center gap-1.5 cursor-pointer",
+                  authAction === 'authorize' ? "bg-emerald-600 hover:bg-emerald-700" :
+                  authAction === 'resubmit' ? "bg-amber-600 hover:bg-amber-700" :
+                  "bg-rose-600 hover:bg-rose-700"
+                )}
+              >
+                {authAction === 'authorize' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                {authAction === 'resubmit' && <RotateCcw className="w-3.5 h-3.5" />}
+                {authAction === 'reject' && <AlertTriangle className="w-3.5 h-3.5" />}
+                <span>Confirm {authAction === 'authorize' ? 'Approval' : authAction === 'resubmit' ? 'Resubmission' : 'Rejection'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

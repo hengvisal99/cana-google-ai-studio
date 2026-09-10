@@ -88,23 +88,23 @@ export function SoftFintechShell({
 
   return (
     <div id="soft-fintech-layout" className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col antialiased">
-      {/* Precision Top Ticker Strip (Soft FinTech specific) */}
-      <div className="bg-slate-900 text-slate-300 text-[11px] px-4 py-1.5 flex items-center justify-between border-b border-slate-800">
+      {/* Precision Top Ticker Strip (Soft FinTech specific) - Crisp Light Mode */}
+      <div className="bg-slate-100 text-slate-600 text-[11px] px-4 py-1.5 flex items-center justify-between border-b border-slate-200">
         <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap">
-          <span className="font-bold text-blue-400 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-bold text-blue-700 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             NEXUS FINTECH CORE
           </span>
-          <span className="text-slate-400">|</span>
-          <span className="text-slate-300">EUR/USD: <strong className="text-white">1.0842</strong> (+0.18%)</span>
-          <span className="text-slate-300">GBP/USD: <strong className="text-white">1.2715</strong> (-0.05%)</span>
-          <span className="text-slate-300">SOFR 30D: <strong className="text-white">4.82%</strong></span>
-          <span className="text-slate-300">SYSTEM LATENCY: <strong className="text-emerald-400">12ms</strong></span>
+          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">EUR/USD: <strong className="text-slate-900">1.0842</strong> (+0.18%)</span>
+          <span className="text-slate-600">GBP/USD: <strong className="text-slate-900">1.2715</strong> (-0.05%)</span>
+          <span className="text-slate-600">SOFR 30D: <strong className="text-slate-900">4.82%</strong></span>
+          <span className="text-slate-600">SYSTEM LATENCY: <strong className="text-emerald-600">12ms</strong></span>
         </div>
-        <div className="hidden sm:flex items-center gap-3 text-slate-400 shrink-0">
+        <div className="hidden sm:flex items-center gap-3 text-slate-500 shrink-0">
           <span>SECURE PROTOCOL 256-BIT</span>
           <span>•</span>
-          <span className="text-slate-300">NEW YORK (EST)</span>
+          <span className="text-slate-700 font-medium">NEW YORK (EST)</span>
         </div>
       </div>
 

@@ -1055,12 +1055,12 @@ export function DashboardScreen({
             id="preview-report-modal"
             className="bg-white rounded-2xl max-w-4xl w-full border border-slate-200 shadow-2xl overflow-hidden my-8"
           >
-            {/* Modal Bar */}
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+            {/* Modal Bar - Light Mode */}
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 text-slate-900 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-400" />
-                <span className="font-bold text-sm">Executive Report Preview</span>
-                <span className="text-xs text-slate-400 font-mono">[{formattedDateRange}]</span>
+                <FileText className="w-5 h-5 text-blue-600" />
+                <span className="font-bold text-sm text-slate-900">Executive Report Preview</span>
+                <span className="text-xs text-slate-500 font-mono">[{formattedDateRange}]</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1072,7 +1072,7 @@ export function DashboardScreen({
                 </button>
                 <button
                   onClick={() => setShowPreviewModal(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>

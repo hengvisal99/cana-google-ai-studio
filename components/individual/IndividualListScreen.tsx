@@ -34,10 +34,14 @@ import {
   X, 
   FileText, 
   User, 
+  UserPlus,
   Lock, 
   Check,
   UserCheck,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  Sliders,
+  Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -124,6 +128,7 @@ export function IndividualListScreen({
 
   // Customize Columns modal state
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [columnSearch, setColumnSearch] = useState('');
   const [columns, setColumns] = useState<ColumnConfig[]>([
     { id: 'gender', label: 'Gender', isDefault: false, visible: false },
     { id: 'maritalStatus', label: 'Marital Status', isDefault: false, visible: false },
@@ -342,20 +347,20 @@ export function IndividualListScreen({
     setCloseReason('');
   };
 
-  // Badge renderers
+  // Simple status indicator for Profile Status
   const renderProfileStatusBadge = (status: 'Completed' | 'Incomplete') => {
     if (status === 'Completed') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-          Completed
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 select-none">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <span>Completed</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-        <Clock className="w-3 h-3 text-amber-600" />
-        Incomplete
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 select-none">
+        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+        <span>Incomplete</span>
       </span>
     );
   };
@@ -387,31 +392,189 @@ export function IndividualListScreen({
 
   const renderRequestBadge = (item: Individual) => {
     const isClose = item.requestType === 'Close Account';
-    let statusBg = 'bg-blue-50 text-blue-700 border-blue-200';
+    const isApproved = item.requestStatus === 'Approved' || item.currentWorkflowStage === 'Approved';
+    const isRejected = item.requestStatus === 'Rejected' || item.currentWorkflowStage === 'Rejected';
+    const isResubmit = item.requestStatus === 'Resubmit' || item.currentWorkflowStage === 'Resubmit';
+    const isPendingSR = item.currentWorkflowStage === 'SR' && item.requestStatus === 'Pending';
+    const isPendingManager = item.currentWorkflowStage === 'Manager' && item.requestStatus === 'Pending';
 
-    if (item.requestStatus === 'Approved') {
-      statusBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    } else if (item.requestStatus === 'Resubmit') {
-      statusBg = 'bg-amber-50 text-amber-700 border-amber-200';
-    } else if (item.requestStatus === 'Rejected') {
-      statusBg = 'bg-rose-50 text-rose-700 border-rose-200';
+    // Connector 1 (CSO -> SR)
+    const connector1Color = 'bg-emerald-400';
+
+    // SR status & visual state
+    let srStatusText = 'Approved';
+    let srStatusColor = 'text-emerald-600';
+    let srState: 'approved' | 'pending' | 'resubmit' | 'rejected' = 'approved';
+
+    if (isPendingSR) {
+      srStatusText = 'Pending';
+      srStatusColor = 'text-amber-600';
+      srState = 'pending';
+    } else if (isResubmit && item.currentWorkflowStage === 'Resubmit') {
+      srStatusText = 'Resubmit';
+      srStatusColor = 'text-amber-600';
+      srState = 'resubmit';
+    } else if (isRejected && item.currentWorkflowStage === 'SR') {
+      srStatusText = 'Rejected';
+      srStatusColor = 'text-rose-600';
+      srState = 'rejected';
+    }
+
+    // Connector 2 (SR -> Manager)
+    let connector2Color = 'bg-emerald-400';
+    if (isPendingManager) {
+      connector2Color = 'bg-amber-400';
+    } else if (isPendingSR || srState === 'pending') {
+      connector2Color = 'bg-slate-200';
+    } else if (isRejected) {
+      connector2Color = 'bg-rose-400';
+    } else if (isResubmit) {
+      connector2Color = 'bg-amber-400';
+    }
+
+    // Manager status & visual state
+    let managerStatusText = 'Approved';
+    let managerStatusColor = 'text-emerald-600';
+    let managerState: 'approved' | 'pending' | 'resubmit' | 'rejected' | 'waiting' = 'approved';
+
+    if (isApproved) {
+      managerStatusText = 'Approved';
+      managerStatusColor = 'text-emerald-600';
+      managerState = 'approved';
+    } else if (isPendingManager) {
+      managerStatusText = 'Pending';
+      managerStatusColor = 'text-amber-600';
+      managerState = 'pending';
+    } else if (isRejected) {
+      managerStatusText = 'Rejected';
+      managerStatusColor = 'text-rose-600';
+      managerState = 'rejected';
+    } else if (isResubmit) {
+      managerStatusText = 'Resubmit';
+      managerStatusColor = 'text-amber-600';
+      managerState = 'resubmit';
+    } else {
+      managerStatusText = 'Waiting';
+      managerStatusColor = 'text-slate-400';
+      managerState = 'waiting';
     }
 
     return (
-      <div className="flex flex-col gap-1 items-start">
-        <span className={cn(
-          'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
-          isClose ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-        )}>
-          {item.requestType}
-        </span>
-        <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border', statusBg)}>
-          {item.requestStatus === 'Approved' && <Check className="w-3 h-3 text-emerald-600" />}
-          {item.requestStatus === 'Resubmit' && <AlertCircle className="w-3 h-3 text-amber-600" />}
-          {item.requestStatus === 'Rejected' && <AlertTriangle className="w-3 h-3 text-rose-600" />}
-          {item.requestStatus === 'Pending' && <Clock className="w-3 h-3 text-blue-600" />}
-          <span>{item.requestStatus} • {item.currentWorkflowStage}</span>
-        </span>
+      <div className="inline-flex items-center gap-3.5 px-3.5 py-2 bg-white border border-slate-200/90 rounded-2xl shadow-2xs select-none whitespace-nowrap min-w-[360px]">
+        {/* Left Request Type Icon Box */}
+        {isClose ? (
+          <div 
+            className="w-8.5 h-8.5 rounded-xl bg-rose-50/90 border border-rose-200/80 flex items-center justify-center text-rose-500 shrink-0"
+            title="Close Account Request"
+          >
+            <Lock className="w-4 h-4" />
+          </div>
+        ) : (
+          <div 
+            className="w-8.5 h-8.5 rounded-xl bg-blue-50/90 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0"
+            title="Registration Request"
+          >
+            <UserPlus className="w-4 h-4" />
+          </div>
+        )}
+
+        {/* Stepper Pipeline: CSO -> SR -> Manager */}
+        <div className="flex items-center gap-2 flex-1">
+          {/* Step 1: CSO */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Check className="w-3 h-3 stroke-[3]" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold text-slate-800 leading-tight">CSO</span>
+              <span className="text-[10px] font-semibold text-emerald-600 leading-tight">Submitted</span>
+            </div>
+          </div>
+
+          {/* Connector 1 */}
+          <div className={cn("h-0.5 w-12 sm:w-16 rounded-full shrink-0", connector1Color)} />
+
+          {/* Step 2: SR */}
+          <div className="flex items-center gap-2 shrink-0">
+            {srState === 'approved' && (
+              <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Check className="w-3 h-3 stroke-[3]" />
+              </div>
+            )}
+            {srState === 'pending' && (
+              <div className="p-1 rounded-full bg-amber-100/80 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <Clock className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {srState === 'resubmit' && (
+              <div className="p-1 rounded-full bg-amber-100/80 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertCircle className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {srState === 'rejected' && (
+              <div className="p-1 rounded-full bg-rose-100/80 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold text-slate-800 leading-tight">SR</span>
+              <span className={cn("text-[10px] font-semibold leading-tight", srStatusColor)}>{srStatusText}</span>
+            </div>
+          </div>
+
+          {/* Connector 2 */}
+          <div className={cn("h-0.5 w-12 sm:w-16 rounded-full shrink-0", connector2Color)} />
+
+          {/* Step 3: Manager */}
+          <div className="flex items-center gap-2 shrink-0">
+            {managerState === 'approved' && (
+              <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Check className="w-3 h-3 stroke-[3]" />
+              </div>
+            )}
+            {managerState === 'pending' && (
+              <div className="p-1 rounded-full bg-[#fef3c7] shrink-0">
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <Clock className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {managerState === 'resubmit' && (
+              <div className="p-1 rounded-full bg-amber-100/80 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertCircle className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {managerState === 'rejected' && (
+              <div className="p-1 rounded-full bg-rose-100/80 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-2xs">
+                  <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
+                </div>
+              </div>
+            )}
+            {managerState === 'waiting' && (
+              <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center shrink-0">
+                <Clock className="w-3 h-3" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className={cn(
+                "text-[11px] font-bold leading-tight",
+                managerState === 'pending' ? 'text-[#78350f]' : managerState === 'waiting' ? 'text-slate-400' : 'text-slate-800'
+              )}>
+                Manager
+              </span>
+              <span className={cn("text-[10px] font-semibold leading-tight", managerStatusColor)}>{managerStatusText}</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -426,386 +589,1141 @@ export function IndividualListScreen({
         </div>
       )}
 
-      {/* Top Header & MD Action Buttons: Reload, Filter, Customize Columns, Export, Add New */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Individual Directory
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
-          </p>
-        </div>
+      {/* ========================================================================= */}
+      {/* THEME 1: SOFT-FINTECH (Institutional Banking / Bloomberg Terminal Layout) */}
+      {/* ========================================================================= */}
+      {theme !== 'glassmorphism' && theme !== 'aurora' && (
+        <div className="space-y-4">
+          {/* Institutional Top Header */}
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    REGULATORY REPOSITORY // AML & KYC
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">AUDITED & ENCRYPTED</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
+                    Individual Directory
+                  </h1>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    {individuals.length} ACCOUNTS
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
+                </p>
+              </div>
 
-        {/* Action Button Group (Per MD: Reload, Filter, Customize Columns, Export, Add New) */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Reload */}
-          <button
-            id="btn-individual-reload"
-            onClick={handleReloadClick}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs"
-            title="Reload data from server"
-          >
-            <RotateCw className="w-3.5 h-3.5 text-slate-500" />
-            <span>Reload</span>
-          </button>
+              {/* Grouped Enterprise Toolbar */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs divide-x divide-slate-100">
+                  {/* Reload */}
+                  <button
+                    id="btn-individual-reload"
+                    onClick={handleReloadClick}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
+                    title="Reload data from server"
+                  >
+                    <RotateCw className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Reload</span>
+                  </button>
 
-          {/* Filter Toggle */}
-          <button
-            id="btn-individual-filter-toggle"
-            onClick={() => setShowFilterPanel(!showFilterPanel)}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition-all shadow-xs',
-              showFilterPanel
-                ? 'bg-blue-50 text-blue-700 border-blue-300'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-            )}
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <span>Filter</span>
-            {(genderFilter !== 'ALL' || maritalFilter !== 'ALL' || nationalityFilter !== 'ALL' || requestTypeFilter !== 'ALL') && (
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-            )}
-          </button>
+                  {/* Filter Toggle */}
+                  <button
+                    id="btn-individual-filter-toggle"
+                    onClick={() => setShowFilterPanel(!showFilterPanel)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition',
+                      showFilterPanel
+                        ? 'bg-blue-50 text-blue-700 font-bold'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    )}
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>Filter</span>
+                    {hasActiveFilters && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                    )}
+                  </button>
 
-          {/* Customize Columns */}
-          <button
-            id="btn-individual-customize-columns"
-            onClick={() => setShowCustomizeModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs"
-          >
-            <Columns className="w-3.5 h-3.5 text-slate-500" />
-            <span>Customize Columns</span>
-          </button>
+                  {/* Columns */}
+                  <button
+                    id="btn-individual-customize-columns"
+                    onClick={() => setShowCustomizeModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    title="Configure Table Columns"
+                  >
+                    <Columns className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Columns</span>
+                    {columns.filter((c) => c.visible).length > 0 && (
+                      <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-blue-100 text-blue-700">
+                        {columns.filter((c) => c.visible).length}
+                      </span>
+                    )}
+                  </button>
 
-          {/* Export */}
-          <div className="relative group">
-            <button
-              id="btn-individual-export"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all shadow-xs"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export</span>
-            </button>
-            <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-lg hidden group-hover:block z-20 py-1 text-xs">
-              <button
-                onClick={() => handleExport('csv')}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
-              >
-                Export as CSV
-              </button>
-              <button
-                onClick={() => handleExport('json')}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
-              >
-                Export as JSON
-              </button>
+                  {/* Export */}
+                  <div className="relative group">
+                    <button
+                      id="btn-individual-export"
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Export</span>
+                    </button>
+                    <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-lg hidden group-hover:block z-20 py-1 text-xs">
+                      <button
+                        onClick={() => handleExport('csv')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
+                      >
+                        Export as CSV
+                      </button>
+                      <button
+                        onClick={() => handleExport('json')}
+                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
+                      >
+                        Export as JSON
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Primary Add New Button */}
+                <button
+                  id="btn-individual-add-new"
+                  onClick={onNavigateToInsert}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Individual</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Add New (Directly routes to dedicated Insert screen) */}
-          <button
-            id="btn-individual-add-new"
-            onClick={onNavigateToInsert}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2 text-xs font-bold text-white transition-all shadow-xs shrink-0',
-              theme === 'glassmorphism'
-                ? 'rounded-full bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20'
-                : theme === 'aurora'
-                ? 'rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/25'
-                : 'rounded-lg bg-blue-600 hover:bg-blue-700'
-            )}
+          {/* Institutional Status Tabs & Search Split */}
+          <div
+            id="individual-tabs-search-row"
+            className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add New</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Status Tabs Bar (Approved, Resubmit, Pending, Rejected, All) */}
-      <div className={cn(
-        'bg-white border border-slate-200 p-1.5 flex items-center gap-1.5 overflow-x-auto',
-        theme === 'glassmorphism' ? 'rounded-2xl bg-white/80 backdrop-blur-md border-white/80 shadow-xs' : 'rounded-xl shadow-xs'
-      )}>
-        <button
-          onClick={() => setStatusTab('ALL')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0',
-            statusTab === 'ALL'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          )}
-        >
-          <span>All Requests</span>
-          <span className={cn(
-            'px-1.5 py-0.2 rounded-full text-[10px]',
-            statusTab === 'ALL' ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600'
-          )}>
-            {countAll}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setStatusTab('Approved')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0',
-            statusTab === 'Approved'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          )}
-        >
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Approved</span>
-          <span className={cn(
-            'px-1.5 py-0.2 rounded-full text-[10px]',
-            statusTab === 'Approved' ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-700'
-          )}>
-            {countApproved}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setStatusTab('Resubmit')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0',
-            statusTab === 'Resubmit'
-              ? 'bg-amber-600 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          )}
-        >
-          <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-          <span>Resubmit</span>
-          <span className={cn(
-            'px-1.5 py-0.2 rounded-full text-[10px]',
-            statusTab === 'Resubmit' ? 'bg-amber-700 text-white' : 'bg-amber-50 text-amber-700'
-          )}>
-            {countResubmit}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setStatusTab('Pending')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0',
-            statusTab === 'Pending'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          )}
-        >
-          <Clock className="w-3.5 h-3.5 text-blue-500" />
-          <span>Pending</span>
-          <span className={cn(
-            'px-1.5 py-0.2 rounded-full text-[10px]',
-            statusTab === 'Pending' ? 'bg-blue-700 text-white' : 'bg-blue-50 text-blue-700'
-          )}>
-            {countPending}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setStatusTab('Rejected')}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all shrink-0',
-            statusTab === 'Rejected'
-              ? 'bg-rose-600 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          )}
-        >
-          <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-          <span>Rejected</span>
-          <span className={cn(
-            'px-1.5 py-0.2 rounded-full text-[10px]',
-            statusTab === 'Rejected' ? 'bg-rose-700 text-white' : 'bg-rose-50 text-rose-700'
-          )}>
-            {countRejected}
-          </span>
-        </button>
-      </div>
-
-      {/* Filter Section (Incorporating Search Group and Filters) */}
-      <div
-        id="individual-filter-section"
-        className={cn(
-          'bg-white border border-slate-200 p-4 transition-all space-y-3.5',
-          theme === 'glassmorphism' ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-xs' : 'rounded-xl shadow-xs'
-        )}
-      >
-        {/* Top bar inside Filter Section: Unified Search Input Group + Records count & Reset */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Unified Input Group Container */}
-          <div className="relative flex-1 max-w-xl">
-            <div className="flex items-stretch rounded-xl border border-blue-200/90 hover:border-blue-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 bg-white shadow-2xs transition-all h-10">
-              {/* Input Group Prefix: Dropdown Toggle Button */}
+            {/* Terminal Segmented Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none p-1 bg-slate-100 rounded-lg border border-slate-200/80 shrink-0">
               <button
-                type="button"
-                id="btn-search-by-dropdown"
-                onClick={() => setIsSearchByOpen(!isSearchByOpen)}
-                className="flex items-center gap-2 px-4 bg-transparent hover:bg-slate-50/70 border-r border-slate-200 text-xs font-bold text-slate-700 uppercase tracking-wider rounded-l-xl transition shrink-0 select-none cursor-pointer"
-              >
-                <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
-                {isSearchByOpen ? (
-                  <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                onClick={() => setStatusTab('ALL')}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
+                  statusTab === 'ALL'
+                    ? 'bg-white text-blue-700 shadow-2xs border border-slate-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
                 )}
+              >
+                <span>All Requests</span>
+                <span className={cn(
+                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
+                  statusTab === 'ALL' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countAll}
+                </span>
               </button>
 
-              {/* Input Group Center: Search Input */}
-              <div className="relative flex-1 flex items-center min-w-0 bg-transparent">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none shrink-0" />
-                <input
-                  id="individual-search-input"
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
-                  className="w-full h-full pl-10 pr-8 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-semibold placeholder:uppercase placeholder:tracking-wider uppercase tracking-wider focus:outline-none"
-                />
-                {searchTerm && (
+              <button
+                onClick={() => setStatusTab('Approved')}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
+                  statusTab === 'Approved'
+                    ? 'bg-white text-emerald-700 shadow-2xs border border-slate-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                )}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Approved</span>
+                <span className={cn(
+                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
+                  statusTab === 'Approved' ? 'bg-emerald-50 text-emerald-700 font-bold' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countApproved}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Resubmit')}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
+                  statusTab === 'Resubmit'
+                    ? 'bg-white text-amber-700 shadow-2xs border border-slate-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                )}
+              >
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                <span>Resubmit</span>
+                <span className={cn(
+                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
+                  statusTab === 'Resubmit' ? 'bg-amber-50 text-amber-700 font-bold' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countResubmit}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Pending')}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
+                  statusTab === 'Pending'
+                    ? 'bg-white text-blue-700 shadow-2xs border border-slate-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                )}
+              >
+                <Clock className="w-3.5 h-3.5 text-blue-500" />
+                <span>Pending</span>
+                <span className={cn(
+                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
+                  statusTab === 'Pending' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countPending}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Rejected')}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
+                  statusTab === 'Rejected'
+                    ? 'bg-white text-rose-700 shadow-2xs border border-slate-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                )}
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                <span>Rejected</span>
+                <span className={cn(
+                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
+                  statusTab === 'Rejected' ? 'bg-rose-50 text-rose-700 font-bold' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countRejected}
+                </span>
+              </button>
+            </div>
+
+            {/* Terminal Search Box */}
+            <div className="relative flex-1 max-w-md w-full">
+              <div className="flex items-stretch rounded-lg border border-slate-300 hover:border-slate-400 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 bg-white shadow-2xs transition-all h-9.5">
+                <button
+                  type="button"
+                  id="btn-search-by-dropdown"
+                  onClick={() => setIsSearchByOpen(!isSearchByOpen)}
+                  className="flex items-center gap-1.5 px-3 bg-slate-50 hover:bg-slate-100 border-r border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider rounded-l-lg transition shrink-0 select-none cursor-pointer"
+                >
+                  <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                  {isSearchByOpen ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  )}
+                </button>
+
+                <div className="relative flex-1 flex items-center min-w-0 bg-transparent">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
+                  <input
+                    id="individual-search-input"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                    className="w-full h-full pl-9 pr-8 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-mono uppercase tracking-wider focus:outline-none"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-2.5 p-0.5 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Dropdown Popup Menu */}
+              {isSearchByOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsSearchByOpen(false)} 
+                  />
+                  <div className="absolute right-0 top-full mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
+                    <div className="space-y-0.5">
+                      {SEARCH_FIELD_OPTIONS.map((opt) => {
+                        const isSelected = searchBy === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setSearchBy(opt.id);
+                              setIsSearchByOpen(false);
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-between px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer",
+                              isSelected
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                            )}
+                          >
+                            <span>{opt.label}</span>
+                            {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Collapsible Corporate Filter Console */}
+          {showFilterPanel && (
+            <div
+              id="individual-filter-section"
+              className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[11px] font-mono font-bold text-slate-800 uppercase tracking-wider">
+                    QUERY PARAMETERS // CRITERIA
+                  </span>
+                  <span className="text-xs text-slate-500 font-mono">
+                    Showing <strong>{filteredData.length}</strong> of {individuals.length} records
+                  </span>
+                </div>
+                {(hasActiveFilters || searchTerm) && (
                   <button
-                    type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 p-0.5 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
-                    title="Clear search"
+                    onClick={handleResetFilters}
+                    className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    Reset Query Filters
                   </button>
                 )}
               </div>
-            </div>
 
-            {/* Dropdown Popup Menu */}
-            {isSearchByOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setIsSearchByOpen(false)} 
-                />
-                <div className="absolute left-0 top-full mt-1.5 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
-                  <div className="space-y-0.5">
-                    {SEARCH_FIELD_OPTIONS.map((opt) => {
-                      const isSelected = searchBy === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => {
-                            setSearchBy(opt.id);
-                            setIsSearchByOpen(false);
-                          }}
-                          className={cn(
-                            "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer",
-                            isSelected
-                              ? "text-blue-600 bg-blue-50/70"
-                              : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                          )}
-                        >
-                          <span>{opt.label}</span>
-                          {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
-                        </button>
-                      );
-                    })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Gender</label>
+                  <select
+                    value={genderFilter}
+                    onChange={(e) => setGenderFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
+                  >
+                    <option value="ALL">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Marital Status</label>
+                  <select
+                    value={maritalFilter}
+                    onChange={(e) => setMaritalFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
+                  >
+                    <option value="ALL">All Marital Statuses</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Widowed">Widowed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Nationality</label>
+                  <select
+                    value={nationalityFilter}
+                    onChange={(e) => setNationalityFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
+                  >
+                    <option value="ALL">All Nationalities</option>
+                    {uniqueNationalities.map((nat) => (
+                      <option key={nat} value={nat}>{nat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Request Type</label>
+                  <select
+                    value={requestTypeFilter}
+                    onChange={(e) => setRequestTypeFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
+                  >
+                    <option value="ALL">All Request Types</option>
+                    <option value="Registration">Registration</option>
+                    <option value="Close Account">Close Account</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* THEME 2: GLASSMORPHISM (Floating Island / Hero Search / Bubble Pills)     */}
+      {/* ========================================================================= */}
+      {theme === 'glassmorphism' && (
+        <div className="space-y-4">
+          {/* Floating Frosted Island Card Header */}
+          <div className="bg-white/75 backdrop-blur-xl rounded-3xl p-6 border border-white/90 shadow-xl shadow-blue-500/5">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-100 to-blue-100 border border-white flex items-center justify-center text-blue-600 shadow-xs shrink-0">
+                  <Layers className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                      Individual Directory
+                    </h1>
+                    <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-200/60 text-[11px] font-bold text-blue-700 backdrop-blur-xs">
+                      Live Cloud Registry
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
+                  </p>
+                </div>
+              </div>
+
+              {/* Floating Pill Action Buttons */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  id="btn-individual-reload"
+                  onClick={handleReloadClick}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white/90 border border-slate-200/80 rounded-full hover:bg-white hover:shadow-xs transition"
+                  title="Reload data from server"
+                >
+                  <RotateCw className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Reload</span>
+                </button>
+
+                <button
+                  id="btn-individual-filter-toggle"
+                  onClick={() => setShowFilterPanel(!showFilterPanel)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-full border transition shadow-2xs',
+                    showFilterPanel
+                      ? 'bg-blue-50 border-blue-300 text-blue-700'
+                      : 'bg-white/90 border-slate-200/80 text-slate-700 hover:bg-white'
+                  )}
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Filter</span>
+                  {hasActiveFilters && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                  )}
+                </button>
+
+                <button
+                  id="btn-individual-customize-columns"
+                  onClick={() => setShowCustomizeModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white/90 border border-slate-200/80 rounded-full hover:bg-white hover:shadow-xs transition"
+                  title="Configure Table Columns"
+                >
+                  <Columns className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Columns</span>
+                  {columns.filter((c) => c.visible).length > 0 && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">
+                      {columns.filter((c) => c.visible).length}
+                    </span>
+                  )}
+                </button>
+
+                <div className="relative group">
+                  <button
+                    id="btn-individual-export"
+                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white/90 border border-slate-200/80 rounded-full hover:bg-white hover:shadow-xs transition"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Export</span>
+                  </button>
+                  <div className="absolute right-0 top-full mt-2 w-36 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl hidden group-hover:block z-20 py-1.5 text-xs">
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="w-full text-left px-3.5 py-2 hover:bg-blue-50 text-slate-700 font-medium rounded-xl mx-1"
+                    >
+                      Export as CSV
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="w-full text-left px-3.5 py-2 hover:bg-blue-50 text-slate-700 font-medium rounded-xl mx-1"
+                    >
+                      Export as JSON
+                    </button>
                   </div>
                 </div>
-              </>
-            )}
+
+                <button
+                  id="btn-individual-add-new"
+                  onClick={onNavigateToInsert}
+                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg shadow-blue-500/25 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Client</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Quick info / clear */}
-          <div className="flex items-center gap-2 justify-end text-xs text-slate-500">
-            <span>Showing <strong>{filteredData.length}</strong> of {individuals.length}</span>
-            {(hasActiveFilters || searchTerm) && (
+          {/* Combined Same Row: Status Bubble Pills + Glass Search Capsule */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Status Bubble Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 shrink-0">
               <button
-                onClick={handleResetFilters}
-                className="text-blue-600 hover:underline font-semibold text-xs ml-2 cursor-pointer"
+                onClick={() => setStatusTab('ALL')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
+                  statusTab === 'ALL'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
+                )}
               >
-                Clear filters
+                <span>All Requests</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px]',
+                  statusTab === 'ALL' ? 'bg-white/20 text-white font-black' : 'bg-slate-100 text-slate-600'
+                )}>
+                  {countAll}
+                </span>
               </button>
-            )}
+
+              <button
+                onClick={() => setStatusTab('Approved')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
+                  statusTab === 'Approved'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
+                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
+                )}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Approved</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px]',
+                  statusTab === 'Approved' ? 'bg-white/20 text-white font-black' : 'bg-emerald-50 text-emerald-700'
+                )}>
+                  {countApproved}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Resubmit')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
+                  statusTab === 'Resubmit'
+                    ? 'bg-amber-600 text-white shadow-md shadow-amber-500/25'
+                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
+                )}
+              >
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Resubmit</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px]',
+                  statusTab === 'Resubmit' ? 'bg-white/20 text-white font-black' : 'bg-amber-50 text-amber-700'
+                )}>
+                  {countResubmit}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Pending')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
+                  statusTab === 'Pending'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
+                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Pending</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px]',
+                  statusTab === 'Pending' ? 'bg-white/20 text-white font-black' : 'bg-blue-50 text-blue-700'
+                )}>
+                  {countPending}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Rejected')}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
+                  statusTab === 'Rejected'
+                    ? 'bg-rose-600 text-white shadow-md shadow-rose-500/25'
+                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
+                )}
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Rejected</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px]',
+                  statusTab === 'Rejected' ? 'bg-white/20 text-white font-black' : 'bg-rose-50 text-rose-700'
+                )}>
+                  {countRejected}
+                </span>
+              </button>
+            </div>
+
+            {/* Glass Search Capsule (Same Row) */}
+            <div className="relative flex-1 lg:max-w-md w-full">
+              <div className="bg-white/80 backdrop-blur-xl rounded-full p-1.5 border border-white/90 shadow-md shadow-slate-900/5 flex items-center justify-between gap-2">
+                <div className="flex-1 flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    id="btn-search-by-dropdown"
+                    onClick={() => setIsSearchByOpen(!isSearchByOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/60 rounded-full text-xs font-bold text-blue-700 transition shrink-0 select-none cursor-pointer"
+                  >
+                    <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                    {isSearchByOpen ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+
+                  <div className="relative flex-1 flex items-center min-w-0">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-2.5 pointer-events-none" />
+                    <input
+                      id="individual-search-input"
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                      className="w-full h-8 pl-8 pr-7 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                    />
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-2 p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dropdown Popup Menu */}
+              {isSearchByOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
+                  <div className="absolute left-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+                    <div className="space-y-1">
+                      {SEARCH_FIELD_OPTIONS.map((opt) => {
+                        const isSelected = searchBy === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setSearchBy(opt.id);
+                              setIsSearchByOpen(false);
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-left cursor-pointer",
+                              isSelected
+                                ? "text-blue-700 bg-blue-50"
+                                : "text-slate-700 hover:bg-slate-50"
+                            )}
+                          >
+                            <span>{opt.label}</span>
+                            {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
+
+          {/* Frosted Floating Filter Drawer */}
+          {showFilterPanel && (
+            <div
+              id="individual-filter-section"
+              className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/90 shadow-xl shadow-blue-500/5 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-xs font-bold text-blue-700">
+                    Filter Attributes
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Showing <strong>{filteredData.length}</strong> of {individuals.length} clients
+                  </span>
+                </div>
+                {(hasActiveFilters || searchTerm) && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Gender</label>
+                  <select
+                    value={genderFilter}
+                    onChange={(e) => setGenderFilter(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
+                  >
+                    <option value="ALL">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Marital Status</label>
+                  <select
+                    value={maritalFilter}
+                    onChange={(e) => setMaritalFilter(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
+                  >
+                    <option value="ALL">All Marital Statuses</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Widowed">Widowed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Nationality</label>
+                  <select
+                    value={nationalityFilter}
+                    onChange={(e) => setNationalityFilter(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
+                  >
+                    <option value="ALL">All Nationalities</option>
+                    {uniqueNationalities.map((nat) => (
+                      <option key={nat} value={nat}>{nat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Request Type</label>
+                  <select
+                    value={requestTypeFilter}
+                    onChange={(e) => setRequestTypeFilter(e.target.value)}
+                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
+                  >
+                    <option value="ALL">All Request Types</option>
+                    <option value="Registration">Registration</option>
+                    <option value="Close Account">Close Account</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Filter fields row inside Filter Section */}
-        {showFilterPanel && (
-          <div className="pt-3 border-t border-slate-100 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                Filter Criteria
-              </span>
-              <button
-                onClick={handleResetFilters}
-                className="text-[11px] font-semibold text-blue-600 hover:underline cursor-pointer"
-              >
-                Reset All Fields
-              </button>
-            </div>
+      {/* ========================================================================= */}
+      {/* THEME 3: AURORA (Spectral Command Console / Dual-Deck Dock / Capsules)    */}
+      {/* ========================================================================= */}
+      {theme === 'aurora' && (
+        <div className="space-y-4">
+          {/* Spectral Command Center Header */}
+          <div className="bg-white rounded-3xl p-6 border border-indigo-200/90 shadow-xl shadow-indigo-500/5 relative overflow-hidden">
+            {/* Ambient soft glow accents */}
+            <div className="absolute -top-12 -right-12 w-44 h-44 bg-indigo-100/70 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-cyan-100/60 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {/* Gender Filter */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Gender</label>
-                <select
-                  value={genderFilter}
-                  onChange={(e) => setGenderFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="ALL">All Genders</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-700 bg-clip-text text-transparent tracking-tight">
+                      Individual Directory
+                    </h1>
+                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-[10px] font-mono font-bold text-indigo-700">
+                      SPECTRUM PIPELINE
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-slate-500 mt-1">
+                    Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
+                  </p>
+                </div>
               </div>
 
-              {/* Marital Status Filter */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Marital Status</label>
-                <select
-                  value={maritalFilter}
-                  onChange={(e) => setMaritalFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              {/* Spectral Command Actions */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  id="btn-individual-reload"
+                  onClick={handleReloadClick}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/40 transition shadow-2xs"
+                  title="Reload data from server"
                 >
-                  <option value="ALL">All Marital Statuses</option>
-                  <option value="Single">Single</option>
-                  <option value="Married">Married</option>
-                  <option value="Divorced">Divorced</option>
-                  <option value="Widowed">Widowed</option>
-                </select>
-              </div>
+                  <RotateCw className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Reload</span>
+                </button>
 
-              {/* Nationality Filter */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nationality</label>
-                <select
-                  value={nationalityFilter}
-                  onChange={(e) => setNationalityFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                <button
+                  id="btn-individual-filter-toggle"
+                  onClick={() => setShowFilterPanel(!showFilterPanel)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border transition shadow-2xs',
+                    showFilterPanel
+                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-400 text-indigo-900'
+                      : 'bg-white border-indigo-200 text-slate-700 hover:border-indigo-300'
+                  )}
                 >
-                  <option value="ALL">All Nationalities</option>
-                  {uniqueNationalities.map((nat) => (
-                    <option key={nat} value={nat}>{nat}</option>
-                  ))}
-                </select>
-              </div>
+                  <Filter className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Filter</span>
+                  {hasActiveFilters && (
+                    <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                  )}
+                </button>
 
-              {/* Request Type Filter */}
-              <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Request Type</label>
-                <select
-                  value={requestTypeFilter}
-                  onChange={(e) => setRequestTypeFilter(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                <button
+                  id="btn-individual-customize-columns"
+                  onClick={() => setShowCustomizeModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/40 transition shadow-2xs"
+                  title="Configure Table Columns"
                 >
-                  <option value="ALL">All Request Types</option>
-                  <option value="Registration">Registration</option>
-                  <option value="Close Account">Close Account</option>
-                </select>
+                  <Columns className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Columns</span>
+                  {columns.filter((c) => c.visible).length > 0 && (
+                    <span className="px-2 py-0.2 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700">
+                      {columns.filter((c) => c.visible).length}
+                    </span>
+                  )}
+                </button>
+
+                <div className="relative group">
+                  <button
+                    id="btn-individual-export"
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/40 transition shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Export</span>
+                  </button>
+                  <div className="absolute right-0 top-full mt-2 w-36 bg-white border border-indigo-100 rounded-2xl shadow-xl hidden group-hover:block z-20 py-1.5 text-xs">
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="w-full text-left px-3.5 py-2 hover:bg-indigo-50 text-slate-700 font-bold rounded-xl mx-1"
+                    >
+                      Export as CSV
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="w-full text-left px-3.5 py-2 hover:bg-indigo-50 text-slate-700 font-bold rounded-xl mx-1"
+                    >
+                      Export as JSON
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="btn-individual-add-new"
+                  onClick={onNavigateToInsert}
+                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:opacity-95 rounded-xl shadow-lg shadow-indigo-500/20 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Account</span>
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Dual-Deck Modular Dock Layout (Status Telemetry Deck + Command Search Deck) */}
+          <div
+            id="individual-tabs-search-row"
+            className="grid grid-cols-1 xl:grid-cols-12 gap-3"
+          >
+            {/* Left Module: Status Telemetry Pipeline Dock */}
+            <div className="xl:col-span-7 bg-white rounded-2xl p-2 border border-indigo-100 shadow-2xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setStatusTab('ALL')}
+                className={cn(
+                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
+                  statusTab === 'ALL'
+                    ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-500 text-indigo-950 shadow-xs'
+                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-indigo-50/30'
+                )}
+              >
+                <span>All</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
+                  statusTab === 'ALL' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countAll}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Approved')}
+                className={cn(
+                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
+                  statusTab === 'Approved'
+                    ? 'bg-emerald-50 border-2 border-emerald-500 text-emerald-950 shadow-xs'
+                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-emerald-50/30'
+                )}
+              >
+                <div className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <span>Approved</span>
+                </div>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
+                  statusTab === 'Approved' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countApproved}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Resubmit')}
+                className={cn(
+                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
+                  statusTab === 'Resubmit'
+                    ? 'bg-amber-50 border-2 border-amber-500 text-amber-950 shadow-xs'
+                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-amber-50/30'
+                )}
+              >
+                <div className="flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3 text-amber-500" />
+                  <span>Resubmit</span>
+                </div>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
+                  statusTab === 'Resubmit' ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countResubmit}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Pending')}
+                className={cn(
+                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
+                  statusTab === 'Pending'
+                    ? 'bg-indigo-50 border-2 border-indigo-500 text-indigo-950 shadow-xs'
+                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-indigo-50/30'
+                )}
+              >
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-indigo-500" />
+                  <span>Pending</span>
+                </div>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
+                  statusTab === 'Pending' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countPending}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setStatusTab('Rejected')}
+                className={cn(
+                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
+                  statusTab === 'Rejected'
+                    ? 'bg-rose-50 border-2 border-rose-500 text-rose-950 shadow-xs'
+                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-rose-50/30'
+                )}
+              >
+                <div className="flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3 text-rose-500" />
+                  <span>Rejected</span>
+                </div>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
+                  statusTab === 'Rejected' ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-600'
+                )}>
+                  {countRejected}
+                </span>
+              </button>
+            </div>
+
+            {/* Right Module: Command Search Dock */}
+            <div className="xl:col-span-5 relative">
+              <div className="flex items-stretch rounded-2xl border border-indigo-200 hover:border-indigo-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 bg-white shadow-2xs transition-all h-full min-h-[46px]">
+                <button
+                  type="button"
+                  id="btn-search-by-dropdown"
+                  onClick={() => setIsSearchByOpen(!isSearchByOpen)}
+                  className="flex items-center gap-1.5 px-3.5 bg-indigo-50/70 hover:bg-indigo-100/70 border-r border-indigo-100 text-[11px] font-bold text-indigo-950 uppercase tracking-wider rounded-l-2xl transition shrink-0 select-none cursor-pointer"
+                >
+                  <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                  {isSearchByOpen ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                  )}
+                </button>
+
+                <div className="relative flex-1 flex items-center min-w-0 bg-transparent">
+                  <Search className="w-4 h-4 text-indigo-400 absolute left-3.5 pointer-events-none shrink-0" />
+                  <input
+                    id="individual-search-input"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                    className="w-full h-full pl-10 pr-8 bg-transparent text-xs font-bold text-slate-900 placeholder:text-indigo-300 uppercase tracking-wider focus:outline-none"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 p-1 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Dropdown Popup Menu */}
+              {isSearchByOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-indigo-100 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+                    <div className="space-y-1">
+                      {SEARCH_FIELD_OPTIONS.map((opt) => {
+                        const isSelected = searchBy === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setSearchBy(opt.id);
+                              setIsSearchByOpen(false);
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer",
+                              isSelected
+                                ? "text-indigo-900 bg-indigo-50 font-extrabold"
+                                : "text-slate-700 hover:bg-indigo-50/50 hover:text-slate-900"
+                            )}
+                          >
+                            <span>{opt.label}</span>
+                            {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0 ml-2" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Spectral Filter Matrix Drawer */}
+          {showFilterPanel && (
+            <div
+              id="individual-filter-section"
+              className="bg-gradient-to-br from-white via-indigo-50/20 to-cyan-50/20 rounded-2xl p-4 border border-indigo-200/90 shadow-2xs space-y-3"
+            >
+              <div className="flex items-center justify-between border-b border-indigo-100/80 pb-2.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-indigo-950 uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    Spectral Query Matrix
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Showing <strong>{filteredData.length}</strong> of {individuals.length} entities
+                  </span>
+                </div>
+                {(hasActiveFilters || searchTerm) && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                  >
+                    Reset Matrix
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Gender</label>
+                  <select
+                    value={genderFilter}
+                    onChange={(e) => setGenderFilter(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
+                  >
+                    <option value="ALL">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Marital Status</label>
+                  <select
+                    value={maritalFilter}
+                    onChange={(e) => setMaritalFilter(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
+                  >
+                    <option value="ALL">All Marital Statuses</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Widowed">Widowed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Nationality</label>
+                  <select
+                    value={nationalityFilter}
+                    onChange={(e) => setNationalityFilter(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
+                  >
+                    <option value="ALL">All Nationalities</option>
+                    {uniqueNationalities.map((nat) => (
+                      <option key={nat} value={nat}>{nat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Request Type</label>
+                  <select
+                    value={requestTypeFilter}
+                    onChange={(e) => setRequestTypeFilter(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
+                  >
+                    <option value="ALL">All Request Types</option>
+                    <option value="Registration">Registration</option>
+                    <option value="Close Account">Close Account</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Table Container with MD default columns + customizable optional columns */}
       <div className={cn(
@@ -849,7 +1767,7 @@ export function IndividualListScreen({
                 <th className="py-3 px-4">Account Status</th>
 
                 {/* Default Column: Request */}
-                <th className="py-3 px-4">Request</th>
+                <th className="py-3 px-4 min-w-[390px]">Request</th>
 
                 {/* Default Column: Action */}
                 <th className="py-3 px-4 text-right">Action</th>
@@ -1032,103 +1950,424 @@ export function IndividualListScreen({
         </div>
       </div>
 
-      {/* Customize Columns Modal */}
+      {/* Customize Columns Modal - Tailored uniquely for each design theme */}
       {showCustomizeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Columns className="w-5 h-5 text-blue-600" />
-                <h3 className="font-bold text-slate-900 text-sm">Customize Table Columns</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          {/* THEME 1: GLASSMORPHISM - Crisp Luminous Island Studio */}
+          {theme === 'glassmorphism' && (
+            <div className="bg-white/95 backdrop-blur-2xl rounded-3xl max-w-xl w-full p-6 border border-slate-200/90 shadow-2xl shadow-slate-900/15 space-y-4 animate-in fade-in zoom-in-95">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shadow-xs">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">Customize Columns</h3>
+                    <p className="text-[11px] font-medium text-slate-500">Select fields to display in table view</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-[11px] font-bold text-blue-700">
+                    {columns.filter((c) => c.visible).length} of {columns.length} Visible
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowCustomizeModal(false);
+                      setColumnSearch('');
+                    }}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => setShowCustomizeModal(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <p className="text-xs text-slate-500">
-              Select which additional attributes you wish to display in the main Individual directory table:
-            </p>
-
-            {/* Select All Checkbox */}
-            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100/60 transition">
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  id="checkbox-customize-columns-select-all"
-                  checked={columns.length > 0 && columns.every((c) => c.visible)}
-                  ref={(el) => {
-                    if (el) {
-                      el.indeterminate = columns.some((c) => c.visible) && !columns.every((c) => c.visible);
-                    }
-                  }}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setColumns((prev) => prev.map((col) => ({ ...col, visible: checked })));
-                  }}
-                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
-                />
-                <span className="text-xs font-bold text-slate-800">
-                  Select All Columns
-                </span>
-              </label>
-              <span className="text-[11px] font-medium text-slate-500">
-                {columns.filter((c) => c.visible).length} of {columns.length} selected
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto p-1 text-xs">
-              {columns.map((col) => (
-                <label
-                  key={col.id}
-                  className={cn(
-                    'flex items-center gap-2.5 p-2 rounded-lg border cursor-pointer transition select-none',
-                    col.visible
-                      ? 'bg-blue-50/70 border-blue-200 text-blue-900 font-semibold'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                  )}
-                >
+              {/* Integrated Control & Search Bar */}
+              <div className="flex items-center justify-between gap-3 p-1.5 rounded-2xl bg-slate-100/80 border border-slate-200/80">
+                <div className="relative flex-1 flex items-center min-w-0">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
                   <input
-                    type="checkbox"
-                    checked={col.visible}
-                    onChange={() => handleToggleColumn(col.id)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    type="text"
+                    value={columnSearch}
+                    onChange={(e) => setColumnSearch(e.target.value)}
+                    placeholder="Search attributes..."
+                    className="w-full h-8 pl-8 pr-7 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none"
                   />
-                  <span>{col.label}</span>
-                </label>
-              ))}
-            </div>
+                  {columnSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setColumnSearch('')}
+                      className="absolute right-2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-              <button
-                onClick={() => {
-                  setColumns((prev) => prev.map((c) => ({ ...c, visible: false })));
-                }}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-700"
-              >
-                Reset to Default
-              </button>
+                {/* Refined Segmented Pill Control */}
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200/80 shadow-2xs shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: true })))}
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                  >
+                    Select All
+                  </button>
+                  <div className="w-px h-3.5 bg-slate-200" />
+                  <button
+                    type="button"
+                    onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: false })))}
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
 
-              <button
-                onClick={() => {
-                  setShowCustomizeModal(false);
-                  triggerToast('Column preferences saved.');
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700"
-              >
-                Done
-              </button>
+              {/* Dynamic Column Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1 text-xs">
+                {columns
+                  .filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase()))
+                  .map((col) => (
+                    <div
+                      key={col.id}
+                      onClick={() => handleToggleColumn(col.id)}
+                      className={cn(
+                        'p-3 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-2 shadow-2xs',
+                        col.visible
+                          ? 'bg-blue-50/80 border-2 border-blue-500 text-blue-950 font-bold shadow-xs'
+                          : 'bg-white/80 border-slate-200/90 text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300'
+                      )}
+                    >
+                      <span className="text-xs truncate">{col.label}</span>
+                      <div className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0",
+                        col.visible ? "bg-blue-600 text-white shadow-xs" : "border-2 border-slate-300 bg-white"
+                      )}>
+                        {col.visible && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
+                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                  <p className="text-xs font-medium text-slate-500">No columns match &quot;{columnSearch}&quot;</p>
+                  <button
+                    type="button"
+                    onClick={() => setColumnSearch('')}
+                    className="mt-2 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                <button
+                  onClick={() => setColumns((prev) => prev.map((c) => ({ ...c, visible: false })))}
+                  className="px-4 py-2 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
+                >
+                  Reset Defaults
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCustomizeModal(false);
+                    setColumnSearch('');
+                    triggerToast('Column preferences saved.');
+                  }}
+                  className="px-6 py-2.5 rounded-full bg-blue-600 text-white text-xs font-bold shadow-lg shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer"
+                >
+                  Apply Columns
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* THEME 2: AURORA - Radiant cosmic console in pristine light mode with spectral accents */}
+          {theme === 'aurora' && (
+            <div className="bg-white rounded-3xl max-w-xl w-full p-6 border border-indigo-200 shadow-2xl shadow-indigo-500/10 space-y-4 text-slate-900 relative overflow-hidden animate-in fade-in zoom-in-95">
+              {/* Radiant Ambient Soft Glow Orbs */}
+              <div className="absolute -top-24 -right-24 w-52 h-52 bg-indigo-50 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -left-24 w-52 h-52 bg-cyan-50 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Aurora Header */}
+              <div className="flex items-center justify-between border-b border-indigo-100 pb-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
+                      Customize Columns
+                    </h3>
+                    <p className="text-[11px] font-medium text-slate-500">Configure visible telemetry fields</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-mono font-bold text-indigo-700 shadow-2xs">
+                    {columns.filter((c) => c.visible).length} / {columns.length} ON
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowCustomizeModal(false);
+                      setColumnSearch('');
+                    }}
+                    className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Aurora Telemetry Search & Batch Control Console */}
+              <div className="flex items-center justify-between gap-3 p-1.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 relative z-10 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
+                <div className="relative flex-1 flex items-center min-w-0">
+                  <Search className="w-3.5 h-3.5 text-indigo-400 absolute left-3 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={columnSearch}
+                    onChange={(e) => setColumnSearch(e.target.value)}
+                    placeholder="Filter attributes..."
+                    className="w-full h-8 pl-8 pr-7 bg-transparent text-xs font-mono font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                  />
+                  {columnSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setColumnSearch('')}
+                      className="absolute right-2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Sleek Dual Toggle Capsule */}
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-indigo-100 shadow-2xs shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: true })))}
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-indigo-700 hover:bg-indigo-50 transition cursor-pointer"
+                  >
+                    Enable All
+                  </button>
+                  <div className="w-px h-3.5 bg-indigo-100" />
+                  <button
+                    type="button"
+                    onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: false })))}
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    Disable All
+                  </button>
+                </div>
+              </div>
+
+              {/* Aurora Cards Grid */}
+              <div className="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto p-1 text-xs relative z-10">
+                {columns
+                  .filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase()))
+                  .map((col) => (
+                    <div
+                      key={col.id}
+                      onClick={() => handleToggleColumn(col.id)}
+                      className={cn(
+                        'p-3 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-2.5 relative overflow-hidden',
+                        col.visible
+                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-500 text-indigo-950 font-bold shadow-xs'
+                          : 'bg-slate-50/80 border-slate-200 text-slate-700 font-semibold hover:border-indigo-200 hover:bg-indigo-50/30'
+                      )}
+                    >
+                      <span className="text-xs font-bold truncate">{col.label}</span>
+
+                      {/* Radiant Neon Switch */}
+                      <div className={cn(
+                        "w-8 h-4.5 rounded-full transition-all flex items-center px-0.5 shrink-0",
+                        col.visible ? "bg-gradient-to-r from-indigo-600 to-cyan-500 justify-end shadow-xs shadow-indigo-400/50" : "bg-slate-300 justify-start"
+                      )}>
+                        <div className="w-3.5 h-3.5 rounded-full bg-white shadow-xs" />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
+                <div className="p-8 text-center bg-indigo-50/40 rounded-2xl border border-indigo-100 relative z-10">
+                  <p className="text-xs font-mono text-slate-500">No telemetry fields match &quot;{columnSearch}&quot;</p>
+                  <button
+                    type="button"
+                    onClick={() => setColumnSearch('')}
+                    className="mt-2 text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    Reset Filter
+                  </button>
+                </div>
+              )}
+
+              {/* Aurora Footer */}
+              <div className="flex items-center justify-between border-t border-indigo-100 pt-4 relative z-10">
+                <button
+                  onClick={() => setColumns((prev) => prev.map((c) => ({ ...c, visible: false })))}
+                  className="text-xs font-semibold text-slate-500 hover:text-indigo-600 transition cursor-pointer"
+                >
+                  Reset Defaults
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCustomizeModal(false);
+                    setColumnSearch('');
+                    triggerToast('Column preferences saved.');
+                  }}
+                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:opacity-95 shadow-lg shadow-indigo-500/20 transition cursor-pointer"
+                >
+                  Save Layout
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* THEME 3: SOFT-FINTECH - Structured corporate data settings with crisp toggle switches */}
+          {theme !== 'glassmorphism' && theme !== 'aurora' && (
+            <div className="bg-white rounded-2xl max-w-xl w-full p-6 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+              {/* Corporate Fintech Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0">
+                    <Sliders className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">Customize Columns</h3>
+                    <p className="text-[11px] text-slate-500">Configure visible table fields</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCustomizeModal(false);
+                    setColumnSearch('');
+                  }}
+                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Corporate Action Bar with Search */}
+              <div className="flex items-center justify-between gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="relative flex-1 flex items-center min-w-0">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={columnSearch}
+                    onChange={(e) => setColumnSearch(e.target.value)}
+                    placeholder="Search columns..."
+                    className="w-full h-7 pl-7 pr-6 bg-transparent text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                  />
+                  {columnSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setColumnSearch('')}
+                      className="absolute right-1.5 p-0.5 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="checkbox-customize-columns-select-all"
+                      checked={columns.length > 0 && columns.every((c) => c.visible)}
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate = columns.some((c) => c.visible) && !columns.every((c) => c.visible);
+                        }
+                      }}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setColumns((prev) => prev.map((col) => ({ ...col, visible: checked })));
+                      }}
+                      className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-slate-800">
+                      Select All
+                    </span>
+                  </label>
+                  <span className="text-[11px] font-mono text-slate-500">
+                    {columns.filter((c) => c.visible).length}/{columns.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Structured 2-column list with sleek switches */}
+              <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto p-1 text-xs">
+                {columns
+                  .filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase()))
+                  .map((col) => (
+                    <div
+                      key={col.id}
+                      onClick={() => handleToggleColumn(col.id)}
+                      className={cn(
+                        'flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition select-none',
+                        col.visible
+                          ? 'bg-blue-50/80 border-2 border-blue-500 text-blue-950 font-semibold'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      )}
+                    >
+                      <span className="truncate">{col.label}</span>
+
+                      {/* Clean Switch Toggle */}
+                      <div className={cn(
+                        "w-7.5 h-4 rounded-full transition-colors flex items-center px-0.5 shrink-0",
+                        col.visible ? "bg-blue-600 justify-end" : "bg-slate-300 justify-start"
+                      )}>
+                        <div className="w-3 h-3 rounded-full bg-white shadow-2xs" />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
+                <div className="p-6 text-center bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-500">No columns match &quot;{columnSearch}&quot;</p>
+                  <button
+                    type="button"
+                    onClick={() => setColumnSearch('')}
+                    className="mt-1 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              )}
+
+              {/* Corporate Footer */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                <button
+                  onClick={() => setColumns((prev) => prev.map((c) => ({ ...c, visible: false })))}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 cursor-pointer"
+                >
+                  Reset to Default
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCustomizeModal(false);
+                    setColumnSearch('');
+                    triggerToast('Column preferences saved.');
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-xs transition cursor-pointer"
+                >
+                  Apply Changes
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Authorize Workflow Modal (CSO -> SR -> Manager) */}
       {authModalIndividual && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-5 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -1322,7 +2561,7 @@ export function IndividualListScreen({
 
       {/* Close Account Modal (For Active Accounts) */}
       {closeAccountIndividual && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -1411,7 +2650,7 @@ export function IndividualListScreen({
 
       {/* Delete Confirmation Modal */}
       {deletingId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-5 border border-slate-200 shadow-2xl space-y-3">
             <div className="flex items-center gap-2.5 text-rose-600 font-bold text-sm">
               <AlertTriangle className="w-5 h-5" />
