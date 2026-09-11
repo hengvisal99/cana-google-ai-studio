@@ -454,7 +454,7 @@ export function IndividualUpdateScreen({
                     type="text"
                     value={surnameKH}
                     onChange={(e) => setSurnameKH(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-khmer"
                   />
                 </div>
 
@@ -466,7 +466,7 @@ export function IndividualUpdateScreen({
                     type="text"
                     value={givenNameKH}
                     onChange={(e) => setGivenNameKH(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-khmer"
                   />
                 </div>
               </div>

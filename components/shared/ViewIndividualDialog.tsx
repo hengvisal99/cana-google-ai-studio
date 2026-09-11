@@ -210,7 +210,7 @@ export function ViewIndividualDialog({
                   {individual.fullNameEN || `${individual.firstName} ${individual.lastName}`}
                 </h2>
                 {individual.fullNameKH && (
-                  <span className="text-xs text-blue-600 font-semibold px-2 py-0.5 rounded-md bg-blue-50 border border-blue-100">
+                  <span className="text-xs text-blue-600 font-semibold px-2 py-0.5 rounded-md bg-blue-50 border border-blue-100 font-khmer">
                     {individual.fullNameKH}
                   </span>
                 )}
@@ -743,18 +743,7 @@ export function ViewIndividualDialog({
                               {/* Card Top Row: Stage Metadata & Status Badge */}
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                      Stage {String(idx + 1).padStart(2, '0')}
-                                    </span>
-                                    {item.stage && (
-                                      <>
-                                        <span className="text-slate-300">•</span>
-                                        <span className="text-[11px] font-semibold text-slate-600">{item.stage}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                  <h5 className="font-bold text-slate-900 text-sm mt-0.5">
+                                  <h5 className="font-bold text-slate-900 text-sm">
                                     {item.processedBy} <span className="font-medium text-slate-500">· {item.role}</span>
                                   </h5>
                                 </div>

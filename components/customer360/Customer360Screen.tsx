@@ -60,7 +60,6 @@ export function Customer360Screen({
   // Left Sidebar State
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [customerTab, setCustomerTab] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
-  const [sidebarUiVariant, setSidebarUiVariant] = useState<'classic' | 'bento' | 'minimal'>('classic');
 
   // Transaction History Filters (Dropdown layout)
   const [selectedIpoFilter, setSelectedIpoFilter] = useState<string>('ALL');
@@ -276,49 +275,6 @@ export function Customer360Screen({
               </span>
             </div>
 
-            {/* Sidebar View Toggle */}
-            <div className="flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setSidebarUiVariant('classic')}
-                title="V1: Classic Clean List"
-                className={cn(
-                  'flex-1 py-1 px-1.5 rounded-md text-[11px] font-bold transition-all text-center flex items-center justify-center gap-1',
-                  sidebarUiVariant === 'classic'
-                    ? 'bg-white text-blue-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                )}
-              >
-                <span>V1: List</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSidebarUiVariant('bento')}
-                title="V2: Ultra-Modern Bento Cards"
-                className={cn(
-                  'flex-1 py-1 px-1.5 rounded-md text-[11px] font-bold transition-all text-center flex items-center justify-center gap-1',
-                  sidebarUiVariant === 'bento'
-                    ? 'bg-white text-blue-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                )}
-              >
-                <span>V2: Bento</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSidebarUiVariant('minimal')}
-                title="V3: High-Density Minimalist Deck"
-                className={cn(
-                  'flex-1 py-1 px-1.5 rounded-md text-[11px] font-bold transition-all text-center flex items-center justify-center gap-1',
-                  sidebarUiVariant === 'minimal'
-                    ? 'bg-white text-blue-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                )}
-              >
-                <span>V3: Minimal</span>
-              </button>
-            </div>
-
             {/* Search: Customer ID (CID) & Full Name */}
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -406,281 +362,95 @@ export function Customer360Screen({
             </div>
           </div>
 
-          {/* Customer List Items */}
+          {/* Customer List Items: Bento UI */}
           {filteredCustomers.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400">
               No matching customer found.
             </div>
           ) : (
-            <>
-              {/* =======================================================================
-                  VARIANT 1: CLASSIC CLEAN LIST
-                 ======================================================================= */}
-              {sidebarUiVariant === 'classic' && (
-                <div className="divide-y divide-slate-100 max-h-[calc(100vh-290px)] min-h-[460px] overflow-y-auto">
-                  {filteredCustomers.map((ind) => {
-                    const isSelected = ind.id === activeIndividual.id;
-                    const status = ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
-                    const portVal = ind.totalDeposits > 0 ? ind.totalDeposits : 125000;
-                    
-                    return (
-                      <button
-                        key={ind.id}
-                        id={`sidebar-customer-item-${ind.id}`}
-                        type="button"
-                        onClick={() => onSelectCustomer(ind.id)}
-                        className={cn(
-                          'w-full text-left p-3.5 transition-all flex items-start gap-3 relative group cursor-pointer',
-                          isSelected
-                            ? 'bg-blue-50/90 text-blue-950 font-medium'
-                            : 'hover:bg-slate-50/80 text-slate-700'
-                        )}
-                      >
-                        {/* Active accent bar */}
-                        {isSelected && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r" />
-                        )}
+            <div className="p-2.5 space-y-2.5 bg-slate-50/50 max-h-[calc(100vh-290px)] min-h-[460px] overflow-y-auto">
+              {filteredCustomers.map((ind) => {
+                const isSelected = ind.id === activeIndividual.id;
+                const status = ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
+                const portVal = ind.totalDeposits > 0 ? ind.totalDeposits : 125000;
 
-                        {/* Profile Photo */}
-                        <div className="relative shrink-0 mt-0.5">
-                          <Image
-                            src={ind.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                            alt={ind.firstName}
-                            width={40}
-                            height={40}
-                            className={cn(
-                              'w-10 h-10 rounded-full object-cover border',
-                              isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200'
-                            )}
-                            referrerPolicy="no-referrer"
-                            unoptimized
-                          />
+                return (
+                  <button
+                    key={ind.id}
+                    id={`sidebar-customer-item-${ind.id}`}
+                    type="button"
+                    onClick={() => onSelectCustomer(ind.id)}
+                    className={cn(
+                      'w-full text-left p-3 rounded-xl transition-all relative group cursor-pointer border',
+                      isSelected
+                        ? 'bg-gradient-to-br from-blue-50/90 via-indigo-50/30 to-white border-blue-500 ring-2 ring-blue-500/10 shadow-xs'
+                        : 'bg-white hover:bg-slate-50/90 border-slate-200 hover:border-blue-200 shadow-2xs'
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      {/* Squircle Avatar */}
+                      <div className="relative shrink-0">
+                        <Image
+                          src={ind.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                          alt={ind.firstName}
+                          width={40}
+                          height={40}
+                          className={cn(
+                            'w-9 h-9 rounded-xl object-cover border',
+                            isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200'
+                          )}
+                          referrerPolicy="no-referrer"
+                          unoptimized
+                        />
+                        <span className={cn(
+                          'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white',
+                          status === 'Active' ? 'bg-emerald-500 ring-1 ring-emerald-300' : status === 'Closed' ? 'bg-rose-500' : 'bg-amber-500'
+                        )} />
+                      </div>
+
+                      {/* Primary Details */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
                           <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white',
-                            status === 'Active' ? 'bg-emerald-500' : status === 'Closed' ? 'bg-rose-500' : 'bg-amber-500'
-                          )} />
-                        </div>
-
-                        {/* Customer Info */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={cn(
-                              'text-xs font-bold truncate',
-                              isSelected ? 'text-blue-700' : 'text-slate-900 group-hover:text-blue-600'
-                            )}>
-                              {ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
-                            </span>
-                            <span className={cn(
-                              'text-[10px] font-bold px-1.5 py-0.2 rounded shrink-0',
-                              status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : status === 'Closed'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            )}>
-                              {status}
-                            </span>
-                          </div>
-
-                          {/* Khmer name and CID */}
-                          <div className="flex items-center justify-between mt-0.5 text-[11px] text-slate-500">
-                            <span className="truncate">{ind.fullNameKH || `${ind.surnameKH || ''} ${ind.givenNameKH || ''}`}</span>
-                            <span className="font-mono text-[10px] text-slate-400 font-semibold ml-1 shrink-0">
-                              {ind.customerId || ind.id}
-                            </span>
-                          </div>
-
-                          {/* Portfolio Value */}
-                          <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-slate-100 text-[11px]">
-                            <span className="text-slate-400 text-[10px] uppercase font-semibold">Portfolio</span>
-                            <span className="font-mono font-bold text-slate-800">
-                              ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* =======================================================================
-                  VARIANT 2: ULTRA-MODERN BENTO CARDS
-                 ======================================================================= */}
-              {sidebarUiVariant === 'bento' && (
-                <div className="p-2.5 space-y-2.5 bg-slate-50/50 max-h-[calc(100vh-290px)] min-h-[460px] overflow-y-auto">
-                  {filteredCustomers.map((ind) => {
-                    const isSelected = ind.id === activeIndividual.id;
-                    const status = ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
-                    const portVal = ind.totalDeposits > 0 ? ind.totalDeposits : 125000;
-
-                    return (
-                      <button
-                        key={ind.id}
-                        type="button"
-                        onClick={() => onSelectCustomer(ind.id)}
-                        className={cn(
-                          'w-full text-left p-3 rounded-xl transition-all relative group cursor-pointer border',
-                          isSelected
-                            ? 'bg-gradient-to-br from-blue-50/90 via-indigo-50/30 to-white border-blue-500 ring-2 ring-blue-500/10 shadow-xs'
-                            : 'bg-white hover:bg-slate-50/90 border-slate-200 hover:border-blue-200 shadow-2xs'
-                        )}
-                      >
-                        <div className="flex items-start gap-2.5">
-                          {/* Squircle Avatar */}
-                          <div className="relative shrink-0">
-                            <Image
-                              src={ind.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                              alt={ind.firstName}
-                              width={40}
-                              height={40}
-                              className={cn(
-                                'w-9 h-9 rounded-xl object-cover border',
-                                isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200'
-                              )}
-                              referrerPolicy="no-referrer"
-                              unoptimized
-                            />
-                            <span className={cn(
-                              'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white',
-                              status === 'Active' ? 'bg-emerald-500 ring-1 ring-emerald-300' : status === 'Closed' ? 'bg-rose-500' : 'bg-amber-500'
-                            )} />
-                          </div>
-
-                          {/* Primary Details */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className={cn(
-                                'text-xs font-bold truncate',
-                                isSelected ? 'text-blue-800' : 'text-slate-900 group-hover:text-blue-600'
-                              )}>
-                                {ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
-                              </span>
-                              <span className={cn(
-                                'text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0',
-                                status === 'Active'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : status === 'Closed'
-                                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-                              )}>
-                                {status}
-                              </span>
-                            </div>
-
-                            <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                              {ind.fullNameKH || `${ind.surnameKH || ''} ${ind.givenNameKH || ''}`}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Bento Card Footer Micro-Bar */}
-                        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[11px]">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                            {ind.customerId || ind.id}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-slate-400 text-[10px] font-medium">Port:</span>
-                            <span className="font-mono font-bold text-slate-800">
-                              ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* =======================================================================
-                  VARIANT 3: HIGH-DENSITY MINIMALIST COMMAND DECK (LIGHT MODE)
-                 ======================================================================= */}
-              {sidebarUiVariant === 'minimal' && (
-                <div className="p-2 space-y-1.5 max-h-[calc(100vh-290px)] min-h-[460px] overflow-y-auto">
-                  {filteredCustomers.map((ind) => {
-                    const isSelected = ind.id === activeIndividual.id;
-                    const status = ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
-                    const portVal = ind.totalDeposits > 0 ? ind.totalDeposits : 125000;
-
-                    return (
-                      <button
-                        key={ind.id}
-                        type="button"
-                        onClick={() => onSelectCustomer(ind.id)}
-                        className={cn(
-                          'w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 relative group cursor-pointer border',
-                          isSelected
-                            ? 'bg-blue-50/90 hover:bg-blue-50 text-slate-900 border-blue-300 shadow-2xs ring-1 ring-blue-500/20'
-                            : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200/80 hover:border-slate-300'
-                        )}
-                      >
-                        {/* Micro Avatar with indicator */}
-                        <div className="relative shrink-0">
-                          <Image
-                            src={ind.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                            alt={ind.firstName}
-                            width={34}
-                            height={34}
-                            className={cn(
-                              'w-8 h-8 rounded-full object-cover border',
-                              isSelected ? 'border-blue-400 ring-2 ring-blue-500/20' : 'border-slate-200'
-                            )}
-                            referrerPolicy="no-referrer"
-                            unoptimized
-                          />
-                          <span className={cn(
-                            'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white',
-                            status === 'Active' ? 'bg-emerald-500' : status === 'Closed' ? 'bg-rose-500' : 'bg-amber-500'
-                          )} />
-                        </div>
-
-                        {/* Center Name & CID */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={cn(
-                              'text-xs font-bold truncate',
-                              isSelected ? 'text-blue-950' : 'text-slate-900 group-hover:text-blue-600'
-                            )}>
-                              {ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1 text-[10px]">
-                            <span className={cn('truncate font-medium', isSelected ? 'text-blue-700/80' : 'text-slate-500')}>
-                              {ind.fullNameKH || `${ind.surnameKH || ''} ${ind.givenNameKH || ''}`}
-                            </span>
-                            <span className={cn('font-mono font-medium', isSelected ? 'text-blue-600/70' : 'text-slate-400')}>
-                              · {ind.customerId || ind.id}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Right Portfolio & Status */}
-                        <div className="shrink-0 text-right">
-                          <div className={cn(
-                            'font-mono text-[11px] font-bold',
-                            isSelected ? 'text-blue-700' : 'text-slate-800'
+                            'text-xs font-bold truncate',
+                            isSelected ? 'text-blue-800' : 'text-slate-900 group-hover:text-blue-600'
                           )}>
-                            ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
+                            {ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
+                          </span>
                           <span className={cn(
-                            'text-[9px] font-bold px-1.5 py-0.2 rounded inline-block',
-                            isSelected
-                              ? status === 'Active'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300/80'
-                                : 'bg-rose-100 text-rose-800 border border-rose-300/80'
-                              : status === 'Active'
+                            'text-[10px] font-bold px-1.5 py-0.2 rounded-md shrink-0',
+                            status === 'Active'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : status === 'Closed'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
                           )}>
                             {status}
                           </span>
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </>
+
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5 font-khmer">
+                          {ind.fullNameKH || `${ind.surnameKH || ''} ${ind.givenNameKH || ''}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bento Card Footer Micro-Bar */}
+                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[11px]">
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                        {ind.customerId || ind.id}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400 text-[10px] font-medium">Port:</span>
+                        <span className="font-mono font-bold text-slate-800">
+                          ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </aside>
 

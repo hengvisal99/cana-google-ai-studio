@@ -203,7 +203,7 @@ export function SoftFintechShell({
             id="soft-fintech-header"
             className="sticky top-0 z-20 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between gap-4 shadow-xs"
           >
-            {/* Left: Sidebar Toggle + Breadcrumb Title */}
+            {/* Left: Sidebar Toggle */}
             <div className="flex items-center gap-3 min-w-0">
               <button
                 id="soft-fintech-sidebar-toggle"
@@ -213,19 +213,6 @@ export function SoftFintechShell({
               >
                 <Menu className="w-4 h-4" />
               </button>
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                  <span>Nexus</span>
-                  <span>/</span>
-                  <span className="text-slate-600">Operations</span>
-                  <span>/</span>
-                  <span className="text-blue-600 font-semibold">{getPageTitle()}</span>
-                </div>
-                <h1 className="text-base font-bold text-slate-900 tracking-tight truncate">
-                  {getPageTitle()}
-                </h1>
-              </div>
             </div>
 
             {/* Right: Switch Application + Theme Selector + Language + User Profile */}

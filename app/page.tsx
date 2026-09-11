@@ -22,13 +22,12 @@ import { IndividualListScreen } from '@/components/individual/IndividualListScre
 import { IndividualInsertScreen } from '@/components/individual/IndividualInsertScreen';
 import { IndividualUpdateScreen } from '@/components/individual/IndividualUpdateScreen';
 
-// Dialog & Fixed Switcher
+// Dialog Modal
 import { ViewIndividualDialog } from '@/components/shared/ViewIndividualDialog';
-import { ThemeSwitcherButton } from '@/components/shared/ThemeSwitcherButton';
 
 export default function Home() {
-  // Global Design Theme State (Soft FinTech, Glassmorphism, Aurora)
-  const [currentTheme, setCurrentTheme] = useState<DesignTheme>('soft-fintech');
+  // Global Design Theme State (Glassmorphism)
+  const [currentTheme, setCurrentTheme] = useState<DesignTheme>('glassmorphism');
 
   // Navigation State (Dashboard, Customer 360, Individual: List, Insert, Update)
   const [currentPage, setCurrentPage] = useState<NavigationPage>('dashboard');
@@ -365,12 +364,6 @@ export default function Home() {
         onAuthorizeIndividual={handleAuthorizeIndividual}
         onCloseAccountIndividual={handleCloseAccountIndividual}
         theme={currentTheme}
-      />
-
-      {/* Fixed Theme-Switcher Button (Requested in Prompt) */}
-      <ThemeSwitcherButton
-        currentTheme={currentTheme}
-        onThemeChange={setCurrentTheme}
       />
     </>
   );

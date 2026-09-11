@@ -34,14 +34,20 @@ import {
   X, 
   FileText, 
   User, 
-  UserPlus,
+  UserPlus, 
   Lock, 
   Check,
   UserCheck,
   ChevronRight,
   Sparkles,
   Sliders,
-  Layers
+  Layers,
+  Zap,
+  SlidersHorizontal,
+  LayoutGrid,
+  Sun,
+  Globe,
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -100,6 +106,9 @@ export function IndividualListScreen({
   onReload,
   theme,
 }: IndividualListScreenProps) {
+  // Light Mode Theme State: 'reference' | 'neo-prism' | 'nordic-studio' | 'command-matrix'
+  const [lightTheme, setLightTheme] = useState<'reference' | 'neo-prism' | 'nordic-studio' | 'command-matrix'>('reference');
+
   // Status Tab filter: Approved | Resubmit | Pending | Rejected | All
   const [statusTab, setStatusTab] = useState<'ALL' | RequestStatus>('ALL');
 
@@ -168,9 +177,6 @@ export function IndividualListScreen({
 
   // Delete Confirmation Modal state
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  // Request Column Layout State: 'stepper' (connected nodes) | 'bar' (segmented progress bar)
-  const [requestColumnLayout, setRequestColumnLayout] = useState<'stepper' | 'bar'>('bar');
 
   // Status Tab counts
   const countAll = individuals.length;
@@ -395,245 +401,93 @@ export function IndividualListScreen({
   };
 
   const renderRequestBadge = (item: Individual) => {
-    const isClose = item.requestType === 'Close Account';
     const isApproved = item.requestStatus === 'Approved' || item.currentWorkflowStage === 'Approved';
     const isRejected = item.requestStatus === 'Rejected' || item.currentWorkflowStage === 'Rejected';
     const isResubmit = item.requestStatus === 'Resubmit' || item.currentWorkflowStage === 'Resubmit';
-    const isPendingSR = item.currentWorkflowStage === 'SR' && item.requestStatus === 'Pending';
-    const isPendingManager = item.currentWorkflowStage === 'Manager' && item.requestStatus === 'Pending';
+    const isPending = item.requestStatus === 'Pending' || (!isApproved && !isRejected && !isResubmit);
 
-    // Extract authorization history if available
-    const history = item.authorizationHistory || [];
-    const csoItem = history.find(h => h.role === 'CSO' || h.stage?.includes('Submit')) || history[0];
-    const srItem = history.find(h => h.role === 'SR') || history[1];
-    const managerItem = history.find(h => h.role === 'Manager') || history[2];
-
-    // CSO Details
-    const csoOfficer = csoItem?.processedBy || 'Sophea Keo';
-    const csoDate = csoItem?.dateTime || 'Mar 15, 2026 · 09:30 AM';
-    const csoStatusText = 'Submitted';
-    const csoStatusColor = 'text-emerald-600';
-    const csoBarColor = 'bg-emerald-500';
-
-    // SR Details & State
-    let srStatusText = 'Approved';
-    let srStatusColor = 'text-emerald-600';
-    let srBarColor = 'bg-emerald-500';
-    let srOfficer = srItem?.processedBy || item.tradingAccountInfo?.currentAssignedSR || 'Dara Vong';
-    let srDate = srItem?.dateTime || 'Mar 17, 2026 · 02:45 PM';
-
-    if (isPendingSR) {
-      srStatusText = 'Pending';
-      srStatusColor = 'text-amber-600 font-bold';
-      srBarColor = 'bg-amber-500';
-    } else if (isResubmit && item.currentWorkflowStage === 'SR') {
-      srStatusText = 'Resubmit';
-      srStatusColor = 'text-amber-600 font-bold';
-      srBarColor = 'bg-amber-500';
-    } else if (isRejected && item.currentWorkflowStage === 'SR') {
-      srStatusText = 'Rejected';
-      srStatusColor = 'text-rose-600 font-bold';
-      srBarColor = 'bg-rose-500';
-    }
-
-    // Manager Details & State
-    let managerStatusText = 'Approved';
-    let managerStatusColor = 'text-emerald-600';
-    let managerBarColor = 'bg-emerald-500';
-    let managerOfficer = managerItem?.processedBy || item.tradingAccountInfo?.accountApprovedBy || 'Vannak Lim';
-    let managerDate = managerItem?.dateTime || 'Mar 18, 2026 · 04:20 PM';
+    const requestType = item.requestType || 'Registration';
+    const stage = item.currentWorkflowStage || 'SR';
 
     if (isApproved) {
-      managerStatusText = 'Approved';
-      managerStatusColor = 'text-emerald-600 font-bold';
-      managerBarColor = 'bg-emerald-500';
-    } else if (isPendingManager) {
-      managerStatusText = 'Pending';
-      managerStatusColor = 'text-amber-600 font-bold';
-      managerBarColor = 'bg-amber-500';
-    } else if (isRejected) {
-      managerStatusText = 'Rejected';
-      managerStatusColor = 'text-rose-600 font-bold';
-      managerBarColor = 'bg-rose-500';
-    } else if (isResubmit) {
-      managerStatusText = 'Resubmit';
-      managerStatusColor = 'text-amber-600 font-bold';
-      managerBarColor = 'bg-amber-500';
-    } else if (isPendingSR) {
-      managerStatusText = 'Waiting';
-      managerStatusColor = 'text-slate-400';
-      managerBarColor = 'bg-slate-200';
-      managerOfficer = '—';
-      managerDate = 'Pending SR';
-    }
-
-    // Reason extraction
-    const rejectionReason = history.find(h => h.reason)?.reason || (isRejected ? 'Customer address does not match the supporting document.' : undefined);
-    const resubmitReason = isResubmit ? (history.find(h => h.status === 'Resubmit')?.comment || 'Additional supporting documents required for review.') : undefined;
-
-
-    // -------------------------------------------------------------
-    // VERSION 1: CONNECTED NODE STEPPER UI
-    // -------------------------------------------------------------
-    if (requestColumnLayout === 'stepper') {
       return (
-        <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs transition-all flex items-start gap-3 min-w-[380px] max-w-[460px] select-none text-left">
-          {/* Left Request Type Icon Box */}
-          {isClose ? (
-            <div 
-              className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shrink-0 shadow-2xs mt-0.5"
-              title="Close Account Request"
-            >
-              <Lock className="w-5 h-5" />
-            </div>
-          ) : (
-            <div 
-              className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5"
-              title="Registration Request"
-            >
-              <UserPlus className="w-5 h-5" />
-            </div>
-          )}
-
-          {/* Stepper Pipeline */}
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Step Nodes & Connectors */}
-            <div className="flex items-center justify-between gap-1">
-              {/* CSO Node */}
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-300">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-bold text-slate-800 leading-tight">CSO</div>
-                  <div className="text-[10px] font-semibold text-emerald-600 leading-tight">Submitted</div>
-                  <div className="text-[9px] text-slate-500 truncate" title={csoOfficer}>{csoOfficer}</div>
-                </div>
-              </div>
-
-              {/* Connector 1 */}
-              <div className="w-6 h-0.5 bg-emerald-300 shrink-0 -mt-3" />
-
-              {/* SR Node */}
-              <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
-                {isPendingSR ? (
-                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-300">
-                    <Clock className="w-3 h-3" />
-                  </div>
-                ) : isRejected && item.currentWorkflowStage === 'SR' ? (
-                  <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-300">
-                    <X className="w-3 h-3 stroke-[3]" />
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-300">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-bold text-slate-800 leading-tight">SR</div>
-                  <div className={cn("text-[10px] font-semibold leading-tight", srStatusColor)}>{srStatusText}</div>
-                  <div className="text-[9px] text-slate-500 truncate" title={srOfficer}>{srOfficer}</div>
-                </div>
-              </div>
-
-              {/* Connector 2 */}
-              <div className={cn("w-6 h-0.5 shrink-0 -mt-3", isPendingSR ? "bg-slate-200" : isRejected && item.currentWorkflowStage === 'SR' ? "bg-rose-200" : "bg-emerald-300")} />
-
-              {/* Manager Node */}
-              <div className="flex items-center gap-1.5 min-w-0 flex-1 pl-1">
-                {isApproved ? (
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-300">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </div>
-                ) : isPendingManager ? (
-                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-300">
-                    <Clock className="w-3 h-3" />
-                  </div>
-                ) : isRejected ? (
-                  <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-300">
-                    <X className="w-3 h-3 stroke-[3]" />
-                  </div>
-                ) : isResubmit ? (
-                  <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-300">
-                    <AlertCircle className="w-3 h-3" />
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0 border border-slate-300">
-                    <Clock className="w-3 h-3" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-bold text-slate-800 leading-tight">Manager</div>
-                  <div className={cn("text-[10px] font-semibold leading-tight", managerStatusColor)}>{managerStatusText}</div>
-                  <div className="text-[9px] text-slate-500 truncate" title={managerOfficer}>{managerOfficer}</div>
-                </div>
-              </div>
-            </div>
+        <div className="flex items-start gap-2.5 select-none text-left py-0.5">
+          <div className="mt-0.5 shrink-0 text-emerald-600">
+            <Check className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[13px] font-bold text-slate-900 leading-tight">
+              Approved
+            </span>
+            <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
+              {requestType}
+            </span>
           </div>
         </div>
       );
     }
 
-    // -------------------------------------------------------------
-    // VERSION 2: SEGMENTED PROGRESS BAR UI
-    // -------------------------------------------------------------
+    if (isPending) {
+      return (
+        <div className="flex items-start gap-2.5 select-none text-left py-0.5">
+          <div className="mt-0.5 shrink-0 text-amber-600">
+            <Clock className="w-4 h-4 text-amber-600" strokeWidth={2.2} />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1 leading-tight">
+              <span className="text-[13px] font-bold text-slate-900">
+                Pending
+              </span>
+              <span className="text-slate-400 font-semibold text-xs">·</span>
+              <span className="text-slate-600 font-semibold text-xs">{stage}</span>
+            </div>
+            <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
+              {requestType}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    if (isRejected) {
+      return (
+        <div className="flex items-start gap-2.5 select-none text-left py-0.5">
+          <div className="mt-0.5 shrink-0 text-rose-600">
+            <X className="w-4 h-4 text-rose-600" strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1 leading-tight">
+              <span className="text-[13px] font-bold text-slate-900">
+                Rejected
+              </span>
+              <span className="text-slate-400 font-semibold text-xs">·</span>
+              <span className="text-slate-600 font-semibold text-xs">{stage}</span>
+            </div>
+            <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
+              {requestType}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Resubmit state
     return (
-      <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs transition-all flex items-start gap-3 min-w-[380px] max-w-[460px] select-none text-left">
-        {/* Left Request Type Icon Box */}
-        {isClose ? (
-          <div 
-            className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center justify-center text-rose-600 shrink-0 shadow-2xs mt-0.5"
-            title="Close Account Request"
-          >
-            <Lock className="w-5 h-5" />
+      <div className="flex items-start gap-2.5 select-none text-left py-0.5">
+        <div className="mt-0.5 shrink-0 text-amber-600">
+          <Clock className="w-4 h-4 text-amber-600" strokeWidth={2.2} />
+        </div>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1 leading-tight">
+            <span className="text-[13px] font-bold text-slate-900">
+              Resubmit
+            </span>
+            <span className="text-slate-400 font-semibold text-xs">·</span>
+            <span className="text-slate-600 font-semibold text-xs">{stage}</span>
           </div>
-        ) : (
-          <div 
-            className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5"
-            title="Registration Request"
-          >
-            <UserPlus className="w-5 h-5" />
-          </div>
-        )}
-
-        {/* Right Content: Segmented Progress Bars & 3-Column Stages */}
-        <div className="flex-1 min-w-0 space-y-2">
-          {/* Top: 3 Segmented Horizontal Progress Bars */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
-            <div className={cn("h-1.5 rounded-full shadow-2xs transition-all", csoBarColor)} />
-            <div className={cn("h-1.5 rounded-full shadow-2xs transition-all", srBarColor)} />
-            <div className={cn("h-1.5 rounded-full shadow-2xs transition-all", managerBarColor)} />
-          </div>
-
-          {/* Bottom: 3 Aligned Stage Details */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
-            {/* Stage 1: CSO */}
-            <div className="min-w-0">
-              <div className="font-bold text-slate-900 text-xs leading-tight">CSO</div>
-              <div className={cn("text-[10px] font-bold leading-tight", csoStatusColor)}>{csoStatusText}</div>
-              <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5" title={csoOfficer}>
-                {csoOfficer}
-              </div>
-            </div>
-
-            {/* Stage 2: SR */}
-            <div className="min-w-0">
-              <div className="font-bold text-slate-900 text-xs leading-tight">SR</div>
-              <div className={cn("text-[10px] font-bold leading-tight", srStatusColor)}>{srStatusText}</div>
-              <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5" title={srOfficer}>
-                {srOfficer}
-              </div>
-            </div>
-
-            {/* Stage 3: Manager */}
-            <div className="min-w-0">
-              <div className="font-bold text-slate-900 text-xs leading-tight">Manager</div>
-              <div className={cn("text-[10px] font-bold leading-tight", managerStatusColor)}>{managerStatusText}</div>
-              <div className="text-[10px] text-slate-600 font-medium truncate mt-0.5" title={managerOfficer}>
-                {managerOfficer}
-              </div>
-            </div>
-          </div>
+          <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
+            {requestType}
+          </span>
         </div>
       </div>
     );
@@ -652,978 +506,358 @@ export function IndividualListScreen({
       {/* ========================================================================= */}
       {/* THEME 1: SOFT-FINTECH (Institutional Banking / Bloomberg Terminal Layout) */}
       {/* ========================================================================= */}
-      {theme !== 'glassmorphism' && theme !== 'aurora' && (
-        <div className="space-y-4">
-          {/* Institutional Top Header */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
-                    Individual Directory
-                  </h1>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
-                </p>
-              </div>
-
-              {/* Grouped Enterprise Toolbar */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs divide-x divide-slate-100">
-                  {/* Reload */}
-                  <button
-                    id="btn-individual-reload"
-                    onClick={handleReloadClick}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
-                    title="Reload data from server"
-                  >
-                    <RotateCw className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Reload</span>
-                  </button>
-
-                  {/* Filter Toggle */}
-                  <button
-                    id="btn-individual-filter-toggle"
-                    onClick={() => setShowFilterPanel(!showFilterPanel)}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition',
-                      showFilterPanel
-                        ? 'bg-blue-50 text-blue-700 font-bold'
-                        : 'text-slate-700 hover:bg-slate-50'
-                    )}
-                  >
-                    <Filter className="w-3.5 h-3.5" />
-                    <span>Filter</span>
-                    {hasActiveFilters && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                    )}
-                  </button>
-
-                  {/* Columns */}
-                  <button
-                    id="btn-individual-customize-columns"
-                    onClick={() => setShowCustomizeModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                    title="Configure Table Columns"
-                  >
-                    <Columns className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Columns</span>
-                    {columns.filter((c) => c.visible).length > 0 && (
-                      <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-blue-100 text-blue-700">
-                        {columns.filter((c) => c.visible).length}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Export */}
-                  <div className="relative group">
-                    <button
-                      id="btn-individual-export"
-                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                    >
-                      <Download className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Export</span>
-                    </button>
-                    <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-lg hidden group-hover:block z-20 py-1 text-xs">
-                      <button
-                        onClick={() => handleExport('csv')}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
-                      >
-                        Export as CSV
-                      </button>
-                      <button
-                        onClick={() => handleExport('json')}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
-                      >
-                        Export as JSON
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-
-                {/* Primary Add New Button */}
-                <button
-                  id="btn-individual-add-new"
-                  onClick={onNavigateToInsert}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Individual</span>
-                </button>
-              </div>
+      {/* ========================================================================= */}
+      {/* UNIFIED DIRECTORY HEADER & ACTION BAR                                      */}
+      {/* ========================================================================= */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
+                Individual Directory
+              </h1>
             </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
+            </p>
           </div>
 
-          {/* Institutional Status Tabs & Search Split */}
-          <div
-            id="individual-tabs-search-row"
-            className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3"
-          >
-            {/* Terminal Segmented Tabs */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none p-1 bg-slate-100 rounded-lg border border-slate-200/80 shrink-0">
+          {/* Grouped Enterprise Toolbar */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-0.5 shadow-2xs divide-x divide-slate-100">
+              {/* Reload */}
               <button
-                onClick={() => setStatusTab('ALL')}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
-                  statusTab === 'ALL'
-                    ? 'bg-white text-blue-700 shadow-2xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                )}
+                id="btn-individual-reload"
+                onClick={handleReloadClick}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition rounded-l-lg cursor-pointer"
+                title="Reload data from server"
               >
-                <span>All Requests</span>
-                <span className={cn(
-                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
-                  statusTab === 'ALL' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countAll}
-                </span>
+                <RotateCw className="w-3.5 h-3.5 text-slate-500" />
+                <span>Reload</span>
               </button>
 
+              {/* Filter */}
               <button
-                onClick={() => setStatusTab('Approved')}
+                id="btn-individual-filter-toggle"
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
-                  statusTab === 'Approved'
-                    ? 'bg-white text-emerald-700 shadow-2xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                  'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition cursor-pointer',
+                  showFilterPanel
+                    ? 'bg-blue-50 text-blue-700 font-bold'
+                    : 'text-slate-700 hover:bg-slate-50'
                 )}
+                title="Toggle Filters"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Approved</span>
-                <span className={cn(
-                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
-                  statusTab === 'Approved' ? 'bg-emerald-50 text-emerald-700 font-bold' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countApproved}
-                </span>
+                <Filter className="w-3.5 h-3.5 text-slate-500" />
+                <span>Filter</span>
+                {hasActiveFilters && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                )}
               </button>
 
+              {/* Columns */}
               <button
-                onClick={() => setStatusTab('Resubmit')}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
-                  statusTab === 'Resubmit'
-                    ? 'bg-white text-amber-700 shadow-2xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                )}
+                id="btn-individual-customize-columns"
+                onClick={() => setShowCustomizeModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                title="Configure Table Columns"
               >
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                <span>Resubmit</span>
-                <span className={cn(
-                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
-                  statusTab === 'Resubmit' ? 'bg-amber-50 text-amber-700 font-bold' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countResubmit}
-                </span>
+                <Columns className="w-3.5 h-3.5 text-slate-500" />
+                <span>Columns</span>
+                {columns.filter((c) => c.visible).length > 0 && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-blue-100 text-blue-700">
+                    {columns.filter((c) => c.visible).length}
+                  </span>
+                )}
               </button>
 
-              <button
-                onClick={() => setStatusTab('Pending')}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
-                  statusTab === 'Pending'
-                    ? 'bg-white text-blue-700 shadow-2xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                )}
-              >
-                <Clock className="w-3.5 h-3.5 text-blue-500" />
-                <span>Pending</span>
-                <span className={cn(
-                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
-                  statusTab === 'Pending' ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countPending}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Rejected')}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition shrink-0 cursor-pointer',
-                  statusTab === 'Rejected'
-                    ? 'bg-white text-rose-700 shadow-2xs border border-slate-200/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                )}
-              >
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                <span>Rejected</span>
-                <span className={cn(
-                  'px-1.5 py-0.2 rounded text-[10px] font-mono',
-                  statusTab === 'Rejected' ? 'bg-rose-50 text-rose-700 font-bold' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countRejected}
-                </span>
-              </button>
-            </div>
-
-            {/* Terminal Search Box */}
-            <div className="relative flex-1 max-w-md w-full">
-              <div className="flex items-stretch rounded-lg border border-slate-300 hover:border-slate-400 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 bg-white shadow-2xs transition-all h-9.5">
+              {/* Export */}
+              <div className="relative group">
                 <button
-                  type="button"
-                  id="btn-search-by-dropdown"
-                  onClick={() => setIsSearchByOpen(!isSearchByOpen)}
-                  className="flex items-center gap-1.5 px-3 bg-slate-50 hover:bg-slate-100 border-r border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider rounded-l-lg transition shrink-0 select-none cursor-pointer"
+                  id="btn-individual-export"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition rounded-r-lg cursor-pointer"
                 >
-                  <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
-                  {isSearchByOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                  )}
+                  <Download className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Export</span>
                 </button>
-
-                <div className="relative flex-1 flex items-center min-w-0 bg-transparent">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
-                  <input
-                    id="individual-search-input"
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
-                    className="w-full h-full pl-9 pr-8 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-mono uppercase tracking-wider focus:outline-none"
-                  />
-                  {searchTerm && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-2.5 p-0.5 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
-                      title="Clear search"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg hidden group-hover:block z-20 py-1 text-xs">
+                  <button
+                    onClick={() => handleExport('csv')}
+                    className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
+                  >
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={() => handleExport('json')}
+                    className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
+                  >
+                    Export as JSON
+                  </button>
                 </div>
               </div>
-
-              {/* Dropdown Popup Menu */}
-              {isSearchByOpen && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsSearchByOpen(false)} 
-                  />
-                  <div className="absolute right-0 top-full mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95">
-                    <div className="space-y-0.5">
-                      {SEARCH_FIELD_OPTIONS.map((opt) => {
-                        const isSelected = searchBy === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setSearchBy(opt.id);
-                              setIsSearchByOpen(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center justify-between px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer",
-                              isSelected
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                            )}
-                          >
-                            <span>{opt.label}</span>
-                            {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
-          </div>
 
-          {/* Collapsible Corporate Filter Console */}
-          {showFilterPanel && (
-            <div
-              id="individual-filter-section"
-              className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3"
+            {/* Primary Add New Button */}
+            <button
+              id="btn-individual-add-new"
+              onClick={onNavigateToInsert}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition cursor-pointer"
             >
-              {(hasActiveFilters || searchTerm) && (
-                <div className="flex items-center justify-end border-b border-slate-100 pb-2.5">
-                  <button
-                    onClick={handleResetFilters}
-                    className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Reset Query Filters
-                  </button>
-                </div>
+              <Plus className="w-4 h-4" />
+              <span>Add Individual</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* LIGHT MODE THEME TOGGLE (OUTSIDE THE MAIN CARD)                           */}
+      {/* ========================================================================= */}
+      <div 
+        id="light-mode-theme-toggle-bar"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-white border border-slate-200/90 rounded-2xl px-5 py-3.5 shadow-2xs"
+      >
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-slate-700 shrink-0">
+            <Sun className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+              Light Mode Themes:
+            </span>
+          </div>
+
+          <div className="inline-flex items-center p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl shadow-inner-xs flex-wrap gap-1">
+            {/* 1. Reference (Current) */}
+            <button
+              type="button"
+              id="btn-theme-reference"
+              onClick={() => setLightTheme('reference')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer select-none',
+                lightTheme === 'reference'
+                  ? 'bg-white text-blue-600 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               )}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>1. Reference (Default)</span>
+            </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Gender</label>
-                  <select
-                    value={genderFilter}
-                    onChange={(e) => setGenderFilter(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
-                  >
-                    <option value="ALL">All Genders</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+            {/* 2. Neo-Prism */}
+            <button
+              type="button"
+              id="btn-theme-neo-prism"
+              onClick={() => setLightTheme('neo-prism')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer select-none',
+                lightTheme === 'neo-prism'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              )}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>2. Neo-Prism</span>
+            </button>
 
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Marital Status</label>
-                  <select
-                    value={maritalFilter}
-                    onChange={(e) => setMaritalFilter(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
-                  >
-                    <option value="ALL">All Marital Statuses</option>
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                    <option value="Widowed">Widowed</option>
-                  </select>
-                </div>
+            {/* 3. Nordic Studio */}
+            <button
+              type="button"
+              id="btn-theme-nordic-studio"
+              onClick={() => setLightTheme('nordic-studio')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer select-none',
+                lightTheme === 'nordic-studio'
+                  ? 'bg-slate-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              )}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>3. Nordic Studio</span>
+            </button>
 
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Nationality</label>
-                  <select
-                    value={nationalityFilter}
-                    onChange={(e) => setNationalityFilter(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
-                  >
-                    <option value="ALL">All Nationalities</option>
-                    {uniqueNationalities.map((nat) => (
-                      <option key={nat} value={nat}>{nat}</option>
-                    ))}
-                  </select>
-                </div>
+            {/* 4. Command Matrix */}
+            <button
+              type="button"
+              id="btn-theme-command-matrix"
+              onClick={() => setLightTheme('command-matrix')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer select-none',
+                lightTheme === 'command-matrix'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              )}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300" />
+              <span>4. Command Matrix</span>
+            </button>
+          </div>
+        </div>
 
-                <div>
-                  <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">Request Type</label>
-                  <select
-                    value={requestTypeFilter}
-                    onChange={(e) => setRequestTypeFilter(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium"
-                  >
-                    <option value="ALL">All Request Types</option>
-                    <option value="Registration">Registration</option>
-                    <option value="Close Account">Close Account</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+        <div className="text-[11px] text-slate-500 font-medium hidden lg:flex items-center gap-1.5">
+          {lightTheme === 'reference' && (
+            <span className="text-slate-600 font-medium">1. Classic reference light layout with soft capsule rail</span>
+          )}
+          {lightTheme === 'neo-prism' && (
+            <span className="text-blue-700 font-medium">2. Executive modern light with glowing status dots & obsidian search</span>
+          )}
+          {lightTheme === 'nordic-studio' && (
+            <span className="text-blue-900 font-medium">3. High-definition royal blue studio styling with frosty capsule rails</span>
+          )}
+          {lightTheme === 'command-matrix' && (
+            <span className="text-indigo-700 font-medium">4. Linear precision light layout with indigo accents & monospace counts</span>
           )}
         </div>
-      )}
+      </div>
 
       {/* ========================================================================= */}
-      {/* THEME 2: GLASSMORPHISM (Floating Island / Hero Search / Bubble Pills)     */}
+      {/* THEME 1: REFERENCE (CURRENT - MATCHING REFERENCE IMAGE)                   */}
       {/* ========================================================================= */}
-      {theme === 'glassmorphism' && (
-        <div className="space-y-4">
-          {/* Floating Frosted Island Card Header */}
-          <div className="bg-white/75 backdrop-blur-xl rounded-3xl p-6 border border-white/90 shadow-xl shadow-blue-500/5">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-100 to-blue-100 border border-white flex items-center justify-center text-blue-600 shadow-xs shrink-0">
-                  <Layers className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                      Individual Directory
-                    </h1>
-                  </div>
-                  <p className="text-xs font-medium text-slate-500 mt-1">
-                    Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
-                  </p>
-                </div>
-              </div>
-
-              {/* Floating Pill Action Buttons */}
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <button
-                  id="btn-individual-reload"
-                  onClick={handleReloadClick}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white/90 border border-slate-200/80 rounded-full hover:bg-white hover:shadow-xs transition"
-                  title="Reload data from server"
-                >
-                  <RotateCw className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Reload</span>
-                </button>
-
-                <button
-                  id="btn-individual-filter-toggle"
-                  onClick={() => setShowFilterPanel(!showFilterPanel)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-full border transition shadow-2xs',
-                    showFilterPanel
-                      ? 'bg-blue-50 border-blue-300 text-blue-700'
-                      : 'bg-white/90 border-slate-200/80 text-slate-700 hover:bg-white'
-                  )}
-                >
-                  <Filter className="w-3.5 h-3.5" />
-                  <span>Filter</span>
-                  {hasActiveFilters && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                  )}
-                </button>
-
-                <button
-                  id="btn-individual-customize-columns"
-                  onClick={() => setShowCustomizeModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white/90 border border-slate-200/80 rounded-full hover:bg-white hover:shadow-xs transition"
-                  title="Configure Table Columns"
-                >
-                  <Columns className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Columns</span>
-                  {columns.filter((c) => c.visible).length > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">
-                      {columns.filter((c) => c.visible).length}
-                    </span>
-                  )}
-                </button>
-
-                <div className="relative group">
-                  <button
-                    id="btn-individual-export"
-                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white/90 border border-slate-200/80 rounded-full hover:bg-white hover:shadow-xs transition"
-                  >
-                    <Download className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Export</span>
-                  </button>
-                  <div className="absolute right-0 top-full mt-2 w-36 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl hidden group-hover:block z-20 py-1.5 text-xs">
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="w-full text-left px-3.5 py-2 hover:bg-blue-50 text-slate-700 font-medium rounded-xl mx-1"
-                    >
-                      Export as CSV
-                    </button>
-                    <button
-                      onClick={() => handleExport('json')}
-                      className="w-full text-left px-3.5 py-2 hover:bg-blue-50 text-slate-700 font-medium rounded-xl mx-1"
-                    >
-                      Export as JSON
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  id="btn-individual-add-new"
-                  onClick={onNavigateToInsert}
-                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg shadow-blue-500/25 transition"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>New Client</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Combined Same Row: Status Bubble Pills + Glass Search Capsule */}
+      {lightTheme === 'reference' && (
+        <div
+          id="individual-filter-section-reference"
+          className="bg-white border border-slate-200/90 rounded-[28px] p-5 sm:p-6 shadow-xs space-y-5"
+        >
+          {/* Row 1: Status Pills + Search Capsule Bar */}
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-            {/* Status Bubble Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 shrink-0">
-              <button
-                onClick={() => setStatusTab('ALL')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
-                  statusTab === 'ALL'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
-                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
-                )}
-              >
-                <span>All Requests</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px]',
-                  statusTab === 'ALL' ? 'bg-white/20 text-white font-black' : 'bg-slate-100 text-slate-600'
-                )}>
-                  {countAll}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Approved')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
-                  statusTab === 'Approved'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25'
-                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
-                )}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Approved</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px]',
-                  statusTab === 'Approved' ? 'bg-white/20 text-white font-black' : 'bg-emerald-50 text-emerald-700'
-                )}>
-                  {countApproved}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Resubmit')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
-                  statusTab === 'Resubmit'
-                    ? 'bg-amber-600 text-white shadow-md shadow-amber-500/25'
-                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
-                )}
-              >
-                <AlertCircle className="w-3.5 h-3.5" />
-                <span>Resubmit</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px]',
-                  statusTab === 'Resubmit' ? 'bg-white/20 text-white font-black' : 'bg-amber-50 text-amber-700'
-                )}>
-                  {countResubmit}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Pending')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
-                  statusTab === 'Pending'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
-                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
-                )}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>Pending</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px]',
-                  statusTab === 'Pending' ? 'bg-white/20 text-white font-black' : 'bg-blue-50 text-blue-700'
-                )}>
-                  {countPending}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Rejected')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer',
-                  statusTab === 'Rejected'
-                    ? 'bg-rose-600 text-white shadow-md shadow-rose-500/25'
-                    : 'bg-white/80 border border-slate-200/80 text-slate-700 hover:bg-white'
-                )}
-              >
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Rejected</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px]',
-                  statusTab === 'Rejected' ? 'bg-white/20 text-white font-black' : 'bg-rose-50 text-rose-700'
-                )}>
-                  {countRejected}
-                </span>
-              </button>
+            {/* Status Tabs (Exact Image Design: All Requests, Approved, Resubmit, Pending, Rejected with Icons and Badges) */}
+            <div className="inline-flex items-center gap-1.5 p-1.5 bg-[#f0f4f9] border border-slate-200/70 rounded-2xl shrink-0 overflow-x-auto max-w-full scrollbar-none">
+              {[
+                { 
+                  id: 'ALL' as const, 
+                  label: 'All Requests', 
+                  count: countAll, 
+                  icon: null,
+                  iconColor: ''
+                },
+                { 
+                  id: 'Approved' as const, 
+                  label: 'Approved', 
+                  count: countApproved, 
+                  icon: CheckCircle2,
+                  iconColor: 'text-emerald-500'
+                },
+                { 
+                  id: 'Resubmit' as const, 
+                  label: 'Resubmit', 
+                  count: countResubmit, 
+                  icon: AlertCircle,
+                  iconColor: 'text-amber-500'
+                },
+                { 
+                  id: 'Pending' as const, 
+                  label: 'Pending', 
+                  count: countPending, 
+                  icon: Clock,
+                  iconColor: 'text-blue-500'
+                },
+                { 
+                  id: 'Rejected' as const, 
+                  label: 'Rejected', 
+                  count: countRejected, 
+                  icon: AlertTriangle,
+                  iconColor: 'text-rose-500'
+                },
+              ].map((tab) => {
+                const isActive = statusTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    id={`tab-status-${tab.id.toLowerCase()}`}
+                    onClick={() => setStatusTab(tab.id)}
+                    className={cn(
+                      'h-9 px-3.5 sm:px-4 inline-flex items-center gap-2 text-xs sm:text-[13px] transition-all cursor-pointer whitespace-nowrap select-none',
+                      isActive
+                        ? 'bg-white rounded-xl shadow-xs border border-slate-200/90 text-blue-600 font-bold'
+                        : 'text-slate-700 hover:text-slate-900 font-medium rounded-xl hover:bg-white/50'
+                    )}
+                  >
+                    {Icon && <Icon className={cn('w-4 h-4 shrink-0 stroke-[2.2]', tab.iconColor)} />}
+                    <span>{tab.label}</span>
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 min-w-[20px] text-center rounded-md sm:rounded-full text-[11px] font-semibold leading-none transition-colors',
+                        isActive
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'bg-slate-200/70 text-slate-600'
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Glass Search Capsule (Same Row) */}
-            <div className="relative flex-1 lg:max-w-md w-full">
-              <div className="bg-white/80 backdrop-blur-xl rounded-full p-1.5 border border-white/90 shadow-md shadow-slate-900/5 flex items-center justify-between gap-2">
-                <div className="flex-1 flex items-center gap-2 min-w-0">
+            {/* Search & Field Selection Grouped Capsule (Field Group) */}
+            <div className="relative flex items-center max-w-lg w-full">
+              <div className="w-full flex items-center bg-white border border-slate-200/90 rounded-full p-1 shadow-2xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                {/* Field Selection Addon */}
+                <div className="relative shrink-0">
                   <button
                     type="button"
                     id="btn-search-by-dropdown"
                     onClick={() => setIsSearchByOpen(!isSearchByOpen)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/60 rounded-full text-xs font-bold text-blue-700 transition shrink-0 select-none cursor-pointer"
+                    className="h-8 flex items-center gap-1.5 px-3.5 bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 rounded-full text-xs font-bold text-blue-600 transition shrink-0 select-none cursor-pointer"
                   >
-                    <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                    <span>{SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
                     {isSearchByOpen ? (
-                      <ChevronUp className="w-3.5 h-3.5" />
+                      <ChevronUp className="w-3.5 h-3.5 text-blue-600" />
                     ) : (
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      <ChevronDown className="w-3.5 h-3.5 text-blue-600" />
                     )}
                   </button>
 
-                  <div className="relative flex-1 flex items-center min-w-0">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-2.5 pointer-events-none" />
-                    <input
-                      id="individual-search-input"
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
-                      className="w-full h-8 pl-8 pr-7 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                    />
-                    {searchTerm && (
-                      <button
-                        type="button"
-                        onClick={() => setSearchTerm('')}
-                        className="absolute right-2 p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Dropdown Popup Menu */}
-              {isSearchByOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
-                  <div className="absolute left-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
-                    <div className="space-y-1">
-                      {SEARCH_FIELD_OPTIONS.map((opt) => {
-                        const isSelected = searchBy === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setSearchBy(opt.id);
-                              setIsSearchByOpen(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-left cursor-pointer",
-                              isSelected
-                                ? "text-blue-700 bg-blue-50"
-                                : "text-slate-700 hover:bg-slate-50"
-                            )}
-                          >
-                            <span>{opt.label}</span>
-                            {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Frosted Floating Filter Drawer */}
-          {showFilterPanel && (
-            <div
-              id="individual-filter-section"
-              className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 border border-white/90 shadow-xl shadow-blue-500/5 space-y-4"
-            >
-              {(hasActiveFilters || searchTerm) && (
-                <div className="flex items-center justify-end pb-1">
-                  <button
-                    onClick={handleResetFilters}
-                    className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Clear All
-                  </button>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Gender</label>
-                  <select
-                    value={genderFilter}
-                    onChange={(e) => setGenderFilter(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
-                  >
-                    <option value="ALL">All Genders</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Marital Status</label>
-                  <select
-                    value={maritalFilter}
-                    onChange={(e) => setMaritalFilter(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
-                  >
-                    <option value="ALL">All Marital Statuses</option>
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                    <option value="Widowed">Widowed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Nationality</label>
-                  <select
-                    value={nationalityFilter}
-                    onChange={(e) => setNationalityFilter(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
-                  >
-                    <option value="ALL">All Nationalities</option>
-                    {uniqueNationalities.map((nat) => (
-                      <option key={nat} value={nat}>{nat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Request Type</label>
-                  <select
-                    value={requestTypeFilter}
-                    onChange={(e) => setRequestTypeFilter(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs bg-white rounded-2xl border border-slate-200 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
-                  >
-                    <option value="ALL">All Request Types</option>
-                    <option value="Registration">Registration</option>
-                    <option value="Close Account">Close Account</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* THEME 3: AURORA (Spectral Command Console / Dual-Deck Dock / Capsules)    */}
-      {/* ========================================================================= */}
-      {theme === 'aurora' && (
-        <div className="space-y-4">
-          {/* Spectral Command Center Header */}
-          <div className="bg-white rounded-3xl p-6 border border-indigo-200/90 shadow-xl shadow-indigo-500/5 relative overflow-hidden">
-            {/* Ambient soft glow accents */}
-            <div className="absolute -top-12 -right-12 w-44 h-44 bg-indigo-100/70 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-cyan-100/60 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 via-purple-700 to-cyan-700 bg-clip-text text-transparent tracking-tight">
-                      Individual Directory
-                    </h1>
-                  </div>
-                  <p className="text-xs font-medium text-slate-500 mt-1">
-                    Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
-                  </p>
-                </div>
-              </div>
-
-              {/* Spectral Command Actions */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  id="btn-individual-reload"
-                  onClick={handleReloadClick}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/40 transition shadow-2xs"
-                  title="Reload data from server"
-                >
-                  <RotateCw className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Reload</span>
-                </button>
-
-                <button
-                  id="btn-individual-filter-toggle"
-                  onClick={() => setShowFilterPanel(!showFilterPanel)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl border transition shadow-2xs',
-                    showFilterPanel
-                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-400 text-indigo-900'
-                      : 'bg-white border-indigo-200 text-slate-700 hover:border-indigo-300'
+                  {/* Field Dropdown Menu */}
+                  {isSearchByOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
+                      <div className="absolute left-0 top-full mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95">
+                        <div className="space-y-1">
+                          {SEARCH_FIELD_OPTIONS.map((opt) => {
+                            const isSelected = searchBy === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => {
+                                  setSearchBy(opt.id);
+                                  setIsSearchByOpen(false);
+                                }}
+                                className={cn(
+                                  'w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer',
+                                  isSelected
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                )}
+                              >
+                                <span>{opt.label}</span>
+                                {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
                   )}
-                >
-                  <Filter className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Filter</span>
-                  {hasActiveFilters && (
-                    <span className="w-2 h-2 rounded-full bg-cyan-500" />
-                  )}
-                </button>
-
-                <button
-                  id="btn-individual-customize-columns"
-                  onClick={() => setShowCustomizeModal(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/40 transition shadow-2xs"
-                  title="Configure Table Columns"
-                >
-                  <Columns className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Columns</span>
-                  {columns.filter((c) => c.visible).length > 0 && (
-                    <span className="px-2 py-0.2 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700">
-                      {columns.filter((c) => c.visible).length}
-                    </span>
-                  )}
-                </button>
-
-                <div className="relative group">
-                  <button
-                    id="btn-individual-export"
-                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-indigo-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/40 transition shadow-2xs"
-                  >
-                    <Download className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Export</span>
-                  </button>
-                  <div className="absolute right-0 top-full mt-2 w-36 bg-white border border-indigo-100 rounded-2xl shadow-xl hidden group-hover:block z-20 py-1.5 text-xs">
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="w-full text-left px-3.5 py-2 hover:bg-indigo-50 text-slate-700 font-bold rounded-xl mx-1"
-                    >
-                      Export as CSV
-                    </button>
-                    <button
-                      onClick={() => handleExport('json')}
-                      className="w-full text-left px-3.5 py-2 hover:bg-indigo-50 text-slate-700 font-bold rounded-xl mx-1"
-                    >
-                      Export as JSON
-                    </button>
-                  </div>
                 </div>
 
-
-                <button
-                  id="btn-individual-add-new"
-                  onClick={onNavigateToInsert}
-                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:opacity-95 rounded-xl shadow-lg shadow-indigo-500/20 transition"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create Account</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Dual-Deck Modular Dock Layout (Status Telemetry Deck + Command Search Deck) */}
-          <div
-            id="individual-tabs-search-row"
-            className="grid grid-cols-1 xl:grid-cols-12 gap-3"
-          >
-            {/* Left Module: Status Telemetry Pipeline Dock */}
-            <div className="xl:col-span-7 bg-white rounded-2xl p-2 border border-indigo-100 shadow-2xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-              <button
-                onClick={() => setStatusTab('ALL')}
-                className={cn(
-                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
-                  statusTab === 'ALL'
-                    ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-500 text-indigo-950 shadow-xs'
-                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-indigo-50/30'
-                )}
-              >
-                <span>All</span>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
-                  statusTab === 'ALL' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countAll}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Approved')}
-                className={cn(
-                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
-                  statusTab === 'Approved'
-                    ? 'bg-emerald-50 border-2 border-emerald-500 text-emerald-950 shadow-xs'
-                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-emerald-50/30'
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                  <span>Approved</span>
-                </div>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
-                  statusTab === 'Approved' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countApproved}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Resubmit')}
-                className={cn(
-                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
-                  statusTab === 'Resubmit'
-                    ? 'bg-amber-50 border-2 border-amber-500 text-amber-950 shadow-xs'
-                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-amber-50/30'
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 text-amber-500" />
-                  <span>Resubmit</span>
-                </div>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
-                  statusTab === 'Resubmit' ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countResubmit}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Pending')}
-                className={cn(
-                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
-                  statusTab === 'Pending'
-                    ? 'bg-indigo-50 border-2 border-indigo-500 text-indigo-950 shadow-xs'
-                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-indigo-50/30'
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-indigo-500" />
-                  <span>Pending</span>
-                </div>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
-                  statusTab === 'Pending' ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countPending}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setStatusTab('Rejected')}
-                className={cn(
-                  'flex-1 min-w-[110px] flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none',
-                  statusTab === 'Rejected'
-                    ? 'bg-rose-50 border-2 border-rose-500 text-rose-950 shadow-xs'
-                    : 'bg-slate-50/70 border border-slate-200/70 text-slate-600 hover:bg-rose-50/30'
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3 text-rose-500" />
-                  <span>Rejected</span>
-                </div>
-                <span className={cn(
-                  'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold',
-                  statusTab === 'Rejected' ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-600'
-                )}>
-                  {countRejected}
-                </span>
-              </button>
-            </div>
-
-            {/* Right Module: Command Search Dock */}
-            <div className="xl:col-span-5 relative">
-              <div className="flex items-stretch rounded-2xl border border-indigo-200 hover:border-indigo-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 bg-white shadow-2xs transition-all h-full min-h-[46px]">
-                <button
-                  type="button"
-                  id="btn-search-by-dropdown"
-                  onClick={() => setIsSearchByOpen(!isSearchByOpen)}
-                  className="flex items-center gap-1.5 px-3.5 bg-indigo-50/70 hover:bg-indigo-100/70 border-r border-indigo-100 text-[11px] font-bold text-indigo-950 uppercase tracking-wider rounded-l-2xl transition shrink-0 select-none cursor-pointer"
-                >
-                  <span>{SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
-                  {isSearchByOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
-                  )}
-                </button>
-
-                <div className="relative flex-1 flex items-center min-w-0 bg-transparent">
-                  <Search className="w-4 h-4 text-indigo-400 absolute left-3.5 pointer-events-none shrink-0" />
+                {/* Search Input Box */}
+                <div className="relative flex-1 flex items-center px-3">
+                  <Search className="w-4 h-4 text-slate-400 shrink-0 mr-2 pointer-events-none" />
                   <input
                     id="individual-search-input"
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={SEARCH_FIELD_OPTIONS.find(o => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
-                    className="w-full h-full pl-10 pr-8 bg-transparent text-xs font-bold text-slate-900 placeholder:text-indigo-300 uppercase tracking-wider focus:outline-none"
+                    placeholder={SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                    className="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none uppercase tracking-wide"
                   />
                   {searchTerm && (
                     <button
                       type="button"
                       onClick={() => setSearchTerm('')}
-                      className="absolute right-3 p-1 text-slate-400 hover:text-slate-600 rounded transition cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
                       title="Clear search"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -1631,116 +865,892 @@ export function IndividualListScreen({
                   )}
                 </div>
               </div>
-
-              {/* Dropdown Popup Menu */}
-              {isSearchByOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-indigo-100 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
-                    <div className="space-y-1">
-                      {SEARCH_FIELD_OPTIONS.map((opt) => {
-                        const isSelected = searchBy === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setSearchBy(opt.id);
-                              setIsSearchByOpen(false);
-                            }}
-                            className={cn(
-                              "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer",
-                              isSelected
-                                ? "text-indigo-900 bg-indigo-50 font-extrabold"
-                                : "text-slate-700 hover:bg-indigo-50/50 hover:text-slate-900"
-                            )}
-                          >
-                            <span>{opt.label}</span>
-                            {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0 ml-2" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
-          {/* Spectral Filter Matrix Drawer */}
-          {showFilterPanel && (
-            <div
-              id="individual-filter-section"
-              className="bg-gradient-to-br from-white via-indigo-50/20 to-cyan-50/20 rounded-2xl p-4 border border-indigo-200/90 shadow-2xs space-y-3"
-            >
-              {(hasActiveFilters || searchTerm) && (
-                <div className="flex items-center justify-end border-b border-indigo-100/80 pb-2.5">
+          {/* Row 2: 4-Dropdown Filter Console (Combined in the same card) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-2">
+            {/* 1. Gender */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
+                GENDER
+              </label>
+              <div className="relative">
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
+                >
+                  <option value="ALL">All Genders</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 2. Marital Status */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
+                MARITAL STATUS
+              </label>
+              <div className="relative">
+                <select
+                  value={maritalFilter}
+                  onChange={(e) => setMaritalFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
+                >
+                  <option value="ALL">All Marital Statuses</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 3. Nationality */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
+                NATIONALITY
+              </label>
+              <div className="relative">
+                <select
+                  value={nationalityFilter}
+                  onChange={(e) => setNationalityFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
+                >
+                  <option value="ALL">All Nationalities</option>
+                  {uniqueNationalities.map((nat) => (
+                    <option key={nat} value={nat}>
+                      {nat}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 4. Request Type */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
+                REQUEST TYPE
+              </label>
+              <div className="relative">
+                <select
+                  value={requestTypeFilter}
+                  onChange={(e) => setRequestTypeFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
+                >
+                  <option value="ALL">All Request Types</option>
+                  <option value="Registration">Registration</option>
+                  <option value="Close Account">Close Account</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Optional Reset filters indicator if filtered */}
+          {(hasActiveFilters || searchTerm) && (
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs text-slate-500">
+                Filtered: <strong className="text-slate-800">{filteredData.length}</strong> of {individuals.length} records
+              </span>
+              <button
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* THEME 2: NEO-PRISM (EXECUTIVE MODERN LIGHT - IDENTICAL LAYOUT)             */}
+      {/* ========================================================================= */}
+      {lightTheme === 'neo-prism' && (
+        <div
+          id="individual-filter-section-neo-prism"
+          className="bg-white border border-slate-200/90 rounded-[28px] p-5 sm:p-6 shadow-xs space-y-5 relative overflow-hidden"
+        >
+          {/* Subtle top accent gradient */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500" />
+
+          {/* Row 1: Status Pills + Search Capsule Bar */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Status Tabs Capsule rail */}
+            <div className="inline-flex items-center gap-1.5 p-1.5 bg-slate-100/90 border border-slate-200/80 rounded-2xl shrink-0 overflow-x-auto max-w-full scrollbar-none shadow-inner-xs">
+              {[
+                { 
+                  id: 'ALL' as const, 
+                  label: 'All Requests', 
+                  count: countAll, 
+                  icon: null,
+                  iconColor: '',
+                  activeBadge: 'bg-slate-900 text-white'
+                },
+                { 
+                  id: 'Approved' as const, 
+                  label: 'Approved', 
+                  count: countApproved, 
+                  icon: CheckCircle2,
+                  iconColor: 'text-emerald-500',
+                  activeBadge: 'bg-emerald-600 text-white'
+                },
+                { 
+                  id: 'Resubmit' as const, 
+                  label: 'Resubmit', 
+                  count: countResubmit, 
+                  icon: AlertCircle,
+                  iconColor: 'text-amber-500',
+                  activeBadge: 'bg-amber-600 text-white'
+                },
+                { 
+                  id: 'Pending' as const, 
+                  label: 'Pending', 
+                  count: countPending, 
+                  icon: Clock,
+                  iconColor: 'text-blue-500',
+                  activeBadge: 'bg-blue-600 text-white'
+                },
+                { 
+                  id: 'Rejected' as const, 
+                  label: 'Rejected', 
+                  count: countRejected, 
+                  icon: AlertTriangle,
+                  iconColor: 'text-rose-500',
+                  activeBadge: 'bg-rose-600 text-white'
+                },
+              ].map((tab) => {
+                const isActive = statusTab === tab.id;
+                const Icon = tab.icon;
+                return (
                   <button
-                    onClick={handleResetFilters}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                    key={tab.id}
+                    type="button"
+                    id={`neo-tab-status-${tab.id.toLowerCase()}`}
+                    onClick={() => setStatusTab(tab.id)}
+                    className={cn(
+                      'h-9 px-3.5 sm:px-4 inline-flex items-center gap-2 text-xs sm:text-[13px] transition-all cursor-pointer whitespace-nowrap select-none',
+                      isActive
+                        ? 'bg-white rounded-xl shadow-xs border border-slate-200 text-slate-900 font-bold'
+                        : 'text-slate-600 hover:text-slate-900 font-medium rounded-xl hover:bg-white/60'
+                    )}
                   >
-                    Reset Matrix
+                    {Icon && <Icon className={cn('w-4 h-4 shrink-0 stroke-[2.2]', tab.iconColor)} />}
+                    <span>{tab.label}</span>
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 min-w-[20px] text-center rounded-md sm:rounded-full text-[11px] font-bold leading-none transition-colors',
+                        isActive
+                          ? tab.activeBadge
+                          : 'bg-slate-200/80 text-slate-600'
+                      )}
+                    >
+                      {tab.count}
+                    </span>
                   </button>
-                </div>
-              )}
+                );
+              })}
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Gender</label>
-                  <select
-                    value={genderFilter}
-                    onChange={(e) => setGenderFilter(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
+            {/* Search & Field Selection Grouped Capsule (Field Group) */}
+            <div className="relative flex items-center max-w-lg w-full">
+              <div className="w-full flex items-center bg-white border border-slate-200/90 rounded-full p-1 shadow-2xs focus-within:border-slate-800 focus-within:ring-2 focus-within:ring-slate-200 transition-all">
+                {/* Field Selection Addon */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchByOpen(!isSearchByOpen)}
+                    className="h-8 flex items-center gap-1.5 px-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs font-bold transition shrink-0 select-none cursor-pointer shadow-2xs"
                   >
-                    <option value="ALL">All Genders</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    <span>{SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                    {isSearchByOpen ? (
+                      <ChevronUp className="w-3.5 h-3.5 text-slate-300" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-300" />
+                    )}
+                  </button>
+
+                  {/* Field Dropdown Menu */}
+                  {isSearchByOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
+                      <div className="absolute left-0 top-full mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95">
+                        <div className="space-y-1">
+                          {SEARCH_FIELD_OPTIONS.map((opt) => {
+                            const isSelected = searchBy === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => {
+                                  setSearchBy(opt.id);
+                                  setIsSearchByOpen(false);
+                                }}
+                                className={cn(
+                                  'w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer',
+                                  isSelected
+                                    ? 'text-slate-900 bg-slate-100 font-black'
+                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                )}
+                              >
+                                <span>{opt.label}</span>
+                                {isSelected && <Check className="w-4 h-4 text-slate-900 shrink-0 ml-2" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Marital Status</label>
-                  <select
-                    value={maritalFilter}
-                    onChange={(e) => setMaritalFilter(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
-                  >
-                    <option value="ALL">All Marital Statuses</option>
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                    <option value="Widowed">Widowed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Nationality</label>
-                  <select
-                    value={nationalityFilter}
-                    onChange={(e) => setNationalityFilter(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
-                  >
-                    <option value="ALL">All Nationalities</option>
-                    {uniqueNationalities.map((nat) => (
-                      <option key={nat} value={nat}>{nat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-indigo-950 mb-1">Request Type</label>
-                  <select
-                    value={requestTypeFilter}
-                    onChange={(e) => setRequestTypeFilter(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-white rounded-xl border border-indigo-200 text-slate-800 shadow-2xs focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-semibold"
-                  >
-                    <option value="ALL">All Request Types</option>
-                    <option value="Registration">Registration</option>
-                    <option value="Close Account">Close Account</option>
-                  </select>
+                {/* Search Input Box */}
+                <div className="relative flex-1 flex items-center px-3">
+                  <Search className="w-4 h-4 text-slate-400 shrink-0 mr-2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                    className="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none uppercase tracking-wide"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Row 2: 4-Dropdown Filter Console */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-2">
+            {/* 1. Gender */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-800 tracking-wider uppercase mb-2">
+                GENDER
+              </label>
+              <div className="relative">
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/70 hover:bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Genders</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 2. Marital Status */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-800 tracking-wider uppercase mb-2">
+                MARITAL STATUS
+              </label>
+              <div className="relative">
+                <select
+                  value={maritalFilter}
+                  onChange={(e) => setMaritalFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/70 hover:bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Marital Statuses</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 3. Nationality */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-800 tracking-wider uppercase mb-2">
+                NATIONALITY
+              </label>
+              <div className="relative">
+                <select
+                  value={nationalityFilter}
+                  onChange={(e) => setNationalityFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/70 hover:bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Nationalities</option>
+                  {uniqueNationalities.map((nat) => (
+                    <option key={nat} value={nat}>
+                      {nat}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 4. Request Type */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-800 tracking-wider uppercase mb-2">
+                REQUEST TYPE
+              </label>
+              <div className="relative">
+                <select
+                  value={requestTypeFilter}
+                  onChange={(e) => setRequestTypeFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/70 hover:bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-slate-400 font-semibold cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Request Types</option>
+                  <option value="Registration">Registration</option>
+                  <option value="Close Account">Close Account</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filter summary indicator if filtered */}
+          {(hasActiveFilters || searchTerm) && (
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs text-slate-500">
+                Filtered: <strong className="text-slate-800">{filteredData.length}</strong> of {individuals.length} records
+              </span>
+              <button
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-slate-900 hover:text-blue-600 hover:underline cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* THEME 3: NORDIC STUDIO (HIGH-DEFINITION ROYAL BLUE - IDENTICAL LAYOUT)     */}
+      {/* ========================================================================= */}
+      {lightTheme === 'nordic-studio' && (
+        <div
+          id="individual-filter-section-nordic-studio"
+          className="bg-[#fbfcfd] border border-blue-100/90 rounded-[28px] p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(30,58,138,0.04)] space-y-5"
+        >
+          {/* Row 1: Status Pills + Search Capsule Bar */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Status Tabs in Frosty Capsule rail */}
+            <div className="inline-flex items-center gap-1.5 p-1.5 bg-blue-50/70 border border-blue-100/90 rounded-2xl shrink-0 overflow-x-auto max-w-full scrollbar-none">
+              {[
+                { 
+                  id: 'ALL' as const, 
+                  label: 'All Requests', 
+                  count: countAll, 
+                  icon: null,
+                  iconColor: ''
+                },
+                { 
+                  id: 'Approved' as const, 
+                  label: 'Approved', 
+                  count: countApproved, 
+                  icon: CheckCircle2,
+                  iconColor: 'text-emerald-500'
+                },
+                { 
+                  id: 'Resubmit' as const, 
+                  label: 'Resubmit', 
+                  count: countResubmit, 
+                  icon: AlertCircle,
+                  iconColor: 'text-amber-500'
+                },
+                { 
+                  id: 'Pending' as const, 
+                  label: 'Pending', 
+                  count: countPending, 
+                  icon: Clock,
+                  iconColor: 'text-blue-500'
+                },
+                { 
+                  id: 'Rejected' as const, 
+                  label: 'Rejected', 
+                  count: countRejected, 
+                  icon: AlertTriangle,
+                  iconColor: 'text-rose-500'
+                },
+              ].map((tab) => {
+                const isActive = statusTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setStatusTab(tab.id)}
+                    className={cn(
+                      'h-9 px-3.5 sm:px-4 inline-flex items-center gap-2 text-xs sm:text-[13px] transition-all cursor-pointer whitespace-nowrap select-none rounded-xl font-bold',
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-xs border border-blue-600'
+                        : 'text-slate-600 hover:text-blue-900 font-semibold hover:bg-white/80'
+                    )}
+                  >
+                    {Icon && <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-white' : tab.iconColor)} />}
+                    <span>{tab.label}</span>
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 min-w-[20px] text-center rounded-md sm:rounded-full text-[11px] font-mono font-bold leading-none transition-colors',
+                        isActive
+                          ? 'bg-white/25 text-white'
+                          : 'bg-blue-100/70 text-blue-800'
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search & Field Selection Grouped Capsule (Field Group) */}
+            <div className="relative flex items-center max-w-lg w-full">
+              <div className="w-full flex items-center bg-white border border-blue-200/80 rounded-full p-1 shadow-2xs focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                {/* Field Selection Addon */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchByOpen(!isSearchByOpen)}
+                    className="h-8 flex items-center gap-1.5 px-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition shrink-0 select-none cursor-pointer shadow-xs"
+                  >
+                    <span>{SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                    {isSearchByOpen ? (
+                      <ChevronUp className="w-3.5 h-3.5 text-blue-200" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-blue-200" />
+                    )}
+                  </button>
+
+                  {/* Field Dropdown Menu */}
+                  {isSearchByOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
+                      <div className="absolute left-0 top-full mt-2 w-60 bg-white border border-blue-100 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95">
+                        <div className="space-y-1">
+                          {SEARCH_FIELD_OPTIONS.map((opt) => {
+                            const isSelected = searchBy === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => {
+                                  setSearchBy(opt.id);
+                                  setIsSearchByOpen(false);
+                                }}
+                                className={cn(
+                                  'w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer',
+                                  isSelected
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                )}
+                              >
+                                <span>{opt.label}</span>
+                                {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Search Input Box */}
+                <div className="relative flex-1 flex items-center px-3">
+                  <Search className="w-4 h-4 text-blue-400 shrink-0 mr-2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                    className="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none uppercase tracking-wide"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: 4-Dropdown Filter Console */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-2">
+            {/* 1. Gender */}
+            <div>
+              <label className="block text-[11px] font-bold text-blue-950 tracking-wider uppercase mb-2">
+                GENDER
+              </label>
+              <div className="relative">
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-blue-100 hover:border-blue-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Genders</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-blue-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 2. Marital Status */}
+            <div>
+              <label className="block text-[11px] font-bold text-blue-950 tracking-wider uppercase mb-2">
+                MARITAL STATUS
+              </label>
+              <div className="relative">
+                <select
+                  value={maritalFilter}
+                  onChange={(e) => setMaritalFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-blue-100 hover:border-blue-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Marital Statuses</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-blue-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 3. Nationality */}
+            <div>
+              <label className="block text-[11px] font-bold text-blue-950 tracking-wider uppercase mb-2">
+                NATIONALITY
+              </label>
+              <div className="relative">
+                <select
+                  value={nationalityFilter}
+                  onChange={(e) => setNationalityFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-blue-100 hover:border-blue-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Nationalities</option>
+                  {uniqueNationalities.map((nat) => (
+                    <option key={nat} value={nat}>
+                      {nat}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-blue-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 4. Request Type */}
+            <div>
+              <label className="block text-[11px] font-bold text-blue-950 tracking-wider uppercase mb-2">
+                REQUEST TYPE
+              </label>
+              <div className="relative">
+                <select
+                  value={requestTypeFilter}
+                  onChange={(e) => setRequestTypeFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-white border border-blue-100 hover:border-blue-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Request Types</option>
+                  <option value="Registration">Registration</option>
+                  <option value="Close Account">Close Account</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-blue-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filter summary indicator if filtered */}
+          {(hasActiveFilters || searchTerm) && (
+            <div className="flex items-center justify-between pt-2 border-t border-blue-100/80">
+              <span className="text-xs text-slate-500">
+                Filtered: <strong className="text-blue-900">{filteredData.length}</strong> of {individuals.length} records
+              </span>
+              <button
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* THEME 4: COMMAND MATRIX (PRECISION INDIGO - IDENTICAL LAYOUT)              */}
+      {/* ========================================================================= */}
+      {lightTheme === 'command-matrix' && (
+        <div
+          id="individual-filter-section-command-matrix"
+          className="bg-white border border-slate-200/90 rounded-[28px] p-5 sm:p-6 shadow-xs space-y-5"
+        >
+          {/* Row 1: Status Pills + Search Capsule Bar */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Status Tabs in Linear Precision Capsule rail */}
+            <div className="inline-flex items-center gap-1.5 p-1.5 bg-slate-100 border border-slate-200/90 rounded-2xl shrink-0 overflow-x-auto max-w-full scrollbar-none">
+              {[
+                { 
+                  id: 'ALL' as const, 
+                  label: 'All Requests', 
+                  count: countAll, 
+                  icon: null,
+                  iconColor: ''
+                },
+                { 
+                  id: 'Approved' as const, 
+                  label: 'Approved', 
+                  count: countApproved, 
+                  icon: CheckCircle2,
+                  iconColor: 'text-emerald-500'
+                },
+                { 
+                  id: 'Resubmit' as const, 
+                  label: 'Resubmit', 
+                  count: countResubmit, 
+                  icon: AlertCircle,
+                  iconColor: 'text-amber-500'
+                },
+                { 
+                  id: 'Pending' as const, 
+                  label: 'Pending', 
+                  count: countPending, 
+                  icon: Clock,
+                  iconColor: 'text-sky-500'
+                },
+                { 
+                  id: 'Rejected' as const, 
+                  label: 'Rejected', 
+                  count: countRejected, 
+                  icon: AlertTriangle,
+                  iconColor: 'text-rose-500'
+                },
+              ].map((tab) => {
+                const isActive = statusTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setStatusTab(tab.id)}
+                    className={cn(
+                      'h-9 px-3.5 sm:px-4 inline-flex items-center gap-2 text-xs sm:text-[13px] transition-all cursor-pointer whitespace-nowrap select-none rounded-xl',
+                      isActive
+                        ? 'bg-indigo-600 text-white font-bold shadow-xs border border-indigo-600'
+                        : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-slate-200/60'
+                    )}
+                  >
+                    {Icon && <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-white' : tab.iconColor)} />}
+                    <span>{tab.label}</span>
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 min-w-[20px] text-center rounded-md sm:rounded-full text-[11px] font-mono font-bold leading-none transition-colors',
+                        isActive
+                          ? 'bg-indigo-500 text-white'
+                          : 'bg-slate-200 text-slate-700'
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search & Field Selection Grouped Capsule (Field Group) */}
+            <div className="relative flex items-center max-w-lg w-full">
+              <div className="w-full flex items-center bg-slate-50/80 hover:bg-white border border-slate-200 rounded-full p-1 shadow-2xs focus-within:bg-white focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                {/* Field Selection Addon */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchByOpen(!isSearchByOpen)}
+                    className="h-8 flex items-center gap-1.5 px-3.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-full text-xs font-bold transition shrink-0 select-none cursor-pointer"
+                  >
+                    <span>{SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
+                    {isSearchByOpen ? (
+                      <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                    )}
+                  </button>
+
+                  {/* Field Dropdown Menu */}
+                  {isSearchByOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
+                      <div className="absolute left-0 top-full mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95">
+                        <div className="space-y-1">
+                          {SEARCH_FIELD_OPTIONS.map((opt) => {
+                            const isSelected = searchBy === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => {
+                                  setSearchBy(opt.id);
+                                  setIsSearchByOpen(false);
+                                }}
+                                className={cn(
+                                  'w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer',
+                                  isSelected
+                                    ? 'text-indigo-700 bg-indigo-50 font-bold'
+                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                )}
+                              >
+                                <span>{opt.label}</span>
+                                {isSelected && <Check className="w-4 h-4 text-indigo-600 shrink-0 ml-2" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Search Input Box */}
+                <div className="relative flex-1 flex items-center px-3">
+                  <Search className="w-4 h-4 text-slate-400 shrink-0 mr-2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
+                    className="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none uppercase tracking-wide"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: 4-Dropdown Filter Console */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-2">
+            {/* 1. Gender */}
+            <div>
+              <label className="block text-[11px] font-mono font-bold text-slate-600 tracking-wider uppercase mb-2">
+                GENDER
+              </label>
+              <div className="relative">
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/50 hover:bg-white border border-slate-200 hover:border-indigo-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Genders</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 2. Marital Status */}
+            <div>
+              <label className="block text-[11px] font-mono font-bold text-slate-600 tracking-wider uppercase mb-2">
+                MARITAL STATUS
+              </label>
+              <div className="relative">
+                <select
+                  value={maritalFilter}
+                  onChange={(e) => setMaritalFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/50 hover:bg-white border border-slate-200 hover:border-indigo-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Marital Statuses</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 3. Nationality */}
+            <div>
+              <label className="block text-[11px] font-mono font-bold text-slate-600 tracking-wider uppercase mb-2">
+                NATIONALITY
+              </label>
+              <div className="relative">
+                <select
+                  value={nationalityFilter}
+                  onChange={(e) => setNationalityFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/50 hover:bg-white border border-slate-200 hover:border-indigo-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Nationalities</option>
+                  {uniqueNationalities.map((nat) => (
+                    <option key={nat} value={nat}>
+                      {nat}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 4. Request Type */}
+            <div>
+              <label className="block text-[11px] font-mono font-bold text-slate-600 tracking-wider uppercase mb-2">
+                REQUEST TYPE
+              </label>
+              <div className="relative">
+                <select
+                  value={requestTypeFilter}
+                  onChange={(e) => setRequestTypeFilter(e.target.value)}
+                  className="w-full h-10 px-4 text-xs bg-slate-50/50 hover:bg-white border border-slate-200 hover:border-indigo-300 rounded-full text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer appearance-none pr-10 transition-all"
+                >
+                  <option value="ALL">All Request Types</option>
+                  <option value="Registration">Registration</option>
+                  <option value="Close Account">Close Account</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Active Filter summary indicator if filtered */}
+          {(hasActiveFilters || searchTerm) && (
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs text-slate-500">
+                Filtered: <strong className="text-indigo-900">{filteredData.length}</strong> of {individuals.length} records
+              </span>
+              <button
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+              >
+                Reset Filters
+              </button>
             </div>
           )}
         </div>
@@ -1787,45 +1797,9 @@ export function IndividualListScreen({
                 {/* Default Column: Account Status */}
                 <th className="py-3 px-4">Account Status</th>
 
-                {/* Default Column: Request with UI version toggle */}
-                <th className="py-3 px-4 min-w-[390px]">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold">Request</span>
-                    <div className="inline-flex items-center bg-slate-200/70 p-0.5 rounded-lg border border-slate-300/60 shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRequestColumnLayout('bar');
-                          triggerToast('Switched to Progress Bar Request view');
-                        }}
-                        className={cn(
-                          'px-2 py-0.5 text-[10px] font-bold rounded-md transition cursor-pointer',
-                          requestColumnLayout === 'bar'
-                            ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/80'
-                            : 'text-slate-500 hover:text-slate-800'
-                        )}
-                        title="Switch to Progress Bar View"
-                      >
-                        Bar View
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRequestColumnLayout('stepper');
-                          triggerToast('Switched to Stepper Nodes Request view');
-                        }}
-                        className={cn(
-                          'px-2 py-0.5 text-[10px] font-bold rounded-md transition cursor-pointer',
-                          requestColumnLayout === 'stepper'
-                            ? 'bg-white text-blue-600 shadow-2xs border border-slate-200/80'
-                            : 'text-slate-500 hover:text-slate-800'
-                        )}
-                        title="Switch to Stepper Nodes View"
-                      >
-                        Stepper View
-                      </button>
-                    </div>
-                  </div>
+                {/* Default Column: Request */}
+                <th className="py-3 px-4 min-w-[160px] font-bold text-slate-700 text-left">
+                  Request
                 </th>
 
                 {/* Default Column: Action */}
@@ -1887,7 +1861,7 @@ export function IndividualListScreen({
                           <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                             <span>{item.fullNameEN || `${item.firstName} ${item.lastName}`}</span>
                           </div>
-                          <div className="text-[11px] text-blue-600/80 font-medium">
+                          <div className="text-[11px] text-blue-600/80 font-medium font-khmer">
                             {item.fullNameKH || 'ឈ្មោះខ្មែរ'}
                           </div>
                         </div>
