@@ -409,11 +409,8 @@ export function IndividualUpdateScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  <span>1. Personal Information</span>
+                  <span>Personal Information</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Update customer legal identities in Latin characters and Khmer script.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -628,11 +625,8 @@ export function IndividualUpdateScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>2. Identification & Supporting Documents</span>
+                  <span>Identification & Supporting Documents</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Update residency verification and document records.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -812,7 +806,7 @@ export function IndividualUpdateScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-600" />
-                  <span>3. Contact Information & Residential Address</span>
+                  <span>Contact Information & Residential Address</span>
                 </h2>
               </div>
 
@@ -913,7 +907,7 @@ export function IndividualUpdateScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-blue-600" />
-                  <span>4. Employment & Banking Information</span>
+                  <span>Employment & Banking Information</span>
                 </h2>
               </div>
 
@@ -1053,7 +1047,7 @@ export function IndividualUpdateScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-600" />
-                  <span>5. Family & Related Persons</span>
+                  <span>Family & Related Persons</span>
                 </h2>
               </div>
 
@@ -1192,7 +1186,7 @@ export function IndividualUpdateScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-blue-600" />
-                  <span>6. Account Information (Investor ID & Trading Account)</span>
+                  <span>Account Information (Investor ID & Trading Account)</span>
                 </h2>
               </div>
 

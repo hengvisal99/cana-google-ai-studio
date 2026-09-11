@@ -103,11 +103,11 @@ export interface TradingAccountInfo {
 export interface AuthorizationTimelineItem {
   id: string;
   stage: string;
-  status: 'Approved' | 'Resubmit' | 'Pending' | 'Rejected' | 'Submitted';
+  status: 'Approved' | 'Resubmit' | 'Pending' | 'Rejected' | 'Submitted' | 'Queue';
   dateTime: string;
   processedBy: string;
   role: WorkflowRole;
-  comment: string;
+  comment?: string;
   reason?: string;
   requestType?: RequestType;
 }

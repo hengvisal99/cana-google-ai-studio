@@ -41,6 +41,7 @@ import {
   Split
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IndividualPersonalViewSection } from '@/components/individual/IndividualPersonalViewSection';
 
 interface ViewIndividualDialogProps {
   individual: Individual | null;
@@ -66,7 +67,7 @@ interface ViewIndividualDialogProps {
   theme: DesignTheme;
 }
 
-type DialogTab = 'overview' | 'personal' | 'identification' | 'employment' | 'family' | 'account' | 'authorization';
+type DialogTab = 'personal' | 'identification' | 'employment' | 'family' | 'account' | 'authorization';
 
 export function ViewIndividualDialog({
   individual,
@@ -78,8 +79,7 @@ export function ViewIndividualDialog({
   onCloseAccountIndividual,
   theme,
 }: ViewIndividualDialogProps) {
-  const [activeTab, setActiveTab] = useState<DialogTab>('overview');
-  const [timelineLayout, setTimelineLayout] = useState<'vertical' | 'stepper' | 'bar'>('vertical');
+  const [activeTab, setActiveTab] = useState<DialogTab>('personal');
 
   // Dedicated Authorization Decision Dialog State
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -193,7 +193,7 @@ export function ViewIndividualDialog({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="p-5 border-b border-slate-100 flex items-start justify-between gap-4 bg-slate-50/50 shrink-0">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/50 shrink-0">
           <div className="flex items-center gap-3.5">
             <Image
               src={individual.avatarUrl}
@@ -215,13 +215,52 @@ export function ViewIndividualDialog({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-mono">
+              <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-mono flex-wrap">
                 <span className="font-bold text-slate-700">{individual.customerId || individual.id}</span>
+                {individual.tradingAccountInfo?.tradingAccountNumber && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span>TRD: <strong className="text-slate-800">{individual.tradingAccountInfo.tradingAccountNumber}</strong></span>
+                  </>
+                )}
+                {individual.investorIdInfo?.investorIdNumber && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span>INV: <strong className="text-blue-600">{individual.investorIdInfo.investorIdNumber}</strong></span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Profile Status & Account Status on the Right */}
+            <div className="flex items-center gap-2.5 flex-wrap justify-end">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Profile:</span>
+                <span className={cn(
+                  'px-2.5 py-0.5 rounded-full font-bold text-[11px] border',
+                  individual.profileStatus === 'Completed'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                )}>
+                  {individual.profileStatus || 'Incomplete'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Account:</span>
+                <span className={cn(
+                  'px-2.5 py-0.5 rounded-full font-bold text-[11px] border',
+                  individual.accountStatus === 'Active'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                )}>
+                  {individual.accountStatus || 'Not Opened'}
+                </span>
+              </div>
+            </div>
+
             <button
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition ml-1 cursor-pointer"
@@ -231,39 +270,9 @@ export function ViewIndividualDialog({
           </div>
         </div>
 
-        {/* Workflow & Status Strip */}
-        <div className="px-5 py-2.5 bg-slate-100/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 text-[10px] font-bold uppercase">Profile Status:</span>
-              <span className={cn(
-                'px-2 py-0.5 rounded-full font-bold text-[11px] border',
-                individual.profileStatus === 'Completed'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200'
-              )}>
-                {individual.profileStatus || 'Incomplete'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 text-[10px] font-bold uppercase">Account Status:</span>
-              <span className={cn(
-                'px-2 py-0.5 rounded-full font-bold text-[11px] border',
-                individual.accountStatus === 'Active'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-slate-100 text-slate-600 border-slate-200'
-              )}>
-                {individual.accountStatus || 'Not Opened'}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Navigation Tabs */}
         <div className="px-5 border-b border-slate-200 flex items-center gap-2 overflow-x-auto bg-white shrink-0 text-xs font-semibold">
           {[
-            { id: 'overview', label: 'Overview' },
             { id: 'personal', label: 'Personal Information' },
             { id: 'identification', label: 'Identification & Docs' },
             { id: 'employment', label: 'Employment & Banking' },
@@ -288,191 +297,28 @@ export function ViewIndividualDialog({
 
         {/* Dialog Tab Body (Scrollable) */}
         <div className="p-5 overflow-y-auto flex-1 space-y-5 text-xs">
-          {/* TAB 1: OVERVIEW */}
-          {activeTab === 'overview' && (
-            <div className="space-y-4">
-              {/* If Close Account, show banner */}
-              {individual.requestType === 'Close Account' && (
-                <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
-                  <div className="flex items-center gap-2 text-purple-900 font-bold">
-                    <Lock className="w-4 h-4 text-purple-700" />
-                    <span>Account Closure Pending Authorization</span>
-                  </div>
-                  <p className="text-purple-800 text-[11px]">
-                    Close Date: <strong>{individual.closeAccountInfo?.closeDate || 'N/A'}</strong> • Target Account: <strong>{individual.closeAccountInfo?.account || 'Primary'}</strong>
-                  </p>
-                  <p className="text-purple-700 text-[11px]">
-                    Closure Reason: {individual.closeAccountInfo?.reason || 'Customer request'}
-                  </p>
-                </div>
-              )}
-
-              {/* Metric Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Trading Account</span>
-                  <div className="text-sm font-bold text-slate-900 font-mono mt-1">
-                    {individual.tradingAccountInfo?.tradingAccountNumber || 'TRD-PENDING'}
-                  </div>
-                  <span className="text-[10px] text-slate-400">Opened {individual.tradingAccountInfo?.accountDate || 'N/A'}</span>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Investor ID</span>
-                  <div className="text-sm font-bold text-blue-600 font-mono mt-1">
-                    {individual.investorIdInfo?.investorIdNumber || 'INV-PENDING'}
-                  </div>
-                  <span className="text-[10px] text-slate-400">SECC Firm: {individual.investorIdInfo?.securitiesFirm}</span>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Risk Category</span>
-                  <div className="text-sm font-bold text-amber-700 mt-1 capitalize">
-                    {individual.riskRating || individual.riskCategory || 'Moderate'}
-                  </div>
-                  <span className="text-[10px] text-slate-400">{individual.investmentExperience || '3-5 yrs experience'}</span>
-                </div>
-
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Total Liquid Capital</span>
-                  <div className="text-sm font-bold text-emerald-700 font-mono mt-1">
-                    ${individual.totalDeposits.toLocaleString()}
-                  </div>
-                  <span className="text-[10px] text-slate-400">FICO {individual.creditScore} Tier</span>
-                </div>
+          {/* If Close Account, show banner across all tabs */}
+          {individual.requestType === 'Close Account' && (
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 text-purple-900 font-bold">
+                <Lock className="w-4 h-4 text-purple-700" />
+                <span>Account Closure Pending Authorization</span>
               </div>
-
-              {/* Summary Overview Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                  <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Primary Demographics & Identity</span>
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 pt-1">
-                    <div>
-                      <span className="text-slate-400 block">Khmer Name:</span>
-                      <strong className="text-slate-800">{individual.fullNameKH || 'N/A'}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Date of Birth:</span>
-                      <strong className="text-slate-800">{individual.dateOfBirth}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Gender / Marital:</span>
-                      <strong className="text-slate-800">{individual.gender} • {individual.maritalStatus}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">ID ({individual.idType}):</span>
-                      <strong className="text-slate-800 font-mono">{individual.idNumber}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                  <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                    <Briefcase className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Employment & Organization</span>
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 pt-1">
-                    <div>
-                      <span className="text-slate-400 block">Occupation:</span>
-                      <strong className="text-slate-800">{individual.employment?.occupation || individual.occupation}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Position / Title:</span>
-                      <strong className="text-slate-800">{individual.employment?.position || 'Lead Officer'}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Employer:</span>
-                      <strong className="text-slate-800">{individual.employment?.organizationName || individual.employer}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block">Settlement Bank:</span>
-                      <strong className="text-slate-800">{individual.banking?.bankName}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <p className="text-purple-800 text-[11px]">
+                Close Date: <strong>{individual.closeAccountInfo?.closeDate || 'N/A'}</strong> • Target Account: <strong>{individual.closeAccountInfo?.account || 'Primary'}</strong>
+              </p>
+              <p className="text-purple-700 text-[11px]">
+                Closure Reason: {individual.closeAccountInfo?.reason || 'Customer request'}
+              </p>
             </div>
           )}
 
-          {/* TAB 2: PERSONAL INFORMATION */}
+          {/* TAB 1: PERSONAL INFORMATION - STRUCTURED DOSSIER */}
           {activeTab === 'personal' && (
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                  Legal Names & Demographics
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Surname (EN)</span>
-                    <strong className="text-slate-900">{individual.surnameEN || individual.lastName}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Given Name (EN)</span>
-                    <strong className="text-slate-900">{individual.givenNameEN || individual.firstName}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Surname (KH)</span>
-                    <strong className="text-slate-900">{individual.surnameKH || 'N/A'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Given Name (KH)</span>
-                    <strong className="text-slate-900">{individual.givenNameKH || 'N/A'}</strong>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Date of Birth</span>
-                    <strong className="text-slate-900 font-mono">{individual.dateOfBirth}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Gender</span>
-                    <strong className="text-slate-900">{individual.gender}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Marital Status</span>
-                    <strong className="text-slate-900">{individual.maritalStatus}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Nationality</span>
-                    <strong className="text-slate-900">{individual.nationality}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                  Securities Appropriateness & Category
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Customer Type</span>
-                    <strong className="text-slate-900">{individual.customerType || 'Retail'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Education Background</span>
-                    <strong className="text-slate-900">{individual.educationBackground || "Bachelor's"}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Securities Knowledge</span>
-                    <strong className="text-slate-900">{individual.securitiesKnowledge || 'Intermediate'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Risk Category</span>
-                    <strong className="text-slate-900 capitalize">{individual.riskRating || individual.riskCategory || 'Moderate'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Investment Experience</span>
-                    <strong className="text-slate-900">{individual.investmentExperience || '3-5 years'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Designated Branch</span>
-                    <strong className="text-slate-900">{individual.branch}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <IndividualPersonalViewSection 
+              individual={individual} 
+              theme={theme} 
+            />
           )}
 
           {/* TAB 3: IDENTIFICATION & DOCUMENTS */}
@@ -691,9 +537,40 @@ export function ViewIndividualDialog({
             </div>
           )}
 
-          {/* TAB 6: ACCOUNT INFORMATION */}
+          {/* TAB 5: ACCOUNT INFORMATION */}
           {activeTab === 'account' && (
             <div className="space-y-4">
+              {/* Account Key Metrics */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Trading Account</span>
+                  <div className="text-sm font-bold text-slate-900 font-mono mt-1">
+                    {individual.tradingAccountInfo?.tradingAccountNumber || 'TRD-PENDING'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Investor ID</span>
+                  <div className="text-sm font-bold text-blue-600 font-mono mt-1">
+                    {individual.investorIdInfo?.investorIdNumber || 'INV-PENDING'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Risk Category</span>
+                  <div className="text-sm font-bold text-amber-700 mt-1 capitalize">
+                    {individual.riskRating || individual.riskCategory || 'Moderate'}
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Total Liquid Capital</span>
+                  <div className="text-sm font-bold text-emerald-700 font-mono mt-1">
+                    ${individual.totalDeposits.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                 <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
                   Investor ID Information (Regulator SECC)
@@ -774,12 +651,9 @@ export function ViewIndividualDialog({
               {/* Two Cards Layout: Registration Timeline & Account Close Timeline */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4.5 items-start">
                 {/* CARD 1: REGISTRATION TIMELINE */}
-                <div id="card-registration-timeline" className={cn(
-                  "bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4 transition-all",
-                  timelineLayout !== 'vertical' ? 'lg:col-span-2' : ''
-                )}>
-                  {/* Header with Title & UI Layout Toggle Button */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div id="card-registration-timeline" className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+                  {/* Header with Title */}
+                  <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0 shadow-xs">
                         <UserCheck className="w-5 h-5" />
@@ -819,339 +693,127 @@ export function ViewIndividualDialog({
                         <p className="text-[11px] sm:text-xs text-slate-500">Customer onboarding & trading account opening</p>
                       </div>
                     </div>
-
-                    {/* Interactive UI Layout Toggle */}
-                    <div className="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs font-semibold self-start md:self-auto shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => setTimelineLayout('vertical')}
-                        title="Detailed Vertical Timeline Cards"
-                        className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all',
-                          timelineLayout === 'vertical'
-                            ? 'bg-white text-blue-700 shadow-xs font-bold'
-                            : 'text-slate-600 hover:text-slate-900'
-                        )}
-                      >
-                        <LayoutList className="w-3.5 h-3.5" />
-                        <span className="text-xs">Vertical</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTimelineLayout('stepper')}
-                        title="Version 2: Connected Node Stepper (Image 1)"
-                        className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all',
-                          timelineLayout === 'stepper'
-                            ? 'bg-white text-blue-700 shadow-xs font-bold'
-                            : 'text-slate-600 hover:text-slate-900'
-                        )}
-                      >
-                        <GitCommit className="w-3.5 h-3.5" />
-                        <span className="text-xs">Step Nodes</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTimelineLayout('bar')}
-                        title="Version 3: Segmented Progress Bar (Image 2)"
-                        className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all',
-                          timelineLayout === 'bar'
-                            ? 'bg-white text-blue-700 shadow-xs font-bold'
-                            : 'text-slate-600 hover:text-slate-900'
-                        )}
-                      >
-                        <Split className="w-3.5 h-3.5" />
-                        <span className="text-xs">Progress Bar</span>
-                      </button>
-                    </div>
                   </div>
 
-                  {/* ========================================================================= */}
-                  {/* LAYOUT 1: DETAILED VERTICAL TIMELINE CARDS */}
-                  {/* ========================================================================= */}
-                  {timelineLayout === 'vertical' && (
-                    <div className="space-y-3.5 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200 pt-1">
-                      {registrationHistory.length > 0 ? (
-                        registrationHistory.map((item, idx) => (
-                          <div key={item.id || idx} className="relative flex items-start gap-3 pl-8">
+                  {/* Connected Stage Timeline: Node & Vertical Line on Left, Card UI on Right */}
+                  <div className="space-y-4 pt-1">
+                    {registrationHistory.length > 0 ? (
+                      registrationHistory.map((item, idx) => {
+                        const isSubmitted = item.status === 'Submitted' || item.status === 'Approved';
+                        const isRejected = item.status === 'Rejected';
+                        const isLast = idx === registrationHistory.length - 1;
+
+                        return (
+                          <div key={item.id || idx} className="relative flex items-start gap-3.5 sm:gap-4">
+                            {/* Vertical Connecting Line */}
+                            {!isLast && (
+                              <div
+                                className="absolute left-[19px] top-10 bottom-[-16px] w-0.5 bg-slate-200 z-0"
+                                aria-hidden="true"
+                              />
+                            )}
+
+                            {/* Left Side: Stage Node Icon */}
                             <div className={cn(
-                              'absolute left-2 top-3 w-3.5 h-3.5 rounded-full border-2 border-white shadow-xs ring-4',
-                              item.status === 'Approved' ? 'bg-emerald-500 ring-emerald-50' :
-                              item.status === 'Resubmit' ? 'bg-amber-500 ring-amber-50' :
-                              item.status === 'Rejected' ? 'bg-rose-500 ring-rose-50' :
-                              item.status === 'Submitted' ? 'bg-blue-600 ring-blue-50' : 'bg-slate-400 ring-slate-100'
-                            )} />
-                            <div className="flex-1 p-3.5 sm:p-4 bg-slate-50/70 hover:bg-slate-50 border border-slate-200 rounded-xl space-y-2 transition-colors">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="font-bold text-slate-900 text-xs sm:text-sm">{item.stage}</span>
-                                <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap shrink-0">{item.dateTime}</span>
-                              </div>
-                              <div className="flex items-center justify-between gap-2 text-xs flex-wrap">
-                                <div className="flex items-center gap-1.5 text-slate-600">
-                                  <span>Officer: <strong className="text-slate-800 font-bold">{item.processedBy}</strong></span>
-                                  <span className="text-slate-300">·</span>
-                                  <span>Role: <strong className="text-slate-800 font-bold">{item.role}</strong></span>
-                                </div>
-                                <span className={cn(
-                                  'font-bold px-2.5 py-0.5 rounded-md text-[11px]',
-                                  item.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' :
-                                  item.status === 'Resubmit' ? 'bg-amber-100 text-amber-800' :
-                                  item.status === 'Rejected' ? 'bg-rose-100 text-rose-800' :
-                                  item.status === 'Submitted' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-slate-200 text-slate-800'
-                                )}>
-                                  {item.status}
-                                </span>
-                              </div>
-                              {item.reason && (
-                                <div className="mt-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-1.5">
-                                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                                  <div>
-                                    <span className="font-bold text-rose-950">Reason: </span>
-                                    <span className="text-rose-800 font-medium">{item.reason}</span>
-                                  </div>
-                                </div>
-                              )}
-                              {item.comment && !item.reason && (
-                                <p className="text-[11px] text-slate-500 pt-0.5">
-                                  {item.comment}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="relative pl-8">
-                          <div className="absolute left-2 top-3 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-500 ring-4 ring-emerald-50 shadow-xs" />
-                          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-slate-900 text-xs">Customer Registration Completed</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{individual.tradingAccountInfo?.accountDate || individual.createdAt}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ========================================================================= */}
-                  {/* LAYOUT 2: CONNECTED NODE STEPPER (Image 1 Style) */}
-                  {/* ========================================================================= */}
-                  {timelineLayout === 'stepper' && (
-                    <div className="space-y-4">
-                      <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase px-1">
-                        REQUEST
-                      </div>
-
-                      <div className="bg-slate-50/60 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-center gap-4 sm:gap-6">
-                        {/* Left Icon: UserPlus with rounded container */}
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs">
-                          <UserPlus className="w-6 h-6 text-blue-600" />
-                        </div>
-
-                        {/* Connected Stepper Rail */}
-                        <div className="flex-1 w-full flex items-center justify-between gap-1 sm:gap-2">
-                          {/* Step 1: CSO */}
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                              <Check className="w-4 h-4 stroke-[3]" />
-                            </div>
-                            <div className="text-left">
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm">CSO</div>
-                              <div className="text-[11px] font-semibold text-emerald-600">Submitted</div>
-                              <div className="text-[10px] text-slate-400 font-medium hidden sm:block">
-                                {registrationHistory[0]?.dateTime || 'Mar 15, 2026 · 09:30 AM'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Connecting Line 1 */}
-                          <div className="flex-1 h-1 bg-emerald-500 rounded-full mx-2 sm:mx-4 min-w-[24px]" />
-
-                          {/* Step 2: SR */}
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                              <Check className="w-4 h-4 stroke-[3]" />
-                            </div>
-                            <div className="text-left">
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm">SR</div>
-                              <div className="text-[11px] font-semibold text-emerald-600">Approved</div>
-                              <div className="text-[10px] text-slate-400 font-medium hidden sm:block">
-                                {registrationHistory[1]?.dateTime || 'Mar 17, 2026 · 02:45 PM'}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Connecting Line 2 */}
-                          <div className={cn(
-                            "flex-1 h-1 rounded-full mx-2 sm:mx-4 min-w-[24px]",
-                            individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                              ? "bg-rose-400"
-                              : "bg-emerald-500"
-                          )} />
-
-                          {/* Step 3: Manager */}
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            <div className={cn(
-                              "w-7 h-7 rounded-full text-white flex items-center justify-center shadow-xs",
-                              individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                                ? "bg-rose-500"
-                                : "bg-emerald-500"
+                              'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border-2 shadow-2xs z-10 transition-transform bg-white',
+                              isSubmitted
+                                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-600 ring-2 ring-emerald-100'
+                                : isRejected
+                                ? 'bg-rose-50/90 border-rose-300 text-rose-600 ring-2 ring-rose-100'
+                                : 'bg-slate-50 border-slate-200 text-slate-400 ring-2 ring-slate-100'
                             )}>
-                              {individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected' ? (
-                                <X className="w-4 h-4 stroke-[3]" />
+                              {isSubmitted ? (
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                              ) : isRejected ? (
+                                <X className="w-5 h-5 text-rose-600 stroke-[2.5]" />
                               ) : (
-                                <Check className="w-4 h-4 stroke-[3]" />
+                                <Clock className="w-5 h-5 text-slate-400" />
                               )}
                             </div>
-                            <div className="text-left">
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm">Manager</div>
-                              <div className={cn(
-                                "text-[11px] font-semibold",
-                                individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                                  ? "text-rose-600 font-bold"
-                                  : "text-emerald-600"
-                              )}>
-                                {individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                                  ? "Rejected"
-                                  : "Approved"}
-                              </div>
-                              <div className="text-[10px] text-slate-400 font-medium hidden sm:block">
-                                {registrationHistory[2]?.dateTime || 'Mar 18, 2026 · 04:20 PM'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
 
-                      {/* Detailed Officer Cards under Stepper */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Step 1 · CSO</div>
-                          <div className="font-bold text-slate-800">{registrationHistory[0]?.processedBy || 'Sophea Keo'}</div>
-                          <div className="text-[11px] text-slate-500">{registrationHistory[0]?.dateTime || 'Mar 15, 2026 · 09:30 AM'}</div>
-                        </div>
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Step 2 · SR</div>
-                          <div className="font-bold text-slate-800">{registrationHistory[1]?.processedBy || 'Dara Vong'}</div>
-                          <div className="text-[11px] text-slate-500">{registrationHistory[1]?.dateTime || 'Mar 17, 2026 · 02:45 PM'}</div>
-                        </div>
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Step 3 · Manager</div>
-                          <div className="font-bold text-slate-800">{registrationHistory[2]?.processedBy || 'Vannak Lim'}</div>
-                          <div className="text-[11px] text-slate-500">{registrationHistory[2]?.dateTime || 'Mar 18, 2026 · 04:20 PM'}</div>
-                        </div>
-                      </div>
-
-                      {/* Rejection Reason Box */}
-                      {(registrationHistory.find(h => h.reason)?.reason || individual.requestStatus === 'Rejected') && (
-                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2 shadow-2xs">
-                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold text-rose-950">Reason: </span>
-                            <span className="text-rose-800 font-medium">
-                              {registrationHistory.find(h => h.reason)?.reason || 'Customer address does not match the supporting document.'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ========================================================================= */}
-                  {/* LAYOUT 3: SEGMENTED PROGRESS BAR (Image 2 Style) */}
-                  {/* ========================================================================= */}
-                  {timelineLayout === 'bar' && (
-                    <div className="space-y-4">
-                      <div className="text-[11px] font-bold tracking-wider text-slate-500 uppercase px-1">
-                        REGISTRATION PROGRESS BAR
-                      </div>
-
-                      <div className="bg-slate-50/60 border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs flex items-start gap-4 sm:gap-6">
-                        {/* Left Icon: UserPlus with rounded blue container */}
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-2xs mt-0.5">
-                          <UserPlus className="w-6 h-6 text-blue-600" />
-                        </div>
-
-                        {/* Right: Segmented Bars & Labels */}
-                        <div className="flex-1 w-full space-y-3.5">
-                          {/* 3 Top Segmented Bars */}
-                          <div className="grid grid-cols-3 gap-2.5 sm:gap-4 w-full">
-                            <div className="h-2 rounded-full bg-emerald-500 shadow-2xs transition-all" />
-                            <div className="h-2 rounded-full bg-emerald-500 shadow-2xs transition-all" />
+                            {/* Right Side: Card UI Only */}
                             <div className={cn(
-                              "h-2 rounded-full shadow-2xs transition-all",
-                              individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                                ? "bg-rose-500"
-                                : "bg-emerald-500"
-                            )} />
+                              'flex-1 p-4 rounded-xl border transition-all space-y-2.5',
+                              isRejected 
+                                ? 'bg-rose-50/25 border-rose-200 shadow-2xs hover:border-rose-300' 
+                                : isSubmitted
+                                ? 'bg-white border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs'
+                                : 'bg-slate-50/60 border-slate-200 shadow-2xs'
+                            )}>
+                              {/* Card Top Row: Stage Metadata & Status Badge */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                      Stage {String(idx + 1).padStart(2, '0')}
+                                    </span>
+                                    {item.stage && (
+                                      <>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="text-[11px] font-semibold text-slate-600">{item.stage}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <h5 className="font-bold text-slate-900 text-sm mt-0.5">
+                                    {item.processedBy} <span className="font-medium text-slate-500">· {item.role}</span>
+                                  </h5>
+                                </div>
+
+                                {/* Status Badge */}
+                                <div>
+                                  {item.status === 'Submitted' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                      SUBMITTED
+                                    </span>
+                                  ) : item.status === 'Approved' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                      APPROVED
+                                    </span>
+                                  ) : item.status === 'Rejected' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                      REJECTED
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
+                                      <Clock className="w-3 h-3 text-slate-400" />
+                                      Queue
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Timestamp Row */}
+                              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                <span>{item.dateTime || 'Queue'}</span>
+                              </div>
+
+                              {/* Reason Box */}
+                              {item.reason && (
+                                <div className="p-3 bg-rose-50/80 border border-rose-200/80 rounded-xl text-xs text-rose-900 space-y-0.5 mt-2">
+                                  <span className="font-bold text-rose-950 block">Rejection Reason:</span>
+                                  <p className="text-rose-800 leading-relaxed">{item.reason}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
-
-                          {/* 3 Step Details aligned under each bar */}
-                          <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-                            {/* Step 1: CSO */}
-                            <div>
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm">CSO</div>
-                              <div className="text-[11px] font-bold text-emerald-600">Submitted</div>
-                              <div className="text-[10px] text-slate-600 font-medium mt-1">
-                                {registrationHistory[0]?.processedBy || 'Sophea Keo'}
-                              </div>
-                              <div className="text-[10px] text-slate-400 hidden sm:block">
-                                {registrationHistory[0]?.dateTime || 'Mar 15, 2026 · 09:30 AM'}
-                              </div>
-                            </div>
-
-                            {/* Step 2: SR */}
-                            <div>
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm">SR</div>
-                              <div className="text-[11px] font-bold text-emerald-600">Approved</div>
-                              <div className="text-[10px] text-slate-600 font-medium mt-1">
-                                {registrationHistory[1]?.processedBy || 'Dara Vong'}
-                              </div>
-                              <div className="text-[10px] text-slate-400 hidden sm:block">
-                                {registrationHistory[1]?.dateTime || 'Mar 17, 2026 · 02:45 PM'}
-                              </div>
-                            </div>
-
-                            {/* Step 3: Manager */}
-                            <div>
-                              <div className="font-bold text-slate-900 text-xs sm:text-sm">Manager</div>
-                              <div className={cn(
-                                "text-[11px] font-bold",
-                                individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                                  ? "text-rose-600"
-                                  : "text-emerald-600"
-                              )}>
-                                {individual.requestStatus === 'Rejected' || registrationHistory[2]?.status === 'Rejected'
-                                  ? "Rejected"
-                                  : "Approved"}
-                              </div>
-                              <div className="text-[10px] text-slate-600 font-medium mt-1">
-                                {registrationHistory[2]?.processedBy || 'Vannak Lim'}
-                              </div>
-                              <div className="text-[10px] text-slate-400 hidden sm:block">
-                                {registrationHistory[2]?.dateTime || 'Mar 18, 2026 · 04:20 PM'}
-                              </div>
-                            </div>
-                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-slate-900 text-sm">Customer Registration Completed</h5>
+                          <p className="text-xs text-slate-500">{individual.tradingAccountInfo?.accountDate || individual.createdAt}</p>
                         </div>
                       </div>
-
-                      {/* Rejection Reason Box */}
-                      {(registrationHistory.find(h => h.reason)?.reason || individual.requestStatus === 'Rejected') && (
-                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2 shadow-2xs">
-                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold text-rose-950">Reason: </span>
-                            <span className="text-rose-800 font-medium">
-                              {registrationHistory.find(h => h.reason)?.reason || 'Customer address does not match the supporting document.'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* CARD 2: ACCOUNT CLOSE TIMELINE */}

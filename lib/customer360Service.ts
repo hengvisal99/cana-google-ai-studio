@@ -160,7 +160,7 @@ export const DEFAULT_TRANSACTIONS: IPOTransactionRecord[] = [
 export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
   {
     id: 'ACT-01',
-    dateTime: '06 Feb 2026, 12:00 AM',
+    dateTime: '07 Feb 2026, 12:00 AM',
     activity: 'Employee Trading Registered',
     referenceId: 'ET-000003',
     processedBy: 'Ly Chanthy',
@@ -168,7 +168,7 @@ export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
   },
   {
     id: 'ACT-02',
-    dateTime: '07 Dec 2025, 12:00 AM',
+    dateTime: '08 Dec 2025, 12:00 AM',
     activity: 'CSX Screen Registered',
     referenceId: 'CSX-000012',
     processedBy: 'Chan Sophea',
@@ -176,7 +176,7 @@ export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
   },
   {
     id: 'ACT-03',
-    dateTime: '06 Nov 2025, 12:00 AM',
+    dateTime: '07 Nov 2025, 12:00 AM',
     activity: 'VIP Customer Registered',
     referenceId: 'VIP-000004',
     processedBy: 'Sok Dara',
@@ -184,30 +184,9 @@ export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
   },
   {
     id: 'ACT-04',
-    dateTime: '07 Oct 2025, 12:00 AM',
+    dateTime: '08 Oct 2025, 12:00 AM',
     activity: 'Client Card Registered',
     referenceId: 'CC-000007',
-    processedBy: 'Ly Chanthy',
-    role: 'CSO',
-  },
-  {
-    id: 'ACT-05',
-    dateTime: '03 Jul 2022, 12:00 AM',
-    activity: 'Registration Approved By Sok Dara',
-    processedBy: 'Sok Dara',
-    role: 'Manager',
-  },
-  {
-    id: 'ACT-06',
-    dateTime: '01 Jul 2022, 12:00 AM',
-    activity: 'Registration Checked By Chan Sophea',
-    processedBy: 'Chan Sophea',
-    role: 'Senior',
-  },
-  {
-    id: 'ACT-07',
-    dateTime: '29 Jun 2022, 12:00 AM',
-    activity: 'Registration Submitted By Ly Chanthy',
     processedBy: 'Ly Chanthy',
     role: 'CSO',
   },
@@ -248,28 +227,30 @@ export function getCustomer360Details(individual: Individual): Customer360Data {
     individual,
     kpis: {
       portfolioValue: {
-        amount: portfolioBase,
+        amount: portfolioBase > 0 && portfolioBase !== 125000 ? portfolioBase : 1404807,
         currency: 'USD',
-        formatted: portfolioFormatted,
-        growthPercentage: '+8.5%',
+        formatted: portfolioBase > 0 && portfolioBase !== 125000 
+          ? `$${portfolioBase.toLocaleString('en-US')}`
+          : '$1,404,807',
+        growthPercentage: '0.1% MoM',
         trend: 'up',
       },
       tradingValue: {
-        amount: 85500.00,
+        amount: 44287.00,
         currency: 'USD',
-        formatted: '$85,500.00 USD',
-        dateRange: '01 Jan 2026 – 31 Dec 2026',
+        formatted: '$44,287',
+        dateRange: 'Jan–Sep 2026',
       },
       totalTrading: {
-        count: 128,
-        formatted: '128 Trades',
-        dateRange: '01 Jan 2026 – 31 Dec 2026',
+        count: 4,
+        formatted: '4 Trades',
+        dateRange: 'Jan–Sep 2026',
       },
       iposHeld: {
-        count: 12,
-        formatted: '12 IPOs',
-        subscriptionCount: 24,
-        subscriptionFormatted: '24 Subscriptions',
+        count: 4,
+        formatted: '4 IPOs',
+        subscriptionCount: 120,
+        subscriptionFormatted: '120 subscriptions',
       },
     },
     products: DEFAULT_CUSTOMER_PRODUCTS,

@@ -15,7 +15,25 @@ import {
   Shield,
   Layers,
   ExternalLink,
-  X
+  X,
+  ChevronDown,
+  Filter,
+  SlidersHorizontal,
+  Sparkles,
+  Clock,
+  Check,
+  RotateCcw,
+  LayoutGrid,
+  Eye,
+  CheckCircle2,
+  TrendingUp,
+  Activity,
+  Wallet,
+  Percent,
+  ArrowUp,
+  Target,
+  Zap,
+  BarChart3
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -58,19 +76,17 @@ const CUSTOMER_GROWTH_DATA = [
 ];
 
 const AGE_PROFILE_DATA = [
-  { group: '18–25', customers: 4, percentage: 7.8 },
-  { group: '26–35', customers: 12, percentage: 23.5 },
-  { group: '36–45', customers: 15, percentage: 29.4 },
-  { group: '46–55', customers: 11, percentage: 21.6 },
-  { group: '56–65', customers: 6, percentage: 11.8 },
-  { group: '66+', customers: 3, percentage: 5.9 },
+  { group: '18–24', customers: 12, percentage: 24 },
+  { group: '25–34', customers: 18, percentage: 36 },
+  { group: '35–44', customers: 12, percentage: 24 },
+  { group: '45–54', customers: 6, percentage: 12 },
+  { group: '55+', customers: 3, percentage: 4 },
 ];
 
 const RISK_PROFILE_DATA = [
-  { category: 'Low', customers: 12, percentage: 23.5, color: '#10B981' },
-  { category: 'Moderate', customers: 21, percentage: 41.2, color: '#3B82F6' },
-  { category: 'High', customers: 13, percentage: 25.5, color: '#F59E0B' },
-  { category: 'Very High', customers: 5, percentage: 9.8, color: '#EF4444' },
+  { category: 'Low', customers: 12, percentage: 34.3, color: '#10B981' },
+  { category: 'Medium', customers: 12, percentage: 34.3, color: '#F59E0B' },
+  { category: 'High', customers: 11, percentage: 31.4, color: '#EF4444' },
 ];
 
 const ACCOUNT_STATUS_DATA = [
@@ -169,193 +185,831 @@ export function DashboardScreen({
   );
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
+  // Dashboard Header UI Variant State (V1: Classic, V2: Neo-Glass, V3: Fintech Dock)
+  const [headerVariant, setHeaderVariant] = useState<'classic' | 'bento' | 'command'>('classic');
+  // Summary Cards UI Variant State (V1: Classic Grid, V2: Neo-Vibrant, V3: Glass Accent, V4: Minimalist Stark)
+  const [summaryCardVariant, setSummaryCardVariant] = useState<'classic' | 'vibrant' | 'glass' | 'stark'>('classic');
+  const [hoveredAgeGroup, setHoveredAgeGroup] = useState<string | null>('18–24');
+  const [selectedDatePreset, setSelectedDatePreset] = useState<string>('MTD');
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState('2026-08-01');
+  const [customEndDate, setCustomEndDate] = useState('2026-08-31');
+
   const handlePrint = () => {
     window.print();
   };
 
-  const formattedDateRange = '01 Aug 2026 - 31 Aug 2026';
+  const formattedDateRange = React.useMemo(() => {
+    switch (selectedDatePreset) {
+      case 'TODAY':
+        return '31 Aug 2026';
+      case '7D':
+        return '24 Aug 2026 - 31 Aug 2026';
+      case '30D':
+        return '01 Aug 2026 - 31 Aug 2026';
+      case 'MTD':
+        return '01 Aug 2026 - 31 Aug 2026';
+      case 'Q3_2026':
+        return '01 Jul 2026 - 30 Sep 2026';
+      case 'YTD':
+        return '01 Jan 2026 - 31 Aug 2026';
+      case 'CUSTOM':
+        return `${customStartDate} - ${customEndDate}`;
+      default:
+        return '01 Aug 2026 - 31 Aug 2026';
+    }
+  }, [selectedDatePreset, customStartDate, customEndDate]);
 
-  return (
-    <div id="dashboard-screen" className="space-y-6">
-      {/* 1. DASHBOARD HEADER */}
-      <div
-        id="dashboard-header-container"
-        className={cn(
-          'p-5 sm:p-6 bg-white border border-slate-200 transition-all',
-          theme === 'glassmorphism'
-            ? 'rounded-3xl bg-white/85 backdrop-blur-xl border-white/80 shadow-lg shadow-blue-950/5'
-            : theme === 'aurora'
-            ? 'rounded-2xl border-slate-200 shadow-md ring-1 ring-blue-500/10'
-            : 'rounded-xl shadow-xs'
-        )}
-      >
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-              Real-time executive metrics on customer growth, demographic risk profiles, portfolio valuation, and product distribution.
-            </p>
+  // Shared Date Picker Popover Panel
+  const renderDatePopover = () => {
+    if (!isDatePopoverOpen) return null;
+    return (
+      <>
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsDatePopoverOpen(false)}
+        />
+        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span>Select Date Period</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsDatePopoverOpen(false)}
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          {/* Filter & Actions Bar */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Date Range Selector */}
-            <div className="flex items-center gap-2 bg-slate-50/90 border border-slate-200 px-3.5 py-2 rounded-lg text-xs">
-              <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
-              <div className="flex items-center gap-1.5 font-medium text-slate-700">
-                <span className="text-slate-500 font-normal">Date Range:</span>
-                <span className="font-semibold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono">
-                  [{formattedDateRange}]
-                </span>
+          {/* Quick Presets Grid */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Quick Presets</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { id: '7D', label: 'Last 7 Days' },
+                { id: '30D', label: 'Last 30 Days' },
+                { id: 'MTD', label: 'This Month (Aug)' },
+                { id: 'Q3_2026', label: 'Q3 2026' },
+                { id: 'YTD', label: 'Year to Date' },
+                { id: 'CUSTOM', label: 'Custom Range' },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDatePreset(p.id);
+                    if (p.id !== 'CUSTOM') setIsDatePopoverOpen(false);
+                  }}
+                  className={cn(
+                    'px-2.5 py-1.5 text-left text-xs rounded-lg font-semibold transition border cursor-pointer',
+                    selectedDatePreset === p.id
+                      ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-2xs'
+                      : 'bg-slate-50 hover:bg-slate-100/80 text-slate-700 border-slate-100'
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Date Inputs */}
+          {selectedDatePreset === 'CUSTOM' && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Custom Date Range</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-slate-500 font-medium block mb-1">From</label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full text-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 font-medium block mb-1">To</label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full text-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Print Action */}
+          {/* Footer */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-mono text-slate-500 font-medium truncate max-w-[170px]">
+              {formattedDateRange}
+            </span>
             <button
-              id="dashboard-print-btn"
-              onClick={handlePrint}
-              className={cn(
-                'flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition shadow-xs cursor-pointer',
-                theme === 'glassmorphism' ? 'rounded-xl' : 'rounded-lg'
-              )}
-              title="Print executive dashboard report"
+              type="button"
+              onClick={() => setIsDatePopoverOpen(false)}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs cursor-pointer"
             >
-              <Printer className="w-4 h-4 text-slate-600" />
-              <span>Print</span>
-            </button>
-
-            {/* Preview Report Action */}
-            <button
-              id="dashboard-preview-report-btn"
-              onClick={() => setShowPreviewModal(true)}
-              className={cn(
-                'flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white transition shadow-sm cursor-pointer',
-                theme === 'glassmorphism'
-                  ? 'rounded-xl bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-                  : theme === 'aurora'
-                  ? 'rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                  : 'rounded-lg bg-blue-600 hover:bg-blue-700'
-              )}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Preview Report</span>
+              Done
             </button>
           </div>
         </div>
-      </div>
+      </>
+    );
+  };
 
-      {/* 2. SUMMARY CARDS */}
-      <div id="dashboard-summary-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Customers */}
-        <div
-          id="summary-card-total-customers"
-          className={cn(
-            'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
-              : 'rounded-xl shadow-xs'
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Customers</span>
-            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-              <Users className="w-5 h-5" />
+  return (
+    <div id="dashboard-screen" className="space-y-4">
+      {/* =========================================================================
+          0. DEDICATED LAYOUT TOGGLE BAR (OUTSIDE OF DASHBOARD CARD)
+         ========================================================================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 py-0.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-2xs">
+            <SlidersHorizontal className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-900">Dashboard Layout Preview</span>
+              <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
+                Light Mode
+              </span>
             </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">51</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-            <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
-              ↑ 18.6%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
+            <p className="text-[11px] text-slate-500">
+              Switch between 3 ultra-modern light mode header & filter designs (classic layout)
+            </p>
           </div>
         </div>
 
-        {/* Card 2: Active Accounts */}
-        <div
-          id="summary-card-active-accounts"
-          className={cn(
-            'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
-              : 'rounded-xl shadow-xs'
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Accounts</span>
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-              <UserCheck className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">44</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-            <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
-              ↑ 22.2%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
-        </div>
-
-        {/* Card 3: New Customers */}
-        <div
-          id="summary-card-new-customers"
-          className={cn(
-            'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
-              : 'rounded-xl shadow-xs'
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">New Customers</span>
-            <div className="w-9 h-9 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-700">
-              <UserPlus className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">8</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-            <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
-              ↑ 33.3%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
-        </div>
-
-        {/* Card 4: Total Portfolio Value */}
-        <div
-          id="summary-card-portfolio-value"
-          className={cn(
-            'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
-              : 'rounded-xl shadow-xs'
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Portfolio Value</span>
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <DollarSign className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">$12.85M</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
-            <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
-              ↑ 14.8%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
+        {/* Clean Outer Segmented Switcher */}
+        <div className="flex items-center bg-white p-1 rounded-xl text-xs font-semibold border border-slate-200/90 shadow-2xs shrink-0 self-start sm:self-auto">
+          {[
+            { id: 'classic', label: 'V1: Classic' },
+            { id: 'bento', label: 'V2: Neo-Glass' },
+            { id: 'command', label: 'V3: Fintech Dock' },
+          ].map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setHeaderVariant(v.id as 'classic' | 'bento' | 'command')}
+              className={cn(
+                'py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer',
+                headerVariant === v.id
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              )}
+            >
+              {v.label}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* =========================================================================
+          1. DASHBOARD HEADER & FILTER SECTION (3 TOGGLEABLE ULTRA-MODERN LIGHT DESIGNS)
+         ========================================================================= */}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 1: CLASSIC INLINE BAR (ROYAL BLUE & CRISP WHITE BASELINE)
+         ------------------------------------------------------------------------- */}
+      {headerVariant === 'classic' && (
+        <div
+          id="dashboard-header-container"
+          className="p-5 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-2xs transition-all"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                  Dashboard
+                </h1>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+                Real-time executive metrics on customer growth, demographic risk profiles, portfolio valuation, and product distribution.
+              </p>
+            </div>
+
+            {/* Filter & Actions Bar */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Date Range Selector */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+                  className="flex items-center gap-2 bg-slate-50/90 hover:bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-lg text-xs transition cursor-pointer shadow-2xs"
+                >
+                  <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
+                  <div className="flex items-center gap-1.5 font-medium text-slate-700">
+                    <span className="text-slate-500 font-normal">Date Range:</span>
+                    <span className="font-semibold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-[11px]">
+                      [{formattedDateRange}]
+                    </span>
+                  </div>
+                  <ChevronDown className={cn('w-3.5 h-3.5 text-slate-400 transition-transform', isDatePopoverOpen && 'rotate-180')} />
+                </button>
+                {renderDatePopover()}
+              </div>
+
+              {/* Print Action */}
+              <button
+                id="dashboard-print-btn"
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition shadow-xs cursor-pointer"
+                title="Print executive dashboard report"
+              >
+                <Printer className="w-4 h-4 text-slate-600" />
+                <span>Print</span>
+              </button>
+
+              {/* Preview Report Action */}
+              <button
+                id="dashboard-preview-report-btn"
+                onClick={() => setShowPreviewModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition cursor-pointer"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Preview Report</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 2: NEO-GLASS HORIZON (ELECTRIC AZURE & CYAN GLASS LIGHT ARCHITECTURE)
+         ------------------------------------------------------------------------- */}
+      {headerVariant === 'bento' && (
+        <div
+          id="dashboard-header-neo-glass"
+          className="p-5 sm:p-6 bg-gradient-to-r from-sky-50/80 via-blue-50/60 to-indigo-50/50 border border-blue-200/80 rounded-2xl shadow-sm relative overflow-hidden backdrop-blur-md"
+        >
+          {/* Top glowing electric azure horizon hairline accent */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600" />
+
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-3 h-3 rounded-full bg-blue-600 ring-4 ring-blue-200 animate-pulse" />
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-950 tracking-tight">
+                  Dashboard
+                </h1>
+              </div>
+              <p className="text-xs sm:text-sm text-blue-900/70 mt-1 max-w-2xl font-normal leading-relaxed">
+                Real-time executive metrics on customer growth, demographic risk profiles, portfolio valuation, and product distribution.
+              </p>
+            </div>
+
+            {/* Filter & Actions Bar */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Floating Frosted Azure Date Pill */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+                  className="flex items-center gap-2.5 bg-white/95 hover:bg-white border border-blue-200/90 hover:border-blue-400 px-3.5 py-2 rounded-xl text-xs transition-all shadow-2xs hover:shadow-xs cursor-pointer group"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex items-center gap-1.5 font-medium text-slate-700">
+                    <span className="text-slate-500">Date Range:</span>
+                    <span className="font-mono font-bold text-blue-950 bg-blue-50/90 px-2 py-0.5 rounded-md border border-blue-200/80 text-[11px]">
+                      {formattedDateRange}
+                    </span>
+                  </div>
+                  <ChevronDown className={cn('w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600 transition-transform', isDatePopoverOpen && 'rotate-180')} />
+                </button>
+                {renderDatePopover()}
+              </div>
+
+              {/* Frosted Azure Print Button */}
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-blue-900 bg-white/90 hover:bg-white border border-blue-200 hover:border-blue-300 rounded-xl shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+                title="Print Report"
+              >
+                <Printer className="w-4 h-4 text-blue-600" />
+                <span>Print</span>
+              </button>
+
+              {/* Radiant Azure-to-Cobalt Gradient Preview Button */}
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 hover:opacity-95 rounded-xl shadow-sm shadow-blue-500/25 transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Preview Report</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 3: FINTECH DOCK (OCEAN BLUE & ICE-BLUE SCULPTED CONTROL BAR)
+         ------------------------------------------------------------------------- */}
+      {headerVariant === 'command' && (
+        <div
+          id="dashboard-header-fintech-dock"
+          className="p-5 sm:p-6 bg-gradient-to-br from-blue-50/70 via-sky-50/40 to-slate-50 border border-blue-200/80 rounded-3xl shadow-sm"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shadow-blue-600/30">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-950 tracking-tight">
+                  Dashboard
+                </h1>
+              </div>
+              <p className="text-xs sm:text-sm text-blue-900/70 mt-1.5 max-w-2xl font-normal leading-relaxed">
+                Real-time executive metrics on customer growth, demographic risk profiles, portfolio valuation, and product distribution.
+              </p>
+            </div>
+
+            {/* Filter & Actions Bar (Clean without enclosing wrapper card) */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Date Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+                  className="flex items-center gap-2 bg-white hover:bg-blue-50/50 border border-blue-200 px-3.5 py-2 rounded-xl text-xs font-medium text-blue-950 shadow-2xs hover:shadow-xs transition cursor-pointer"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-slate-500">Date Range:</span>
+                  <span className="font-mono font-bold text-blue-950 text-[11px] bg-blue-50/80 px-2 py-0.5 rounded border border-blue-200">
+                    {formattedDateRange}
+                  </span>
+                  <ChevronDown className={cn('w-3.5 h-3.5 text-blue-600 transition-transform', isDatePopoverOpen && 'rotate-180')} />
+                </button>
+                {renderDatePopover()}
+              </div>
+
+              {/* Print Button */}
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-blue-900 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl shadow-2xs hover:shadow-xs transition cursor-pointer"
+                title="Print Dashboard"
+              >
+                <Printer className="w-3.5 h-3.5 text-blue-700" />
+                <span>Print</span>
+              </button>
+
+              {/* Vivid Ocean Blue Preview Report Button */}
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 rounded-xl shadow-xs shadow-blue-600/30 transition cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Preview Report</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          2. DEDICATED SUMMARY CARDS LAYOUT SWITCHER (OUTSIDE OF SUMMARY CARDS)
+         ========================================================================= */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 pt-1">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-2xs">
+            <LayoutGrid className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-900">Summary Cards Layout Preview</span>
+              <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                Light Mode
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Switch between 4 ultra-modern metric card architectures & visual representations
+            </p>
+          </div>
+        </div>
+
+        {/* Outer Segmented Switcher for Summary Cards */}
+        <div className="flex items-center bg-white p-1 rounded-xl text-xs font-semibold border border-slate-200/90 shadow-2xs shrink-0 self-start sm:self-auto">
+          {[
+            { id: 'classic', label: 'V1: Classic Grid' },
+            { id: 'vibrant', label: 'V2: Neo-Vibrant' },
+            { id: 'glass', label: 'V3: Glass Accent' },
+            { id: 'stark', label: 'V4: Minimalist Stark' },
+          ].map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setSummaryCardVariant(v.id as 'classic' | 'vibrant' | 'glass' | 'stark')}
+              className={cn(
+                'py-1.5 px-3 rounded-lg text-xs font-bold transition-all text-center cursor-pointer',
+                summaryCardVariant === v.id
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              )}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* =========================================================================
+          SUMMARY CARDS: 4 DISTINCT ULTRA-MODERN LIGHT MODE LAYOUTS (EXACT INFO)
+         ========================================================================= */}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 1: CLASSIC 4-GRID CARDS (ORIGINAL BASELINE REFERENCE)
+         ------------------------------------------------------------------------- */}
+      {summaryCardVariant === 'classic' && (
+        <div id="dashboard-summary-cards-classic" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Total Customers */}
+          <div
+            id="summary-card-total-customers"
+            className={cn(
+              'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
+              theme === 'glassmorphism'
+                ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
+                : 'rounded-xl shadow-xs'
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Customers</span>
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">51</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
+                ↑ 18.6%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+
+          {/* Card 2: Active Accounts */}
+          <div
+            id="summary-card-active-accounts"
+            className={cn(
+              'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
+              theme === 'glassmorphism'
+                ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
+                : 'rounded-xl shadow-xs'
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Accounts</span>
+              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <UserCheck className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">44</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
+                ↑ 22.2%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+
+          {/* Card 3: New Customers */}
+          <div
+            id="summary-card-new-customers"
+            className={cn(
+              'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
+              theme === 'glassmorphism'
+                ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
+                : 'rounded-xl shadow-xs'
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">New Customers</span>
+              <div className="w-9 h-9 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-700">
+                <UserPlus className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">8</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
+                ↑ 33.3%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+
+          {/* Card 4: Total Portfolio Value */}
+          <div
+            id="summary-card-portfolio-value"
+            className={cn(
+              'p-5 bg-white border border-slate-200 transition-all hover:border-blue-300',
+              theme === 'glassmorphism'
+                ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm hover:shadow-md'
+                : 'rounded-xl shadow-xs'
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Portfolio Value</span>
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700">
+                <DollarSign className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-extrabold text-slate-900 font-mono tracking-tight">$12.85M</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-600">
+              <span className="flex items-center gap-0.5 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">
+                ↑ 14.8%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 2: NEO-VIBRANT GRID (ULTRA-MODERN COLOR TINTS & SQUIRCLE ICONS)
+         ------------------------------------------------------------------------- */}
+      {summaryCardVariant === 'vibrant' && (
+        <div id="dashboard-summary-cards-vibrant" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Vibrant Card 1: Total Customers */}
+          <div className="p-5 bg-gradient-to-b from-blue-50/60 via-white to-white border border-blue-200/90 hover:border-blue-400 rounded-2xl shadow-xs hover:shadow-md hover:shadow-blue-500/10 transition-all duration-200 space-y-3 group">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total Customers</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shadow-blue-500/40 group-hover:scale-105 transition-transform">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">51</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
+                <ArrowUp className="w-3 h-3" />
+                18.6%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+
+          {/* Vibrant Card 2: Active Accounts */}
+          <div className="p-5 bg-gradient-to-b from-sky-50/60 via-white to-white border border-sky-200/90 hover:border-sky-400 rounded-2xl shadow-xs hover:shadow-md hover:shadow-sky-500/10 transition-all duration-200 space-y-3 group">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Active Accounts</span>
+              <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs shadow-sky-500/40 group-hover:scale-105 transition-transform">
+                <UserCheck className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">44</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
+                <ArrowUp className="w-3 h-3" />
+                22.2%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+
+          {/* Vibrant Card 3: New Customers */}
+          <div className="p-5 bg-gradient-to-b from-cyan-50/60 via-white to-white border border-cyan-200/90 hover:border-cyan-400 rounded-2xl shadow-xs hover:shadow-md hover:shadow-cyan-500/10 transition-all duration-200 space-y-3 group">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">New Customers</span>
+              <div className="w-10 h-10 rounded-xl bg-cyan-600 text-white flex items-center justify-center shadow-xs shadow-cyan-500/40 group-hover:scale-105 transition-transform">
+                <UserPlus className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">8</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
+                <ArrowUp className="w-3 h-3" />
+                33.3%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+
+          {/* Vibrant Card 4: Total Portfolio Value */}
+          <div className="p-5 bg-gradient-to-b from-blue-100/40 via-white to-white border border-blue-300/80 hover:border-blue-500 rounded-2xl shadow-xs hover:shadow-md hover:shadow-blue-600/10 transition-all duration-200 space-y-3 group">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total Portfolio Value</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-800 text-white flex items-center justify-center shadow-xs shadow-blue-800/40 group-hover:scale-105 transition-transform">
+                <DollarSign className="w-5 h-5" />
+              </div>
+            </div>
+            <div>
+              <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">$12.85M</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
+                <ArrowUp className="w-3 h-3" />
+                14.8%
+              </span>
+              <span className="text-slate-400 font-normal">vs last month</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 3: GLASS ACCENT (HORIZON GRADIENT ACCENT & DUAL-RING ICONS)
+         ------------------------------------------------------------------------- */}
+      {summaryCardVariant === 'glass' && (
+        <div id="dashboard-summary-cards-glass" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Glass Card 1 */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-sm transition-all overflow-hidden flex flex-col justify-between group">
+            <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 w-full" />
+            <div className="p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400">Total Customers</span>
+                <div className="w-9 h-9 rounded-xl bg-blue-50 ring-4 ring-blue-50/50 flex items-center justify-center text-blue-600">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">51</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold pt-1 border-t border-slate-100">
+                <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                  ↑ 18.6%
+                </span>
+                <span className="text-slate-400 text-[11px] font-normal">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Glass Card 2 */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-sm transition-all overflow-hidden flex flex-col justify-between group">
+            <div className="h-1 bg-gradient-to-r from-sky-500 to-blue-600 w-full" />
+            <div className="p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400">Active Accounts</span>
+                <div className="w-9 h-9 rounded-xl bg-sky-50 ring-4 ring-sky-50/50 flex items-center justify-center text-sky-600">
+                  <UserCheck className="w-4 h-4" />
+                </div>
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">44</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold pt-1 border-t border-slate-100">
+                <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                  ↑ 22.2%
+                </span>
+                <span className="text-slate-400 text-[11px] font-normal">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Glass Card 3 */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-sm transition-all overflow-hidden flex flex-col justify-between group">
+            <div className="h-1 bg-gradient-to-r from-cyan-500 to-blue-500 w-full" />
+            <div className="p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400">New Customers</span>
+                <div className="w-9 h-9 rounded-xl bg-cyan-50 ring-4 ring-cyan-50/50 flex items-center justify-center text-cyan-700">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">8</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold pt-1 border-t border-slate-100">
+                <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                  ↑ 33.3%
+                </span>
+                <span className="text-slate-400 text-[11px] font-normal">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Glass Card 4 */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs hover:shadow-sm transition-all overflow-hidden flex flex-col justify-between group">
+            <div className="h-1 bg-gradient-to-r from-blue-600 to-indigo-700 w-full" />
+            <div className="p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400">Total Portfolio Value</span>
+                <div className="w-9 h-9 rounded-xl bg-blue-50 ring-4 ring-blue-50/50 flex items-center justify-center text-blue-800">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">$12.85M</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold pt-1 border-t border-slate-100">
+                <span className="font-mono font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                  ↑ 14.8%
+                </span>
+                <span className="text-slate-400 text-[11px] font-normal">vs last month</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------------------
+          VARIANT 4: MINIMALIST STARK (HIGH-CONTRAST MONOCHROME & ACCENT BARS)
+         ------------------------------------------------------------------------- */}
+      {summaryCardVariant === 'stark' && (
+        <div id="dashboard-summary-cards-stark" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Stark Card 1 */}
+          <div className="p-5 bg-white border-2 border-slate-200/90 hover:border-slate-800 rounded-xl transition-all duration-150 flex items-stretch gap-3.5">
+            <div className="w-1.5 rounded-full bg-blue-600 shrink-0 self-stretch my-0.5" />
+            <div className="flex-1 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Total Customers</span>
+                <Users className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 tracking-tighter font-mono">51</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  ↑ 18.6%
+                </span>
+                <span className="text-slate-500 font-medium text-[11px]">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stark Card 2 */}
+          <div className="p-5 bg-white border-2 border-slate-200/90 hover:border-slate-800 rounded-xl transition-all duration-150 flex items-stretch gap-3.5">
+            <div className="w-1.5 rounded-full bg-sky-600 shrink-0 self-stretch my-0.5" />
+            <div className="flex-1 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Active Accounts</span>
+                <UserCheck className="w-4 h-4 text-sky-600" />
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 tracking-tighter font-mono">44</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  ↑ 22.2%
+                </span>
+                <span className="text-slate-500 font-medium text-[11px]">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stark Card 3 */}
+          <div className="p-5 bg-white border-2 border-slate-200/90 hover:border-slate-800 rounded-xl transition-all duration-150 flex items-stretch gap-3.5">
+            <div className="w-1.5 rounded-full bg-cyan-600 shrink-0 self-stretch my-0.5" />
+            <div className="flex-1 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">New Customers</span>
+                <UserPlus className="w-4 h-4 text-cyan-600" />
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 tracking-tighter font-mono">8</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  ↑ 33.3%
+                </span>
+                <span className="text-slate-500 font-medium text-[11px]">vs last month</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stark Card 4 */}
+          <div className="p-5 bg-white border-2 border-slate-200/90 hover:border-slate-800 rounded-xl transition-all duration-150 flex items-stretch gap-3.5">
+            <div className="w-1.5 rounded-full bg-blue-800 shrink-0 self-stretch my-0.5" />
+            <div className="flex-1 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Total Portfolio Value</span>
+                <DollarSign className="w-4 h-4 text-blue-800" />
+              </div>
+              <div>
+                <span className="text-3xl font-black text-slate-900 tracking-tighter font-mono">$12.85M</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                  ↑ 14.8%
+                </span>
+                <span className="text-slate-500 font-medium text-[11px]">vs last month</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. ANALYTICS CHARTS */}
       {/* Chart Row 1: Customer Growth (2 Cols) + Age Profile (1 Col) in 3-col grid */}
@@ -450,11 +1104,11 @@ export function DashboardScreen({
           </div>
         </div>
 
-        {/* Age Profile: 1 col x 1 row */}
+        {/* Age Profile: 1 col x 1 row (Custom Single-Color Horizontal Bar Chart) */}
         <div
           id="chart-age-profile"
           className={cn(
-            'lg:col-span-1 p-5 bg-white border border-slate-200 flex flex-col',
+            'lg:col-span-1 p-5 bg-white border border-slate-200 flex flex-col justify-between',
             theme === 'glassmorphism'
               ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
@@ -463,62 +1117,89 @@ export function DashboardScreen({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Age Profile</h2>
-              <p className="text-xs text-slate-400">Distribution by age group (Total: 51)</p>
+              <p className="text-xs text-slate-400">Distribution by age group (Total: 51 • 100%)</p>
             </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-              6 Tiers
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
+              5 Tiers
             </span>
           </div>
 
-          <div className="h-[280px] w-full pt-4">
-            {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={AGE_PROFILE_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis
-                    dataKey="group"
-                    tick={{ fill: '#64748B', fontSize: 11 }}
-                    axisLine={{ stroke: '#CBD5E1' }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: '#64748B', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 18]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1E293B',
-                      borderRadius: '8px',
-                      color: '#F8FAFC',
-                      border: 'none',
-                      fontSize: '12px',
-                    }}
-                    formatter={(value: any) => [`${value} Customers`, 'Count']}
-                  />
-                  <Bar
-                    dataKey="customers"
-                    name="Customers"
-                    fill="#3B82F6"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400">Loading chart...</div>
-            )}
+          {/* Single-Color Horizontal Bar Chart */}
+          <div className="pt-4 pb-2 flex-1 flex flex-col justify-center space-y-2.5">
+            {AGE_PROFILE_DATA.map((item) => {
+              const isHovered = hoveredAgeGroup === item.group;
+              const barWidthPercent = Math.max((item.percentage / 45) * 80, 8);
+
+              return (
+                <div
+                  key={item.group}
+                  onMouseEnter={() => setHoveredAgeGroup(item.group)}
+                  className={cn(
+                    'group/row flex items-center gap-2.5 py-1 px-1.5 rounded-lg transition-colors cursor-pointer select-none',
+                    isHovered ? 'bg-blue-50/70 shadow-2xs' : 'hover:bg-slate-50'
+                  )}
+                  title={`${item.group}: ${item.customers} Customers (${item.percentage}%)`}
+                >
+                  {/* Category Label */}
+                  <span
+                    className={cn(
+                      'w-12 text-right text-xs font-mono tracking-tight shrink-0 transition-colors',
+                      isHovered ? 'font-bold text-blue-950' : 'font-semibold text-slate-600'
+                    )}
+                  >
+                    {item.group}
+                  </span>
+
+                  {/* Vertical Axis Line */}
+                  <div className="w-0.5 h-7 bg-slate-200 shrink-0" />
+
+                  {/* Single-Color Bar Track & Fill */}
+                  <div className="flex-1 flex items-center">
+                    <div
+                      className={cn(
+                        'h-6 sm:h-7 rounded-md bg-blue-600 shadow-2xs transition-all duration-200 relative flex items-center',
+                        isHovered ? 'bg-blue-700 shadow-xs scale-y-105' : 'hover:bg-blue-600/90'
+                      )}
+                      style={{
+                        width: `${barWidthPercent}%`,
+                      }}
+                    />
+
+                    {/* Percentage Label directly adjacent to bar */}
+                    <span
+                      className={cn(
+                        'ml-3 font-mono text-xs sm:text-sm tracking-tight shrink-0 transition-colors',
+                        isHovered ? 'font-black text-blue-950 scale-105' : 'font-bold text-slate-700'
+                      )}
+                    >
+                      {item.percentage}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Active Highlight Info Strip */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-400 text-[11px]">
+              Active: <span className="font-bold text-blue-700 font-mono">{hoveredAgeGroup || '18–24'}</span>
+            </span>
+            <span className="font-mono text-slate-600 font-medium text-[11px]">
+              {AGE_PROFILE_DATA.find((a) => a.group === (hoveredAgeGroup || '18–24'))?.customers || 12} Customers (
+              {AGE_PROFILE_DATA.find((a) => a.group === (hoveredAgeGroup || '18–24'))?.percentage || 24}%)
+            </span>
           </div>
         </div>
       </div>
 
       {/* Chart Row 2: Customer Risk Profile (1 Col) + Account Status (1 Col) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Customer Risk Profile: 1 col x 1 row */}
+        {/* Customer Risk Profile: 1 col x 1 row (Semi-Circle Gauge Arc UI) */}
         <div
           id="chart-risk-profile"
           className={cn(
-            'p-5 bg-white border border-slate-200 flex flex-col',
+            'p-5 bg-white border border-slate-200 flex flex-col justify-between',
             theme === 'glassmorphism'
               ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
@@ -527,31 +1208,33 @@ export function DashboardScreen({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Customer Risk Profile</h2>
-              <p className="text-xs text-slate-400">Distribution by risk category (Total: 51 • 100%)</p>
+              <p className="text-xs text-slate-400">Distribution by risk category (Total: 35 • 100%)</p>
             </div>
-            <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded">
-              <Shield className="w-3.5 h-3.5 text-blue-600" />
-              <span>Risk Matrix</span>
-            </div>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
+              3 Tiers
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center pt-4 flex-1">
-            <div className="sm:col-span-6 h-[220px]">
+          {/* Semi-Circle Gauge Arc UI matching reference */}
+          <div className="pt-2 pb-2 flex-1 flex flex-col items-center justify-center">
+            <div className="w-full h-[180px] sm:h-[190px] relative flex items-center justify-center">
               {isMounted ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={RISK_PROFILE_DATA}
                       cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
+                      cy="82%"
+                      startAngle={180}
+                      endAngle={0}
+                      innerRadius={68}
+                      outerRadius={98}
                       paddingAngle={4}
                       dataKey="customers"
                       nameKey="category"
                     >
                       {RISK_PROFILE_DATA.map((entry) => (
-                        <Cell key={`cell-risk-${entry.category}`} fill={entry.color} />
+                        <Cell key={`cell-risk-${entry.category}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
                       ))}
                     </Pie>
                     <Tooltip
@@ -563,35 +1246,40 @@ export function DashboardScreen({
                         fontSize: '12px',
                       }}
                       formatter={(val: any, name: any, item: any) => [
-                        `${val} Customers (${item.payload.percentage}%)`,
+                        `${val} Accounts (${item.payload.percentage}%)`,
                         item.payload.category,
                       ]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               ) : null}
-            </div>
 
-            <div className="sm:col-span-6 space-y-2.5">
-              {RISK_PROFILE_DATA.map((r) => (
-                <div key={r.category} className="p-2.5 rounded-lg border border-slate-100 bg-slate-50/70">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
-                      <span className="font-semibold text-slate-800">{r.category}</span>
-                    </div>
-                    <span className="font-mono font-bold text-slate-900">
-                      {r.customers} <span className="font-normal text-slate-500 text-[11px]">({r.percentage}%)</span>
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${r.percentage}%`, backgroundColor: r.color }}
-                    />
-                  </div>
-                </div>
-              ))}
+              {/* Centered Stat under Arc */}
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-3 pointer-events-none">
+                <span className="text-3xl sm:text-4xl font-black text-slate-900 font-mono tracking-tight">35</span>
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                  INDIVIDUAL ACCOUNTS
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom 3-Column Legend Footer matching uploaded reference */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm px-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] shrink-0" />
+              <span className="text-slate-600 font-medium text-xs sm:text-sm">Low</span>
+              <span className="font-bold text-slate-900 font-mono text-xs sm:text-sm ml-0.5">12</span>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] shrink-0" />
+              <span className="text-slate-600 font-medium text-xs sm:text-sm">Medium</span>
+              <span className="font-bold text-slate-900 font-mono text-xs sm:text-sm ml-0.5">12</span>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] shrink-0" />
+              <span className="text-slate-600 font-medium text-xs sm:text-sm">High</span>
+              <span className="font-bold text-slate-900 font-mono text-xs sm:text-sm ml-0.5">11</span>
             </div>
           </div>
         </div>

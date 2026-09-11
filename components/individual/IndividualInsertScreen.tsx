@@ -198,7 +198,7 @@ export function IndividualInsertScreen({
     reader.readAsDataURL(file);
   };
 
-  // Supporting Document Upload Handler
+  // Supporting Document Upload Handler (Single file per category)
   const handleFileUpload = (
     files: FileList | File[],
     docType: 'Account Specimen' | 'ID Card / Passport' | 'Other',
@@ -207,29 +207,29 @@ export function IndividualInsertScreen({
     const fileArray = Array.from(files);
     if (fileArray.length === 0) return;
 
-    const newDocs: SupportingDocument[] = fileArray.map((file) => {
-      const formattedSize =
-        file.size > 1024 * 1024
-          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-          : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+    const file = fileArray[0];
+    const formattedSize =
+      file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.max(1, Math.round(file.size / 1024))} KB`;
 
-      return {
-        id: `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        type: docType,
-        fileName: file.name,
-        fileSize: formattedSize,
-        uploadedAt: new Date().toISOString().slice(0, 10),
-        remark:
-          customRemark ||
-          (docType === 'Account Specimen'
-            ? 'Account signature specimen document'
-            : docType === 'ID Card / Passport'
-            ? 'Official identity card / passport copy'
-            : `${otherDocType} supporting document`),
-      };
-    });
+    const newDoc: SupportingDocument = {
+      id: `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      type: docType,
+      fileName: file.name,
+      fileSize: formattedSize,
+      uploadedAt: new Date().toISOString().slice(0, 10),
+      remark:
+        customRemark ||
+        (docType === 'Account Specimen'
+          ? 'Account signature specimen document'
+          : docType === 'ID Card / Passport'
+          ? 'Official identity card / passport copy'
+          : `${otherDocType} supporting document`),
+    };
 
-    setDocuments((prev) => [...prev, ...newDocs]);
+    // One file one upload only: replace any existing document of this type
+    setDocuments((prev) => [...prev.filter((d) => d.type !== docType), newDoc]);
   };
 
   const handleRemoveDocument = (docId: string) => {
@@ -445,49 +445,35 @@ export function IndividualInsertScreen({
 
   return (
     <div id="individual-insert-screen" className="space-y-5 pb-12">
-      {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      {/* Top Header & Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-200/70">
+        <div className="space-y-1">
           <button
             id="btn-insert-back-to-list"
             onClick={onCancel}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition mb-1"
+            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
             <span>Back to Individual Directory</span>
           </button>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Insert Individual Customer
-            </h1>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              New Registration
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Complete the multi-section regulatory form to register a new investor profile into Nexus Securities.
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Insert Individual Customer
+          </h1>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 self-end sm:self-center">
           <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
-          >
-            Cancel
-          </button>
-          <button
+            id="btn-insert-save-submit"
             type="button"
             onClick={handleFormSubmit}
             disabled={isSubmitting}
             className={cn(
-              'flex items-center gap-2 px-5 py-2 text-xs font-bold text-white transition-all shadow-xs shrink-0',
+              'inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-white transition-all shadow-xs shrink-0 active:scale-[0.98]',
               theme === 'glassmorphism'
                 ? 'rounded-full bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20'
                 : theme === 'aurora'
                 ? 'rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/25'
-                : 'rounded-lg bg-blue-600 hover:bg-blue-700'
+                : 'rounded-xl bg-blue-600 hover:bg-blue-700 shadow-xs hover:shadow-sm'
             )}
           >
             <Save className="w-4 h-4" />
@@ -496,27 +482,30 @@ export function IndividualInsertScreen({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs Stepper */}
       <div className={cn(
-        'bg-white border border-slate-200 p-1.5 flex items-center gap-1 overflow-x-auto',
+        'bg-white border border-slate-200 p-1.5 flex items-center gap-1 overflow-x-auto scrollbar-none',
         theme === 'glassmorphism' ? 'rounded-2xl bg-white/80 backdrop-blur-md border-white/80 shadow-xs' : 'rounded-xl shadow-xs'
       )}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              'flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0 select-none',
-              activeTab === tab.key
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-            )}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'flex items-center gap-2 px-3.5 py-2 text-xs rounded-lg transition-all shrink-0 select-none',
+                isActive
+                  ? 'bg-blue-600 text-white shadow-xs font-bold'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold'
+              )}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Main Form Content Container */}
@@ -531,11 +520,157 @@ export function IndividualInsertScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  <span>1. Personal Information</span>
+                  <span>Personal Information</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Enter English and Khmer legal names along with investor categorization and knowledge assessments.
-                </p>
+              </div>
+
+              {/* Customer Profile Photo Upload & Quick Identity Profile without outer card */}
+              <div className="pt-1">
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePhotoUpload(file);
+                  }}
+                />
+
+                <div className="flex flex-col sm:flex-row gap-5 items-start">
+                  {/* Left Column: Photo Upload / Preview */}
+                  <div className="w-32 sm:w-36 shrink-0 flex flex-col items-center">
+                    {avatarUrl ? (
+                      <div className="flex flex-col items-center gap-2.5 p-2.5 bg-white border border-slate-200 rounded-2xl shadow-xs w-full">
+                        <div className="relative group/avatar shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={avatarUrl}
+                            alt="Customer Portrait Preview"
+                            className="w-24 h-24 rounded-xl object-cover border border-slate-200 shadow-xs"
+                          />
+                        </div>
+                        <div className="w-full text-center">
+                          <h4 className="text-[11px] font-bold text-slate-800">Portrait Loaded</h4>
+                          <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => photoInputRef.current?.click()}
+                              className="px-2 py-0.5 text-[10px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition"
+                            >
+                              Change
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAvatarUrl('');
+                                if (photoInputRef.current) photoInputRef.current.value = '';
+                              }}
+                              className="px-2 py-0.5 text-[10px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full flex flex-col items-center">
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDraggingPhoto(true);
+                          }}
+                          onDragLeave={() => setIsDraggingPhoto(false)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDraggingPhoto(false);
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) handlePhotoUpload(file);
+                          }}
+                          onClick={() => photoInputRef.current?.click()}
+                          className={cn(
+                            'w-full h-32 sm:h-36 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 bg-white group shadow-2xs',
+                            isDraggingPhoto
+                              ? 'border-blue-500 bg-blue-50/60'
+                              : 'border-slate-300 hover:border-blue-500 hover:bg-blue-50/30 text-slate-500'
+                          )}
+                        >
+                          <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mb-1.5 group-hover:scale-105 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
+                            <Camera className="w-4.5 h-4.5 stroke-[1.75]" />
+                          </div>
+                          <span className="text-[10px] font-bold tracking-wider text-slate-700 group-hover:text-blue-600 transition-colors uppercase">
+                            UPLOAD
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 font-medium text-center">
+                          JPG or PNG, up to 5 MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Side Fields: Customer Type, Investor Status, Risk Rating & Mobile */}
+                  <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Customer Type *
+                      </label>
+                      <select
+                        value={customerType}
+                        onChange={(e) => setCustomerType(e.target.value as CustomerType)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="Retail">Retail Investor</option>
+                        <option value="Corporate">Corporate Investor</option>
+                        <option value="Institutional">Institutional Investor</option>
+                        <option value="HNW">High Net Worth (HNW)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Investor Status *
+                      </label>
+                      <select
+                        value={investorStatus}
+                        onChange={(e) => setInvestorStatus(e.target.value as any)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="Normal">Normal Status</option>
+                        <option value="VIP">VIP Investor</option>
+                        <option value="Restricted">Restricted</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Risk Rating Category *
+                      </label>
+                      <select
+                        value={riskCategory}
+                        onChange={(e) => setRiskCategory(e.target.value as RiskRating)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="conservative">Conservative</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="aggressive">Aggressive</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Mobile Phone Number *
+                      </label>
+                      <input
+                        type="text"
+                        value={mobile}
+                        onChange={(e) => setMobile(e.target.value)}
+                        placeholder="e.g. +855 12 345 678"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Name Fields (EN & KH) */}
@@ -748,105 +883,6 @@ export function IndividualInsertScreen({
                   </div>
                 </div>
               </div>
-
-              {/* Customer Photo Upload Section */}
-              <div className="pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                      Customer Profile Photo (Portrait / Avatar)
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      Upload a front-facing formal portrait of the customer for biometric profile verification.
-                    </span>
-                  </div>
-                  {avatarUrl && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Photo Uploaded
-                    </span>
-                  )}
-                </div>
-
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg, image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handlePhotoUpload(file);
-                  }}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
-                  {/* Dropzone container */}
-                  <div
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setIsDraggingPhoto(true);
-                    }}
-                    onDragLeave={() => setIsDraggingPhoto(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setIsDraggingPhoto(false);
-                      const file = e.dataTransfer.files?.[0];
-                      if (file) handlePhotoUpload(file);
-                    }}
-                    onClick={() => photoInputRef.current?.click()}
-                    className={cn(
-                      'md:col-span-2 border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group',
-                      isDraggingPhoto
-                        ? 'border-blue-500 bg-blue-50/60 shadow-xs'
-                        : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-400'
-                    )}
-                  >
-                    <div className="w-11 h-11 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-blue-100 transition-all">
-                      <Camera className="w-5 h-5" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-800 mb-0.5">
-                      Drag & drop customer portrait photo here, or <span className="text-blue-600 underline">Browse</span>
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      Supports JPG, PNG, WEBP (Formal front-facing photo, Max 5MB)
-                    </p>
-                  </div>
-
-                  {/* Preview Card */}
-                  <div className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/70 flex flex-col items-center justify-center text-center">
-                    {avatarUrl ? (
-                      <div className="relative group/avatar">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={avatarUrl}
-                          alt="Customer Portrait"
-                          className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-sm ring-2 ring-blue-500/20"
-                        />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAvatarUrl('');
-                            if (photoInputRef.current) photoInputRef.current.value = '';
-                          }}
-                          className="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-sm transition"
-                          title="Remove photo"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                        <p className="text-[11px] font-semibold text-slate-700 mt-2">Selected Photo</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-2">
-                        <div className="w-16 h-16 rounded-full bg-slate-200/80 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400 mb-2">
-                          <User className="w-7 h-7" />
-                        </div>
-                        <span className="text-[11px] font-medium text-slate-400">No Photo Selected</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
@@ -856,11 +892,8 @@ export function IndividualInsertScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>2. Identification & Supporting Documents</span>
+                  <span>Identification & Supporting Documents</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Verify residency, official identification credentials, and upload supporting KYC files.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -965,26 +998,20 @@ export function IndividualInsertScreen({
               {/* Supporting Documents Section with Integrated Card Upload UI */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                      Supporting Documents (Account Specimen, ID / Passport, Other)
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      Upload verified customer signatures and identity documents directly into each card.
-                    </span>
-                  </div>
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                    Supporting Documents
+                  </span>
                   {documents.length > 0 && (
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                      {documents.length} {documents.length === 1 ? 'file attached' : 'files attached'}
+                      {documents.length} / 3 uploaded
                     </span>
                   )}
                 </div>
 
-                {/* Hidden File Inputs */}
+                {/* Hidden File Inputs (single file selection) */}
                 <input
                   ref={specimenInputRef}
                   type="file"
-                  multiple
                   accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
                   className="hidden"
                   onChange={(e) => {
@@ -997,7 +1024,6 @@ export function IndividualInsertScreen({
                 <input
                   ref={idDocInputRef}
                   type="file"
-                  multiple
                   accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
                   className="hidden"
                   onChange={(e) => {
@@ -1010,7 +1036,6 @@ export function IndividualInsertScreen({
                 <input
                   ref={otherDocInputRef}
                   type="file"
-                  multiple
                   accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
                   className="hidden"
                   onChange={(e) => {
@@ -1021,272 +1046,259 @@ export function IndividualInsertScreen({
                   }}
                 />
 
-                {/* 3 Unified Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* 1. Account Specimen Card (Unified Upload & Uploaded State) */}
-                  <div>
-                    {documents.filter((d) => d.type === 'Account Specimen').length === 0 ? (
-                      /* Empty State: Upload Dropzone matching Image 1 without subtitle */
-                      <div
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setIsDraggingSpecimen(true);
-                        }}
-                        onDragLeave={() => setIsDraggingSpecimen(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDraggingSpecimen(false);
-                          if (e.dataTransfer.files) {
-                            handleFileUpload(e.dataTransfer.files, 'Account Specimen');
-                          }
-                        }}
-                        onClick={() => specimenInputRef.current?.click()}
-                        className={cn(
-                          'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative min-h-[170px]',
-                          isDraggingSpecimen
-                            ? 'border-blue-500 bg-blue-50/70 shadow-xs'
-                            : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-blue-400'
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-blue-100 transition-all">
-                          <FileCheck className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-800 mb-2">Account Specimen</span>
-                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-blue-600 shadow-2xs group-hover:border-blue-300">
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Upload Specimen</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
-                      </div>
-                    ) : (
-                      /* Uploaded State: Direct card matching Image 2 */
-                      <div className="space-y-2">
-                        {documents
-                          .filter((d) => d.type === 'Account Specimen')
-                          .map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all group min-h-[90px]"
-                            >
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* 3 Unified Cards Grid (One file one upload only) */}
+                {(() => {
+                  const specimenDoc = documents.find((d) => d.type === 'Account Specimen');
+                  const idDoc = documents.find((d) => d.type === 'ID Card / Passport');
+                  const otherDoc = documents.find((d) => d.type === 'Other');
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* 1. Account Specimen Card */}
+                      <div>
+                        {!specimenDoc ? (
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDraggingSpecimen(true);
+                            }}
+                            onDragLeave={() => setIsDraggingSpecimen(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDraggingSpecimen(false);
+                              if (e.dataTransfer.files) {
+                                handleFileUpload(e.dataTransfer.files, 'Account Specimen');
+                              }
+                            }}
+                            onClick={() => specimenInputRef.current?.click()}
+                            className={cn(
+                              'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative h-44',
+                              isDraggingSpecimen
+                                ? 'border-blue-500 bg-blue-50/70 shadow-xs'
+                                : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-blue-400'
+                            )}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-blue-100 transition-all">
+                              <FileCheck className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-800 mb-2">Account Specimen</span>
+                            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-blue-600 shadow-2xs group-hover:border-blue-300">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>Upload Specimen</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
+                          </div>
+                        ) : (
+                          <div className="h-44 p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
+                            <div className="flex items-start justify-between gap-2.5">
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                 <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                                   <FileText className="w-5 h-5" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-slate-800 truncate text-xs" title={doc.fileName}>
-                                    {doc.fileName}
+                                  <p className="font-bold text-slate-900 truncate text-xs" title={specimenDoc.fileName}>
+                                    {specimenDoc.fileName}
                                   </p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
                                       Account Specimen
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{specimenDoc.fileSize}</span>
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1 shrink-0 ml-2">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveDocument(doc.id);
-                                  }}
-                                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                                  title="Delete document"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDocument(specimenDoc.id)}
+                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
+                                title="Delete document"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
-                          ))}
-                        <button
-                          type="button"
-                          onClick={() => specimenInputRef.current?.click()}
-                          className="w-full py-1.5 border border-dashed border-slate-200 rounded-xl text-[11px] font-semibold text-blue-600 hover:border-blue-400 hover:bg-blue-50/50 transition flex items-center justify-center gap-1"
-                        >
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Upload another specimen</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* 2. ID / Passport Card (Unified Upload & Uploaded State) */}
-                  <div>
-                    {documents.filter((d) => d.type === 'ID Card / Passport').length === 0 ? (
-                      /* Empty State: Upload Dropzone matching Image 1 without subtitle */
-                      <div
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setIsDraggingIdDoc(true);
-                        }}
-                        onDragLeave={() => setIsDraggingIdDoc(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDraggingIdDoc(false);
-                          if (e.dataTransfer.files) {
-                            handleFileUpload(e.dataTransfer.files, 'ID Card / Passport');
-                          }
-                        }}
-                        onClick={() => idDocInputRef.current?.click()}
-                        className={cn(
-                          'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative min-h-[170px]',
-                          isDraggingIdDoc
-                            ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
-                            : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-emerald-400'
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Attached</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => specimenInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 border border-slate-200 rounded-lg transition cursor-pointer"
+                              >
+                                <UploadCloud className="w-3 h-3" />
+                                <span>Replace</span>
+                              </button>
+                            </div>
+                          </div>
                         )}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-emerald-100 transition-all">
-                          <ShieldCheck className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-800 mb-2">ID / Passport</span>
-                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-emerald-600 shadow-2xs group-hover:border-emerald-300">
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Upload ID / Passport</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
                       </div>
-                    ) : (
-                      /* Uploaded State: Direct card matching Image 2 */
-                      <div className="space-y-2">
-                        {documents
-                          .filter((d) => d.type === 'ID Card / Passport')
-                          .map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all group min-h-[90px]"
-                            >
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
+
+                      {/* 2. ID / Passport Card */}
+                      <div>
+                        {!idDoc ? (
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDraggingIdDoc(true);
+                            }}
+                            onDragLeave={() => setIsDraggingIdDoc(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDraggingIdDoc(false);
+                              if (e.dataTransfer.files) {
+                                handleFileUpload(e.dataTransfer.files, 'ID Card / Passport');
+                              }
+                            }}
+                            onClick={() => idDocInputRef.current?.click()}
+                            className={cn(
+                              'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative h-44',
+                              isDraggingIdDoc
+                                ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
+                                : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-emerald-400'
+                            )}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-emerald-100 transition-all">
+                              <ShieldCheck className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-800 mb-2">ID / Passport</span>
+                            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-emerald-600 shadow-2xs group-hover:border-emerald-300">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>Upload ID / Passport</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
+                          </div>
+                        ) : (
+                          <div className="h-44 p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
+                            <div className="flex items-start justify-between gap-2.5">
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                 <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                                   <ShieldCheck className="w-5 h-5" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-slate-800 truncate text-xs" title={doc.fileName}>
-                                    {doc.fileName}
+                                  <p className="font-bold text-slate-900 truncate text-xs" title={idDoc.fileName}>
+                                    {idDoc.fileName}
                                   </p>
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-1.5 mt-1">
                                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
                                       ID / Passport
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{idDoc.fileSize}</span>
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1 shrink-0 ml-2">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveDocument(doc.id);
-                                  }}
-                                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                                  title="Delete document"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDocument(idDoc.id)}
+                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
+                                title="Delete document"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
-                          ))}
-                        <button
-                          type="button"
-                          onClick={() => idDocInputRef.current?.click()}
-                          className="w-full py-1.5 border border-dashed border-slate-200 rounded-xl text-[11px] font-semibold text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50/50 transition flex items-center justify-center gap-1"
-                        >
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Upload another ID / Passport</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* 3. Other Supporting Documents Card (Unified Upload & Uploaded State) */}
-                  <div>
-                    {documents.filter((d) => d.type === 'Other').length === 0 ? (
-                      /* Empty State: Upload Dropzone matching Card 1 and Card 2 */
-                      <div
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setIsDraggingOtherDoc(true);
-                        }}
-                        onDragLeave={() => setIsDraggingOtherDoc(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDraggingOtherDoc(false);
-                          if (e.dataTransfer.files) {
-                            handleFileUpload(e.dataTransfer.files, 'Other');
-                          }
-                        }}
-                        onClick={() => otherDocInputRef.current?.click()}
-                        className={cn(
-                          'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative min-h-[170px]',
-                          isDraggingOtherDoc
-                            ? 'border-purple-500 bg-purple-50/70 shadow-xs'
-                            : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-purple-400'
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Attached</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => idDocInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/80 border border-slate-200 rounded-lg transition cursor-pointer"
+                              >
+                                <UploadCloud className="w-3 h-3" />
+                                <span>Replace</span>
+                              </button>
+                            </div>
+                          </div>
                         )}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-purple-100 transition-all">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-800 mb-2">Other Supporting Docs</span>
-                        <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-purple-600 shadow-2xs group-hover:border-purple-300">
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Upload Supporting Doc</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
                       </div>
-                    ) : (
-                      /* Uploaded State for Other Docs */
-                      <div className="space-y-2">
-                        {documents
-                          .filter((d) => d.type === 'Other')
-                          .map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all group min-h-[90px]"
-                            >
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
+
+                      {/* 3. Other Supporting Documents Card */}
+                      <div>
+                        {!otherDoc ? (
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDraggingOtherDoc(true);
+                            }}
+                            onDragLeave={() => setIsDraggingOtherDoc(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDraggingOtherDoc(false);
+                              if (e.dataTransfer.files) {
+                                handleFileUpload(e.dataTransfer.files, 'Other');
+                              }
+                            }}
+                            onClick={() => otherDocInputRef.current?.click()}
+                            className={cn(
+                              'border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 group relative h-44',
+                              isDraggingOtherDoc
+                                ? 'border-purple-500 bg-purple-50/70 shadow-xs'
+                                : 'border-slate-200 bg-white hover:bg-slate-50/70 hover:border-purple-400'
+                            )}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-2.5 group-hover:scale-105 group-hover:bg-purple-100 transition-all">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-800 mb-2">Other Supporting Docs</span>
+                            <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-purple-600 shadow-2xs group-hover:border-purple-300">
+                              <UploadCloud className="w-3.5 h-3.5" />
+                              <span>Upload Supporting Doc</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
+                          </div>
+                        ) : (
+                          <div className="h-44 p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
+                            <div className="flex items-start justify-between gap-2.5">
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                 <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
                                   <FileText className="w-5 h-5" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-slate-800 truncate text-xs" title={doc.fileName}>
-                                    {doc.fileName}
+                                  <p className="font-bold text-slate-900 truncate text-xs" title={otherDoc.fileName}>
+                                    {otherDoc.fileName}
                                   </p>
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-1.5 mt-1">
                                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
                                       Other Supporting Doc
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">{doc.fileSize}</span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{otherDoc.fileSize}</span>
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1 shrink-0 ml-2">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveDocument(doc.id);
-                                  }}
-                                  className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition cursor-pointer"
-                                  title="Delete document"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDocument(otherDoc.id)}
+                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
+                                title="Delete document"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
-                          ))}
-                        <button
-                          type="button"
-                          onClick={() => otherDocInputRef.current?.click()}
-                          className="w-full py-1.5 border border-dashed border-slate-200 rounded-xl text-[11px] font-semibold text-purple-600 hover:border-purple-400 hover:bg-purple-50/50 transition flex items-center justify-center gap-1"
-                        >
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Upload another document</span>
-                        </button>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Attached</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => otherDocInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:text-purple-600 hover:bg-purple-50/80 border border-slate-200 rounded-lg transition cursor-pointer"
+                              >
+                                <UploadCloud className="w-3 h-3" />
+                                <span>Replace</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1297,11 +1309,8 @@ export function IndividualInsertScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-600" />
-                  <span>3. Contact Information & Residential Address</span>
+                  <span>Contact Information & Residential Address</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Direct channels for electronic notices, trade executions, and registered legal residence.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
@@ -1432,11 +1441,8 @@ export function IndividualInsertScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-blue-600" />
-                  <span>4. Employment & Banking Information</span>
+                  <span>Employment & Banking Information</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Record occupational background, employer details, and designated commercial bank account.
-                </p>
               </div>
 
               {/* Employment */}
@@ -1596,11 +1602,8 @@ export function IndividualInsertScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-600" />
-                  <span>5. Family & Related Persons</span>
+                  <span>Family & Related Persons</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Record spouse and emergency or related parties for compliance and AML disclosure.
-                </p>
               </div>
 
               {/* Spouse Section - Always visible */}
@@ -1819,11 +1822,8 @@ export function IndividualInsertScreen({
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-blue-600" />
-                  <span>6. Account Information (Investor ID & Trading Account)</span>
+                  <span>Account Information (Investor ID & Trading Account)</span>
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Specify regulator submission details, SECC tracking, and securities trading identifiers.
-                </p>
               </div>
 
               {/* Investor ID info */}

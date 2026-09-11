@@ -165,11 +165,12 @@ export function IndividualListScreen({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Request Column Layout State: 'stepper' (connected nodes) | 'bar' (segmented progress bar)
-  const [requestColumnLayout, setRequestColumnLayout] = useState<'stepper' | 'bar'>('bar');
 
   // Delete Confirmation Modal state
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Request Column Layout State: 'stepper' (connected nodes) | 'bar' (segmented progress bar)
+  const [requestColumnLayout, setRequestColumnLayout] = useState<'stepper' | 'bar'>('bar');
 
   // Status Tab counts
   const countAll = individuals.length;
@@ -470,8 +471,9 @@ export function IndividualListScreen({
     const rejectionReason = history.find(h => h.reason)?.reason || (isRejected ? 'Customer address does not match the supporting document.' : undefined);
     const resubmitReason = isResubmit ? (history.find(h => h.status === 'Resubmit')?.comment || 'Additional supporting documents required for review.') : undefined;
 
+
     // -------------------------------------------------------------
-    // VERSION 1: CONNECTED NODE STEPPER UI (Previous Version)
+    // VERSION 1: CONNECTED NODE STEPPER UI
     // -------------------------------------------------------------
     if (requestColumnLayout === 'stepper') {
       return (
@@ -573,7 +575,7 @@ export function IndividualListScreen({
     }
 
     // -------------------------------------------------------------
-    // VERSION 2: SEGMENTED PROGRESS BAR UI (New Version)
+    // VERSION 2: SEGMENTED PROGRESS BAR UI
     // -------------------------------------------------------------
     return (
       <div className="bg-slate-50/70 hover:bg-slate-50 border border-slate-200/90 rounded-2xl p-3 shadow-2xs transition-all flex items-start gap-3 min-w-[380px] max-w-[460px] select-none text-left">
@@ -740,49 +742,6 @@ export function IndividualListScreen({
                   </div>
                 </div>
 
-                {/* Request Column View Switcher */}
-                <div className="inline-flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 font-semibold border-r border-slate-100">
-                    <Sliders className="w-3.5 h-3.5 text-blue-600" />
-                    <span className="hidden sm:inline">Request View:</span>
-                  </div>
-                  <div className="flex items-center gap-0.5 p-0.5">
-                    <button
-                      id="btn-toggle-request-bar"
-                      type="button"
-                      onClick={() => {
-                        setRequestColumnLayout('bar');
-                        triggerToast('Switched to Progress Bar Request view');
-                      }}
-                      className={cn(
-                        'px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer',
-                        requestColumnLayout === 'bar'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      )}
-                      title="Progress Bar Request Layout"
-                    >
-                      Progress Bar
-                    </button>
-                    <button
-                      id="btn-toggle-request-stepper"
-                      type="button"
-                      onClick={() => {
-                        setRequestColumnLayout('stepper');
-                        triggerToast('Switched to Stepper Nodes Request view');
-                      }}
-                      className={cn(
-                        'px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer',
-                        requestColumnLayout === 'stepper'
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      )}
-                      title="Connected Node Stepper Request Layout"
-                    >
-                      Stepper Nodes
-                    </button>
-                  </div>
-                </div>
 
                 {/* Primary Add New Button */}
                 <button
@@ -1510,49 +1469,6 @@ export function IndividualListScreen({
                   </div>
                 </div>
 
-                {/* Aurora Request Column View Switcher */}
-                <div className="inline-flex items-center rounded-xl border border-indigo-200 bg-white p-0.5 shadow-2xs">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-indigo-700 font-semibold border-r border-indigo-100">
-                    <Sliders className="w-3.5 h-3.5 text-indigo-600" />
-                    <span className="hidden sm:inline">Request View:</span>
-                  </div>
-                  <div className="flex items-center gap-0.5 p-0.5">
-                    <button
-                      id="btn-toggle-request-bar-aurora"
-                      type="button"
-                      onClick={() => {
-                        setRequestColumnLayout('bar');
-                        triggerToast('Switched to Progress Bar Request view');
-                      }}
-                      className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer',
-                        requestColumnLayout === 'bar'
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-indigo-900 hover:bg-indigo-50/50'
-                      )}
-                      title="Progress Bar Request Layout"
-                    >
-                      Progress Bar
-                    </button>
-                    <button
-                      id="btn-toggle-request-stepper-aurora"
-                      type="button"
-                      onClick={() => {
-                        setRequestColumnLayout('stepper');
-                        triggerToast('Switched to Stepper Nodes Request view');
-                      }}
-                      className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer',
-                        requestColumnLayout === 'stepper'
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-2xs'
-                          : 'text-slate-600 hover:text-indigo-900 hover:bg-indigo-50/50'
-                      )}
-                      title="Connected Node Stepper Request Layout"
-                    >
-                      Stepper Nodes
-                    </button>
-                  </div>
-                </div>
 
                 <button
                   id="btn-individual-add-new"
