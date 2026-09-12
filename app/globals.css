@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @theme {
   --font-sans: var(--font-geist-sans), "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Kantumruy Pro", "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
