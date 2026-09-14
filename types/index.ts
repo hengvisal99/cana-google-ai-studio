@@ -5,7 +5,8 @@ export type NavigationPage =
   | 'customer-360'
   | 'individual-list'
   | 'individual-insert'
-  | 'individual-update';
+  | 'individual-update'
+  | 'customer-type';
 
 export type KYCStatus = 'verified' | 'pending' | 'under_review' | 'rejected';
 export type RiskRating = 'low' | 'moderate' | 'high';
@@ -22,6 +23,21 @@ export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 export type MaritalStatus = 'Single' | 'Married' | 'Divorced' | 'Widowed';
 export type ResidencyStatus = 'Resident' | 'Non-Resident';
 export type CustomerType = 'Retail' | 'High Net Worth' | 'Institutional' | 'Corporate Officer';
+
+// Service customer types: a customer can hold many, each with its own dynamic form
+export type CustomerTypeId = 'csx-screen' | 'client-card' | 'employee-trading' | 'vip-customer' | 'ipo-customer';
+export type CustomerTypeFieldValue = string | boolean;
+
+/** One record of a customer type; a customer can have many, including several of the same type */
+export interface CustomerTypeRecord {
+  id: string;
+  /** Individual.id of the owning customer */
+  customerId: string;
+  typeId: CustomerTypeId;
+  values: Record<string, CustomerTypeFieldValue>;
+  createdAt: string;
+  updatedAt: string;
+}
 export type EducationBackground = 'High School' | "Bachelor's" | "Master's" | 'Doctorate' | 'Professional' | 'Other';
 export type SecuritiesKnowledge = 'None' | 'Beginner' | 'Intermediate' | 'Advanced' | 'Professional';
 export type InvestmentExperience = '< 1 year' | '1 - 3 years' | '3 - 5 years' | '5+ years';

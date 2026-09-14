@@ -8,7 +8,9 @@ import {
   EnterpriseApp, 
   Individual 
 } from '@/types';
+import type { CustomerTypeRecord } from '@/types';
 import { INITIAL_INDIVIDUALS } from '@/lib/data';
+import { INITIAL_CUSTOMER_TYPE_RECORDS } from '@/lib/customer-type-records';
 
 // Theme Shells
 import { SoftFintechShell } from '@/components/themes/SoftFintechShell';
@@ -21,6 +23,7 @@ import { Customer360Screen } from '@/components/customer360/Customer360Screen';
 import { IndividualListScreen } from '@/components/individual/IndividualListScreen';
 import { IndividualInsertScreen } from '@/components/individual/IndividualInsertScreen';
 import { IndividualUpdateScreen } from '@/components/individual/IndividualUpdateScreen';
+import { CustomerTypeScreen } from '@/components/customer/CustomerTypeScreen';
 
 // Dialog Modal
 import { ViewIndividualDialog } from '@/components/shared/ViewIndividualDialog';
@@ -39,6 +42,9 @@ export default function Home() {
 
   // Individual Database State
   const [individuals, setIndividuals] = useState<Individual[]>(INITIAL_INDIVIDUALS);
+
+  // Customer Type records (many per customer, several per type allowed)
+  const [customerTypeRecords, setCustomerTypeRecords] = useState<CustomerTypeRecord[]>(INITIAL_CUSTOMER_TYPE_RECORDS);
 
   // Active customer in Customer 360
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(INITIAL_INDIVIDUALS[0].id);
@@ -96,6 +102,7 @@ export default function Home() {
 
   const handleDeleteIndividual = (id: string) => {
     setIndividuals((prev) => prev.filter((item) => item.id !== id));
+    setCustomerTypeRecords((prev) => prev.filter((record) => record.customerId !== id));
     if (selectedCustomerId === id && individuals.length > 1) {
       const remaining = individuals.filter((item) => item.id !== id);
       setSelectedCustomerId(remaining[0].id);
@@ -236,6 +243,19 @@ export default function Home() {
     );
   };
 
+  // Insert or update a customer type record by id
+  const handleSaveCustomerTypeRecord = (record: CustomerTypeRecord) => {
+    setCustomerTypeRecords((prev) =>
+      prev.some((item) => item.id === record.id)
+        ? prev.map((item) => (item.id === record.id ? record : item))
+        : [record, ...prev]
+    );
+  };
+
+  const handleDeleteCustomerTypeRecord = (id: string) => {
+    setCustomerTypeRecords((prev) => prev.filter((item) => item.id !== id));
+  };
+
   const handleReload = () => {
     setIndividuals(INITIAL_INDIVIDUALS);
   };
@@ -279,6 +299,7 @@ export default function Home() {
             onDeleteIndividual={handleDeleteIndividual}
             onAuthorizeIndividual={handleAuthorizeIndividual}
             onCloseAccountIndividual={handleCloseAccountIndividual}
+            onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
             onReload={handleReload}
             theme={currentTheme}
           />
@@ -314,8 +335,19 @@ export default function Home() {
             onDeleteIndividual={handleDeleteIndividual}
             onAuthorizeIndividual={handleAuthorizeIndividual}
             onCloseAccountIndividual={handleCloseAccountIndividual}
+            onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
             onReload={handleReload}
             theme={currentTheme}
+          />
+        );
+
+      case 'customer-type':
+        return (
+          <CustomerTypeScreen
+            records={customerTypeRecords}
+            customers={individuals}
+            onSaveRecord={handleSaveCustomerTypeRecord}
+            onDeleteRecord={handleDeleteCustomerTypeRecord}
           />
         );
     }

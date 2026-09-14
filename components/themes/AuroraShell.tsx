@@ -51,6 +51,22 @@ export function AuroraShell({
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [customerMenuOpen, setCustomerMenuOpen] = useState(true);
+
+  const isCustomerPage =
+    currentPage === 'individual-list' ||
+    currentPage === 'individual-insert' ||
+    currentPage === 'individual-update' ||
+    currentPage === 'customer-type';
+  const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
+    {
+      label: 'List',
+      page: 'individual-list',
+      active: currentPage === 'individual-list' || currentPage === 'individual-update',
+    },
+    { label: 'Create', page: 'individual-insert', active: currentPage === 'individual-insert' },
+    { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
+  ];
 
   const apps: EnterpriseApp[] = [
     'Nexus Core Banking',
@@ -79,13 +95,15 @@ export function AuroraShell({
         return 'Insert Client Record (Screen)';
       case 'individual-update':
         return 'Update Client Dossier (Screen)';
+      case 'customer-type':
+        return 'Customer Type';
     }
   };
 
   return (
     <div id="aurora-layout" className="min-h-screen bg-[#F0F4F8] text-slate-900 flex flex-col antialiased">
       {/* Dynamic Top Aurora Radiant Accent Line */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 shrink-0" />
+      <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500 shrink-0" />
 
       {/* =========================================================================
           AURORA HEADER: High-Tech Studio Bar
@@ -141,7 +159,7 @@ export function AuroraShell({
                     className={cn(
                       'w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition',
                       currentApp === app
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold'
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold'
                         : 'hover:bg-slate-100 text-slate-700'
                     )}
                   >
@@ -190,7 +208,7 @@ export function AuroraShell({
                     className={cn(
                       'w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition',
                       currentTheme === t.id
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold'
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold'
                         : 'hover:bg-slate-100 text-slate-700'
                     )}
                   >
@@ -232,7 +250,7 @@ export function AuroraShell({
                     className={cn(
                       'w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center justify-between transition',
                       currentLanguage === l.code
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold'
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold'
                         : 'hover:bg-slate-100 text-slate-700'
                     )}
                   >
@@ -328,7 +346,7 @@ export function AuroraShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
                     currentPage === 'dashboard'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Dashboard"
@@ -345,7 +363,7 @@ export function AuroraShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
                     currentPage === 'customer-360'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Customer 360"
@@ -353,22 +371,55 @@ export function AuroraShell({
                   <Users className="w-4 h-4 shrink-0" />
                   {!sidebarCollapsed && <span>Customer 360</span>}
                 </button>
-                {/* Individual */}
+                {/* Customer: expandable group (List, Create, Customer Type) */}
                 <button
-                  id="aurora-nav-individual"
+                  id="aurora-nav-customer"
                   type="button"
-                  onClick={() => onNavigate('individual-list')}
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('individual-list') : setCustomerMenuOpen(!customerMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && customerMenuOpen}
                   className={cn(
                     'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
-                    currentPage === 'individual-list' || currentPage === 'individual-insert' || currentPage === 'individual-update'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
+                    isCustomerPage
+                      ? sidebarCollapsed || !customerMenuOpen
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
+                        : 'bg-blue-50 text-blue-700'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
-                  title="Individual (Directory)"
+                  title="Customer"
                 >
                   <User className="w-4 h-4 shrink-0" />
-                  {!sidebarCollapsed && <span>Individual</span>}
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Customer</span>
+                      <ChevronDown
+                        className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !customerMenuOpen && '-rotate-90')}
+                      />
+                    </>
+                  )}
                 </button>
+
+                {!sidebarCollapsed && customerMenuOpen && (
+                  <div className="ml-5.5 space-y-1 border-l border-slate-200 pl-3">
+                    {customerSubItems.map((item) => (
+                      <button
+                        key={item.page}
+                        id={`aurora-nav-customer-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'w-full flex items-center px-3 py-2 rounded-lg text-left font-semibold transition-all duration-150',
+                          item.active
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm shadow-blue-500/25'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        )}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </nav>
@@ -381,7 +432,7 @@ export function AuroraShell({
                 <span className="text-blue-600 font-mono">99.98%</span>
               </div>
               <div className="w-full h-1.5 bg-blue-200/60 rounded-full overflow-hidden">
-                <div className="w-4/5 h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full" />
+                <div className="w-4/5 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" />
               </div>
             </div>
           )}

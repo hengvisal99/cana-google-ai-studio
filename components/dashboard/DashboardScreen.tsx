@@ -96,7 +96,7 @@ const ACCOUNT_STATUS_DATA = [
 ];
 
 const INVESTMENT_EXPERIENCE_DATA = [
-  { product: 'Stock', count: 22, percentage: 43, color: '#2563EB' },
+  { product: 'Stock', count: 22, percentage: 43, color: '#3B82F6' },
   { product: 'Bond', count: 15, percentage: 29, color: '#EA580C' },
   { product: 'Treasury Bill', count: 14, percentage: 27, color: '#0D9488' },
   { product: 'Other Securities', count: 7, percentage: 14, color: '#8B5CF6' },
@@ -170,6 +170,41 @@ const PRODUCT_PERFORMANCE_DATA = [
   { product: 'VIP Customer', customers: 7, active: 7, portfolioValue: '$3.92M' },
 ];
 
+const SUMMARY_CARDS = [
+  {
+    label: 'Total Customers',
+    value: '51',
+    change: '18.6%',
+    icon: Users,
+    outline: 'border-blue-200/90 hover:border-blue-400 hover:shadow-blue-500/10',
+    iconStyle: 'bg-blue-50 text-blue-600',
+  },
+  {
+    label: 'Active Accounts',
+    value: '44',
+    change: '22.2%',
+    icon: UserCheck,
+    outline: 'border-sky-200/90 hover:border-sky-400 hover:shadow-sky-500/10',
+    iconStyle: 'bg-sky-50 text-sky-600',
+  },
+  {
+    label: 'New Customers',
+    value: '8',
+    change: '33.3%',
+    icon: UserPlus,
+    outline: 'border-cyan-200/90 hover:border-cyan-400 hover:shadow-cyan-500/10',
+    iconStyle: 'bg-cyan-50 text-cyan-600',
+  },
+  {
+    label: 'Total Portfolio Value',
+    value: '$12.85M',
+    change: '14.8%',
+    icon: DollarSign,
+    outline: 'border-blue-300/80 hover:border-blue-500 hover:shadow-blue-500/10',
+    iconStyle: 'bg-blue-100 text-blue-800',
+  },
+];
+
 const subscribeNoop = () => () => {};
 
 export function DashboardScreen({
@@ -184,6 +219,8 @@ export function DashboardScreen({
     () => false
   );
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  // Design preview: compare header styles (remove once a style is chosen)
+  const [headerVariant, setHeaderVariant] = useState<'classic' | 'gradient'>('classic');
 
   const [hoveredAgeGroup, setHoveredAgeGroup] = useState<string | null>('18–24');
   const [selectedDatePreset, setSelectedDatePreset] = useState<string>('MTD');
@@ -307,7 +344,7 @@ export function DashboardScreen({
             <button
               type="button"
               onClick={() => setIsDatePopoverOpen(false)}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs cursor-pointer"
+              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow-2xs cursor-pointer"
             >
               Done
             </button>
@@ -319,26 +356,50 @@ export function DashboardScreen({
 
   return (
     <div id="dashboard-screen" className="space-y-4">
+      {/* Header style toggle (design preview) */}
+      <div className="fixed bottom-5 right-5 z-50 flex items-center gap-1 p-1 bg-white border border-blue-200 rounded-xl shadow-md print:hidden">
+        {(['classic', 'gradient'] as const).map((variant) => (
+          <button
+            key={variant}
+            type="button"
+            onClick={() => setHeaderVariant(variant)}
+            className={cn(
+              'h-8 px-3 rounded-lg text-xs font-semibold capitalize transition cursor-pointer',
+              headerVariant === variant
+                ? 'bg-blue-500 text-white shadow-xs shadow-blue-500/30'
+                : 'text-blue-900 hover:bg-blue-50'
+            )}
+          >
+            {variant}
+          </button>
+        ))}
+      </div>
+
       {/* =========================================================================
           DASHBOARD HEADER: FINTECH DOCK
          ========================================================================= */}
       <div
         id="dashboard-header-fintech-dock"
-        className="p-5 sm:p-6 bg-gradient-to-br from-blue-50/70 via-sky-50/40 to-slate-50 border border-blue-200/80 rounded-3xl shadow-sm"
+        className={cn(
+          'p-5 sm:p-6 border border-blue-200/90 rounded-2xl shadow-2xs',
+          headerVariant === 'gradient'
+            ? 'bg-[linear-gradient(90deg,var(--color-blue-50)_0%,var(--color-white)_32%)]'
+            : 'bg-white'
+        )}
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shadow-blue-600/30">
-                <Layers className="w-4 h-4" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-950 tracking-tight">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-xs shadow-blue-500/30">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-blue-950 tracking-tight leading-tight">
                 Dashboard
               </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
+                Executive overview of customers, risk, portfolio and products.
+              </p>
             </div>
-            <p className="text-xs sm:text-sm text-blue-900/70 mt-1.5 max-w-2xl font-normal leading-relaxed">
-              Real-time executive metrics on customer growth, demographic risk profiles, portfolio valuation, and product distribution.
-            </p>
           </div>
 
           {/* Filter & Actions Bar */}
@@ -348,11 +409,11 @@ export function DashboardScreen({
               <button
                 type="button"
                 onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
-                className="flex items-center gap-2 bg-white hover:bg-blue-50/50 border border-blue-200 px-3.5 py-2 rounded-xl text-xs font-medium text-blue-950 shadow-2xs hover:shadow-xs transition cursor-pointer"
+                className="flex items-center gap-2 bg-white hover:bg-blue-50/50 border border-blue-200 h-9 px-3.5 rounded-xl text-xs font-medium text-blue-950 shadow-2xs hover:shadow-xs transition cursor-pointer"
               >
                 <Calendar className="w-3.5 h-3.5 text-blue-600" />
                 <span className="text-slate-500">Date Range:</span>
-                <span className="font-mono font-bold text-blue-950 text-[11px] bg-blue-50/80 px-2 py-0.5 rounded border border-blue-200">
+                <span className="font-mono font-bold text-blue-950 text-[11px] leading-none bg-blue-50/80 px-2 py-1 rounded border border-blue-200">
                   {formattedDateRange}
                 </span>
                 <ChevronDown className={cn('w-3.5 h-3.5 text-blue-600 transition-transform', isDatePopoverOpen && 'rotate-180')} />
@@ -364,7 +425,7 @@ export function DashboardScreen({
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-blue-900 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl shadow-2xs hover:shadow-xs transition cursor-pointer"
+              className="flex items-center gap-1.5 h-9 px-3.5 text-xs font-semibold text-blue-900 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl shadow-2xs hover:shadow-xs transition cursor-pointer"
               title="Print Dashboard"
             >
               <Printer className="w-3.5 h-3.5 text-blue-700" />
@@ -375,7 +436,7 @@ export function DashboardScreen({
             <button
               type="button"
               onClick={() => setShowPreviewModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 rounded-xl shadow-xs shadow-blue-600/30 transition cursor-pointer"
+              className="flex items-center gap-1.5 h-9 px-4 text-xs font-bold text-white bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl shadow-xs shadow-blue-500/30 transition cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Preview Report</span>
@@ -385,88 +446,35 @@ export function DashboardScreen({
       </div>
 
       {/* =========================================================================
-          SUMMARY CARDS: NEO-VIBRANT GRID
+          SUMMARY CARDS
          ========================================================================= */}
-      <div id="dashboard-summary-cards-vibrant" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Vibrant Card 1: Total Customers */}
-        <div className="p-5 bg-gradient-to-b from-blue-50/60 via-white to-white border border-blue-200/90 hover:border-blue-400 rounded-2xl shadow-xs hover:shadow-md hover:shadow-blue-500/10 transition-all duration-200 space-y-3 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total Customers</span>
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shadow-blue-500/40 group-hover:scale-105 transition-transform">
-              <Users className="w-5 h-5" />
+      <div id="dashboard-summary-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {SUMMARY_CARDS.map(({ label, value, change, icon: Icon, outline, iconStyle }) => (
+          <div
+            key={label}
+            className={cn(
+              'p-5 bg-white border rounded-2xl shadow-2xs hover:shadow-md transition-all duration-200',
+              outline
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="block text-xs font-medium text-slate-500">{label}</span>
+                <span className="block text-3xl font-bold text-slate-900 font-mono tracking-tight">{value}</span>
+              </div>
+              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', iconStyle)}>
+                <Icon className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-mono font-bold">
+                <ArrowUp className="w-3 h-3" />
+                {change}
+              </span>
+              <span className="text-slate-400">vs last month</span>
             </div>
           </div>
-          <div>
-            <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">51</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
-              <ArrowUp className="w-3 h-3" />
-              18.6%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
-        </div>
-
-        {/* Vibrant Card 2: Active Accounts */}
-        <div className="p-5 bg-gradient-to-b from-sky-50/60 via-white to-white border border-sky-200/90 hover:border-sky-400 rounded-2xl shadow-xs hover:shadow-md hover:shadow-sky-500/10 transition-all duration-200 space-y-3 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Active Accounts</span>
-            <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shadow-xs shadow-sky-500/40 group-hover:scale-105 transition-transform">
-              <UserCheck className="w-5 h-5" />
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">44</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
-              <ArrowUp className="w-3 h-3" />
-              22.2%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
-        </div>
-
-        {/* Vibrant Card 3: New Customers */}
-        <div className="p-5 bg-gradient-to-b from-cyan-50/60 via-white to-white border border-cyan-200/90 hover:border-cyan-400 rounded-2xl shadow-xs hover:shadow-md hover:shadow-cyan-500/10 transition-all duration-200 space-y-3 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">New Customers</span>
-            <div className="w-10 h-10 rounded-xl bg-cyan-600 text-white flex items-center justify-center shadow-xs shadow-cyan-500/40 group-hover:scale-105 transition-transform">
-              <UserPlus className="w-5 h-5" />
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">8</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
-              <ArrowUp className="w-3 h-3" />
-              33.3%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
-        </div>
-
-        {/* Vibrant Card 4: Total Portfolio Value */}
-        <div className="p-5 bg-gradient-to-b from-blue-100/40 via-white to-white border border-blue-300/80 hover:border-blue-500 rounded-2xl shadow-xs hover:shadow-md hover:shadow-blue-600/10 transition-all duration-200 space-y-3 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Total Portfolio Value</span>
-            <div className="w-10 h-10 rounded-xl bg-blue-800 text-white flex items-center justify-center shadow-xs shadow-blue-800/40 group-hover:scale-105 transition-transform">
-              <DollarSign className="w-5 h-5" />
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">$12.85M</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full font-mono font-bold">
-              <ArrowUp className="w-3 h-3" />
-              14.8%
-            </span>
-            <span className="text-slate-400 font-normal">vs last month</span>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* 3. ANALYTICS CHARTS */}
@@ -489,7 +497,7 @@ export function DashboardScreen({
             </div>
             <div className="flex items-center gap-3 text-xs font-medium">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-blue-600 inline-block" />
+                <span className="w-3 h-3 rounded-full bg-blue-500 inline-block" />
                 <span className="text-slate-600">Total Customers</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -505,8 +513,8 @@ export function DashboardScreen({
                 <AreaChart data={CUSTOMER_GROWTH_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="totalGrowthGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="newGrowthGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.25} />
@@ -540,7 +548,7 @@ export function DashboardScreen({
                     type="monotone"
                     dataKey="totalCustomers"
                     name="Total Customers"
-                    stroke="#2563EB"
+                    stroke="#3B82F6"
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#totalGrowthGradient)"
@@ -615,8 +623,8 @@ export function DashboardScreen({
                   <div className="flex-1 flex items-center">
                     <div
                       className={cn(
-                        'h-6 sm:h-7 rounded-md bg-blue-600 shadow-2xs transition-all duration-200 relative flex items-center',
-                        isHovered ? 'bg-blue-700 shadow-xs scale-y-105' : 'hover:bg-blue-600/90'
+                        'h-6 sm:h-7 rounded-md bg-blue-500 shadow-2xs transition-all duration-200 relative flex items-center',
+                        isHovered ? 'bg-blue-600 shadow-xs scale-y-105' : 'hover:bg-blue-500/90'
                       )}
                       style={{
                         width: `${barWidthPercent}%`,
@@ -1129,7 +1137,7 @@ export function DashboardScreen({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrint}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold transition cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Dossier</span>

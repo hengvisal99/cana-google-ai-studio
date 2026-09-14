@@ -47,19 +47,27 @@ import {
   X,
   FileImage,
   Layers,
-  Sparkles,
   SlidersHorizontal,
   ArrowRight,
   ChevronRight,
   Check,
-  RotateCcw,
   BadgeCheck,
-  Zap,
   CheckCircle,
   Clock,
   Compass
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Arrow-shaped step segment: notched on the left (except first), pointed on the right (except last).
+const STEP_NOTCH = 14;
+const stepClipPath = (idx: number, count: number) => {
+  const right =
+    idx === count - 1
+      ? '100% 0, 100% 100%'
+      : `calc(100% - ${STEP_NOTCH}px) 0, 100% 50%, calc(100% - ${STEP_NOTCH}px) 100%`;
+  const left = idx === 0 ? '0 100%' : `0 100%, ${STEP_NOTCH}px 50%`;
+  return `polygon(0 0, ${right}, ${left})`;
+};
 
 interface IndividualInsertScreenProps {
   onCancel: () => void;
@@ -474,78 +482,6 @@ export function IndividualInsertScreen({
 
   const completedTabsCount = tabs.filter((t) => isTabComplete(t.key)).length;
   const completionPercentage = Math.round((completedTabsCount / tabs.length) * 100);
-
-  const handleFillDemoData = () => {
-    setSurnameEN('SOK');
-    setGivenNameEN('CHANDARA');
-    setSurnameKH('សុខ');
-    setGivenNameKH('ចាន់ដារ៉ា');
-    setDateOfBirth('1988-06-20');
-    setGender('Male');
-    setMaritalStatus('Married');
-    setNationality('Cambodian');
-    setCustomerType('Retail');
-    setEducationBackground("Master's");
-    setSecuritiesKnowledge('Advanced');
-    setRiskCategory('moderate');
-    setInvestmentExperience('5+ years');
-    setResidency('Resident');
-    setIdType('National ID');
-    setIdNumber('010892451');
-    setIssuedBy('General Department of Identification');
-    setTaxpayerIdNumber('K008-99018274');
-    setEmail('chandara.sok@gmail.com');
-    setMobile('+855 12 889 922');
-    setTelephone('+855 23 990 112');
-    setStreet('Preah Norodom Blvd, Sangkat Phsar Thmey III');
-    setCity('Phnom Penh');
-    setState('Khan Daun Penh');
-    setPostalCode('120201');
-    setCountry('Cambodia');
-    setOccupation('Senior Investment Director');
-    setPosition('Head of Portfolio Strategy');
-    setTypeOfBusiness('Financial Services');
-    setLevelOfPosition('Executive / C-Level');
-    setOrganizationName('Angkor Capital Management Ltd');
-    setLengthOfWork('6 years');
-    setOfficeTelephone('+855 23 881 220');
-    setBankName('ABA Bank Plc');
-    setAccountOwner('SOK CHANDARA');
-    setSavingAccount('Premier Fixed Deposit & Trading Settlement');
-    setAccountNumber('000 892 119');
-    setSpouseName('KEO SOPHEAKTRA');
-    setSpouseLatin('KEO SOPHEAKTRA');
-    setSpouseEmail('sopheaktra.keo@gmail.com');
-    setSpouseOccupation('Senior Economist');
-    setSpouseMobile('+855 12 771 990');
-    setInvestorIdNumber('INV-KH-2026-0089');
-    setTradingAccountNumber('TRD-889021');
-    setErrors({});
-  };
-
-  const handleResetForm = () => {
-    setSurnameEN('');
-    setGivenNameEN('');
-    setSurnameKH('');
-    setGivenNameKH('');
-    setDateOfBirth('1990-01-15');
-    setGender('Male');
-    setMaritalStatus('Single');
-    setNationality('Cambodian');
-    setCustomerType('Retail');
-    setIdNumber('');
-    setEmail('');
-    setMobile('');
-    setStreet('');
-    setOccupation('');
-    setOrganizationName('');
-    setAccountNumber('');
-    setSpouseName('');
-    setRelName('');
-    setInvestorIdNumber('');
-    setTradingAccountNumber('');
-    setErrors({});
-  };
 
   // Render the inner form fields for active tab
   const renderTabContent = () => (
@@ -1976,95 +1912,90 @@ export function IndividualInsertScreen({
     </>
   );
 
+  const headerRow = (
+    <>
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="group -mx-2 -my-1 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12.5px] font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+          <span>Back to Directory</span>
+        </button>
+        <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-slate-900 sm:text-2xl">
+          New Customer Onboarding
+        </h1>
+      </div>
+      <button
+        type="button"
+        onClick={handleFormSubmit}
+        disabled={isSubmitting}
+        className="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-full bg-blue-500 px-5 text-[13px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(59,130,246,0.4),0_8px_20px_-8px_rgba(59,130,246,0.7)] transition hover:bg-blue-600 active:scale-[0.98] disabled:opacity-70 sm:self-auto cursor-pointer"
+      >
+        <Save className="h-4 w-4" />
+        <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
+      </button>
+    </>
+  );
+
+  const activeIdx = tabs.findIndex((t) => t.key === activeTab);
+
+  const stepTabs = (
+    <ol className="flex w-full min-w-[1080px]">
+      {tabs.map((tab, idx) => {
+        const isActive = idx === activeIdx;
+        const isPassed = idx < activeIdx;
+        return (
+          <li key={tab.key} className="min-w-0 flex-1" style={{ marginLeft: idx === 0 ? 0 : -8 }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              aria-current={isActive ? 'step' : undefined}
+              style={{ clipPath: stepClipPath(idx, tabs.length) }}
+              className={cn(
+                'flex h-11 w-full items-center gap-2.5 text-left transition-colors cursor-pointer',
+                idx === 0 ? 'rounded-l-xl pl-3' : 'pl-[26px]',
+                idx === tabs.length - 1 ? 'rounded-r-xl pr-4' : 'pr-6',
+                isActive && 'bg-blue-500 text-white',
+                isPassed && 'bg-blue-500 text-white hover:bg-blue-500/90',
+                !isActive && !isPassed && 'bg-slate-100/70 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              )}
+            >
+              <span
+                className={cn(
+                  'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-bold tabular-nums',
+                  isActive && 'bg-white text-blue-600 shadow-[0_0_0_3px_rgba(255,255,255,0.25)]',
+                  isPassed && 'bg-white text-blue-600',
+                  !isActive && !isPassed && 'bg-white text-slate-500 ring-1 ring-slate-200'
+                )}
+              >
+                {isPassed ? <Check className="h-3 w-3" strokeWidth={3} /> : idx + 1}
+              </span>
+              <span className={cn('min-w-0 truncate text-[12.5px]', isActive ? 'font-bold' : 'font-medium')}>
+                {tab.label}
+                <span className="sr-only">
+                  {isActive ? ' (current step)' : isPassed ? ' (completed)' : ' (upcoming)'}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
   return (
     <div id="individual-insert-screen" className="space-y-5 pb-12 animate-in fade-in duration-200">
-      {/* Frosted Glass Header */}
-      <div className="p-4 sm:p-5 bg-white/80 backdrop-blur-xl border border-white/90 shadow-lg shadow-blue-950/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-            <span>Back to Directory</span>
-          </button>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              New Customer Onboarding
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-50/80 border border-blue-200 text-blue-700 text-xs font-bold inline-flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-blue-600" />
-              <span>Ultra Glass</span>
-            </span>
-          </div>
+      {/* Header + stepper card */}
+      <div className="rounded-[22px] bg-white/90 ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {headerRow}
         </div>
-
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <button
-                type="button"
-                onClick={handleFillDemoData}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-slate-200"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-500" />
-                <span>Quick Demo</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleResetForm}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-600 text-xs font-semibold rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-slate-200"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleFormSubmit}
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isSubmitting ? 'Saving...' : 'Save & Submit'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Floating Frosted Pill Stepper */}
-          <div className="p-2 bg-white/70 backdrop-blur-lg border border-slate-200/70 rounded-2xl shadow-xs overflow-x-auto">
-            <div className="flex items-center gap-1.5 min-w-max p-1">
-              {tabs.map((tab, idx) => {
-                const isActive = activeTab === tab.key;
-                const isCompleted = isTabComplete(tab.key);
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      'px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer',
-                      isActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                        : isCompleted
-                        ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100/70'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-                    )}
-                  >
-                    <span className={cn(
-                      'w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-bold',
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : isCompleted
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-200 text-slate-700'
-                    )}>
-                      {isCompleted ? <Check className="w-3 h-3" /> : idx + 1}
-                    </span>
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        <nav aria-label="Onboarding steps" className="border-t border-slate-100 p-2.5 overflow-x-auto">
+          {stepTabs}
+        </nav>
+      </div>
 
           {/* Glass Form Card */}
           <div className="p-5 sm:p-7 bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-sm rounded-2xl">
@@ -2093,7 +2024,7 @@ export function IndividualInsertScreen({
                       const currIdx = tabs.findIndex((t) => t.key === activeTab);
                       if (currIdx < tabs.length - 1) setActiveTab(tabs[currIdx + 1].key);
                     }}
-                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer flex items-center gap-1.5"
                   >
                     <span>Next Step</span>
                     <ArrowRight className="w-3.5 h-3.5" />

@@ -1,0 +1,244 @@
+import { format } from 'date-fns';
+import { Briefcase, CreditCard, Crown, MonitorSmartphone, TrendingUp, type LucideIcon } from 'lucide-react';
+import type { CustomerTypeFieldValue, CustomerTypeId } from '@/types';
+
+export type CustomerTypeValues = Record<string, CustomerTypeFieldValue>;
+
+export type CustomerTypeFieldType =
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'textarea'
+  | 'checkbox'
+  // Owning customer; stores Individual.id
+  | 'customer'
+  // Side-by-side option buttons, e.g. Active | Close
+  | 'segmented'
+  // Read-only value derived from other fields via `compute`
+  | 'computed';
+
+export type SegmentTone = 'primary' | 'success' | 'danger';
+
+export interface CustomerTypeField {
+  key: string;
+  label: string;
+  type: CustomerTypeFieldType;
+  required?: boolean;
+  options?: string[];
+  /** Colour per option for `segmented` fields (default: primary) */
+  optionTones?: Record<string, SegmentTone>;
+  defaultValue?: string;
+  placeholder?: string;
+  compute?: (values: CustomerTypeValues) => number;
+  format?: 'currency';
+  /** Show as a column on the Customer Type list page */
+  showInList?: boolean;
+}
+
+export interface CustomerTypeDefinition {
+  id: CustomerTypeId;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  fields: CustomerTypeField[];
+}
+
+const toNumber = (value: CustomerTypeFieldValue | undefined) => Number(value) || 0;
+
+const CUSTOMER_FIELD: CustomerTypeField = {
+  key: 'customerId',
+  label: 'Customer ID',
+  type: 'customer',
+  required: true,
+  placeholder: 'Choose here',
+};
+
+// Registration / renewal lifecycle form shared by Employee Trading and VIP Customer
+const MEMBERSHIP_FIELDS: CustomerTypeField[] = [
+  CUSTOMER_FIELD,
+  { key: 'registeredDate', label: 'Registered Date', type: 'date', required: true, showInList: true },
+  { key: 'expiredDate', label: 'Expired Date', type: 'date', required: true, showInList: true },
+  { key: 'renewalDate', label: 'Renewal Date', type: 'date', required: true, showInList: true },
+  { key: 'renewalExpiredDate', label: 'Renewal Expired Date', type: 'date', required: true, showInList: true },
+  { key: 'period', label: 'Period', type: 'date', required: true, showInList: true },
+  {
+    key: 'status',
+    label: 'Status',
+    type: 'segmented',
+    required: true,
+    options: ['Active', 'Inactive'],
+    optionTones: { Active: 'success', Inactive: 'danger' },
+    defaultValue: 'Active',
+    showInList: true,
+  },
+  { key: 'reason', label: 'Reason', type: 'textarea', required: true, showInList: true },
+];
+
+/**
+ * Customer type catalog. List columns, forms and detail views are all rendered
+ * from `fields`, so adding a type or a field only needs a change here.
+ */
+export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
+  {
+    id: 'csx-screen',
+    label: 'CSX Screen',
+    description: 'Access to the CSX trading screen.',
+    icon: MonitorSmartphone,
+    fields: [
+      CUSTOMER_FIELD,
+      { key: 'createdDate', label: 'Created Date', type: 'date', required: true, showInList: true },
+      { key: 'closedDate', label: 'Closed Date', type: 'date', required: true, showInList: true },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'segmented',
+        required: true,
+        options: ['Active', 'Close'],
+        optionTones: { Active: 'success', Close: 'danger' },
+        defaultValue: 'Active',
+        showInList: true,
+      },
+    ],
+  },
+  {
+    id: 'client-card',
+    label: 'Client Card',
+    description: 'Physical client identification card.',
+    icon: CreditCard,
+    fields: [CUSTOMER_FIELD, { key: 'takenDate', label: 'Taken Date', type: 'date', required: true, showInList: true }],
+  },
+  {
+    id: 'employee-trading',
+    label: 'Employee Trading',
+    description: 'Staff account trading under compliance rules.',
+    icon: Briefcase,
+    fields: MEMBERSHIP_FIELDS,
+  },
+  {
+    id: 'vip-customer',
+    label: 'VIP Customer',
+    description: 'Priority service and preferential fees.',
+    icon: Crown,
+    fields: MEMBERSHIP_FIELDS,
+  },
+  {
+    id: 'ipo-customer',
+    label: 'IPO Customer',
+    description: 'Subscribes to initial public offerings.',
+    icon: TrendingUp,
+    fields: [
+      CUSTOMER_FIELD,
+      {
+        key: 'ipoNameId',
+        label: 'IPO Name ID',
+        type: 'select',
+        required: true,
+        placeholder: 'Choose here',
+        // Placeholder IDs until the IPO list comes from the backend
+        options: ['IPO-2026-001', 'IPO-2026-002', 'IPO-2026-003'],
+        showInList: true,
+      },
+      { key: 'bookBuildingDate', label: 'Book Building Date', type: 'date', required: true },
+      { key: 'purchaseQuantity', label: 'Purchase Quantity', type: 'number', required: true, showInList: true },
+      {
+        key: 'purchasePrice',
+        label: 'Purchase Price',
+        type: 'number',
+        required: true,
+        format: 'currency',
+        showInList: true,
+      },
+      {
+        key: 'totalAmount',
+        label: 'Total Amount',
+        type: 'computed',
+        format: 'currency',
+        compute: (v) => toNumber(v.purchaseQuantity) * toNumber(v.purchasePrice),
+        showInList: true,
+      },
+      { key: 'subQuantity', label: 'Sub Quantity', type: 'number', required: true },
+      { key: 'subPrice', label: 'Sub Price', type: 'number', required: true, format: 'currency' },
+      {
+        key: 'subTotalAmount',
+        label: 'Sub Total Amount',
+        type: 'computed',
+        format: 'currency',
+        compute: (v) => toNumber(v.subQuantity) * toNumber(v.subPrice),
+      },
+      { key: 'subscriptionDate', label: 'Subscription Date', type: 'date', required: true, showInList: true },
+    ],
+  },
+];
+
+export function getCustomerType(id: CustomerTypeId): CustomerTypeDefinition {
+  return CUSTOMER_TYPES.find((type) => type.id === id) as CustomerTypeDefinition;
+}
+
+export function getCustomerFieldKey(type: CustomerTypeDefinition): string | undefined {
+  return type.fields.find((field) => field.type === 'customer')?.key;
+}
+
+export function getListFields(type: CustomerTypeDefinition): CustomerTypeField[] {
+  return type.fields.filter((field) => field.showInList);
+}
+
+export function initialValues(type: CustomerTypeDefinition, customerId = ''): CustomerTypeValues {
+  return Object.fromEntries(
+    type.fields.map((field) => {
+      if (field.type === 'checkbox') return [field.key, false];
+      if (field.type === 'customer') return [field.key, customerId];
+      return [field.key, field.defaultValue ?? ''];
+    })
+  );
+}
+
+/** Keys of required fields that are still empty */
+export function findMissingRequired(type: CustomerTypeDefinition, values: CustomerTypeValues): string[] {
+  return type.fields
+    .filter(
+      (field) =>
+        field.required &&
+        field.type !== 'checkbox' &&
+        field.type !== 'computed' &&
+        String(values[field.key] ?? '').trim() === ''
+    )
+    .map((field) => field.key);
+}
+
+export function computeFieldValue(field: CustomerTypeField, values: CustomerTypeValues): number {
+  const result = field.compute?.(values) ?? 0;
+  return Number.isFinite(result) ? Math.round(result * 100) / 100 : 0;
+}
+
+/** Values with every computed field filled in, ready to store */
+export function withComputedValues(type: CustomerTypeDefinition, values: CustomerTypeValues): CustomerTypeValues {
+  const computed = type.fields
+    .filter((field) => field.type === 'computed')
+    .map((field) => [field.key, String(computeFieldValue(field, values))]);
+  return { ...values, ...Object.fromEntries(computed) };
+}
+
+/** Display text for a stored value (dates, numbers, currency); `—` when empty */
+export function formatFieldValue(field: CustomerTypeField, value: CustomerTypeFieldValue | undefined): string {
+  if (value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+
+  if (field.type === 'date') {
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? value : format(date, 'dd MMM yyyy');
+  }
+
+  if (field.type === 'number' || field.type === 'computed') {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return value;
+    if (field.format === 'currency') {
+      // Whole amounts stay short ($2,500); fractional ones get cents ($4.20)
+      const cents = Number.isInteger(number) ? 0 : 2;
+      return `$${number.toLocaleString('en-US', { minimumFractionDigits: cents, maximumFractionDigits: 2 })}`;
+    }
+    return number.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  return value;
+}

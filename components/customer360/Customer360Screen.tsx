@@ -473,7 +473,7 @@ export function Customer360Screen({
             )}
           >
             {theme === 'aurora' && (
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500" />
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500" />
             )}
 
             {/* Profile Row: Photo, Names, CID, Badges, Print Button */}
@@ -534,7 +534,7 @@ export function Customer360Screen({
                   type="button"
                   id="c360-print-btn"
                   onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-xs hover:shadow-sm active:scale-[0.98] transition cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 active:bg-blue-700 rounded-lg shadow-xs hover:shadow-sm active:scale-[0.98] transition cursor-pointer"
                   title="Print Customer Dossier (Ctrl+P)"
                 >
                   <Printer className="w-4 h-4 text-white" />
@@ -784,7 +784,7 @@ export function Customer360Screen({
                         <Filter className="w-3.5 h-3.5 text-blue-600" />
                         <span>Filter</span>
                         {activeTxFilterCount > 0 && (
-                          <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                          <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
                             {activeTxFilterCount}
                           </span>
                         )}
@@ -884,7 +884,7 @@ export function Customer360Screen({
                             <button
                               type="button"
                               onClick={() => setIsTxFilterDropdownOpen(false)}
-                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-2xs transition cursor-pointer"
+                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-2xs transition cursor-pointer"
                             >
                               Done
                             </button>
@@ -997,7 +997,7 @@ export function Customer360Screen({
                 {customer360Data.activities.map((act) => (
                   <div key={act.id} className="relative group">
                     {/* Blue Node Dot */}
-                    <div className="absolute -left-6 top-3 w-3.5 h-3.5 rounded-full border-2 border-white bg-blue-600 shadow-2xs ring-2 ring-blue-100 transition-transform group-hover:scale-110" />
+                    <div className="absolute -left-6 top-3 w-3.5 h-3.5 rounded-full border-2 border-white bg-blue-500 shadow-2xs ring-2 ring-blue-100 transition-transform group-hover:scale-110" />
 
                     {/* Right Side Card UI */}
                     <div className="bg-slate-50/80 hover:bg-white border border-slate-200/80 rounded-xl p-3 transition-all shadow-2xs hover:shadow-xs hover:border-blue-200">

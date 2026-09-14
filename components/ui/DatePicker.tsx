@@ -105,7 +105,7 @@ export function DatePicker({
             onSelect={handleSelect}
             classNames={{
               root: 'p-1',
-              chevron: 'w-4 h-4 fill-blue-600 text-blue-600',
+              chevron: 'w-4 h-4 fill-blue-500 text-blue-600',
               month_caption: 'flex justify-center items-center h-8 font-semibold text-sm text-slate-800',
               nav: 'flex items-center justify-between absolute top-1 left-1 right-1',
               button_previous: 'p-1 text-slate-500 hover:text-blue-600 rounded-md hover:bg-slate-100',
@@ -114,7 +114,7 @@ export function DatePicker({
               weekday: 'w-8 h-8 text-xs font-medium text-slate-400 text-center',
               day: 'w-8 h-8 text-center text-xs p-0 m-0.5 rounded-lg transition-colors',
               day_button: 'w-full h-full rounded-lg hover:bg-blue-50 text-slate-700 hover:text-blue-600 font-medium',
-              selected: 'bg-blue-600 text-white font-bold hover:bg-blue-700 hover:text-white',
+              selected: 'bg-blue-500 text-white font-bold hover:bg-blue-600 hover:text-white',
               today: 'text-blue-600 font-bold underline',
               outside: 'text-slate-300 opacity-50',
             }}

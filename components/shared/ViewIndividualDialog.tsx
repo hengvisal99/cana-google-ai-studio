@@ -373,7 +373,7 @@ export function ViewIndividualDialog({
                 className={cn(
                   'py-3 border-b-2 font-medium transition whitespace-nowrap flex items-center gap-2 cursor-pointer',
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
                 )}
               >

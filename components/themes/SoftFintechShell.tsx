@@ -55,6 +55,22 @@ export function SoftFintechShell({
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [customerMenuOpen, setCustomerMenuOpen] = useState(true);
+
+  const isCustomerPage =
+    currentPage === 'individual-list' ||
+    currentPage === 'individual-insert' ||
+    currentPage === 'individual-update' ||
+    currentPage === 'customer-type';
+  const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
+    {
+      label: 'List',
+      page: 'individual-list',
+      active: currentPage === 'individual-list' || currentPage === 'individual-update',
+    },
+    { label: 'Create', page: 'individual-insert', active: currentPage === 'individual-insert' },
+    { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
+  ];
 
   const apps: EnterpriseApp[] = [
     'Nexus Core Banking',
@@ -83,6 +99,8 @@ export function SoftFintechShell({
         return 'Individual Registration (Insert)';
       case 'individual-update':
         return 'Individual File Management (Update)';
+      case 'customer-type':
+        return 'Customer Type';
     }
   };
 
@@ -103,7 +121,7 @@ export function SoftFintechShell({
           {/* Company Brand Box */}
           <div className="p-4 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
                 <Building2 className="w-5 h-5" />
               </div>
               {!sidebarCollapsed && (
@@ -137,7 +155,7 @@ export function SoftFintechShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     currentPage === 'dashboard'
-                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-600'
+                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-500'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Dashboard"
@@ -154,7 +172,7 @@ export function SoftFintechShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     currentPage === 'customer-360'
-                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-600'
+                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-500'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Customer 360 (Left Customer Sidebar)"
@@ -163,22 +181,58 @@ export function SoftFintechShell({
                   {!sidebarCollapsed && <span className="truncate">Customer 360</span>}
                 </button>
 
-                {/* Individual */}
+                {/* Customer: expandable group (List, Create, Customer Type) */}
                 <button
-                  id="nav-btn-individual"
+                  id="nav-btn-customer"
                   type="button"
-                  onClick={() => onNavigate('individual-list')}
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('individual-list') : setCustomerMenuOpen(!customerMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && customerMenuOpen}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
-                    currentPage === 'individual-list' || currentPage === 'individual-insert' || currentPage === 'individual-update'
-                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-600'
+                    isCustomerPage
+                      ? sidebarCollapsed || !customerMenuOpen
+                        ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-500'
+                        : 'text-blue-700 font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
-                  title="Individual (Directory)"
+                  title="Customer"
                 >
                   <User className="w-4 h-4 shrink-0 text-blue-600" />
-                  {!sidebarCollapsed && <span className="truncate">Individual</span>}
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 truncate text-left">Customer</span>
+                      <ChevronDown
+                        className={cn(
+                          'w-3.5 h-3.5 shrink-0 text-slate-400 transition-transform',
+                          !customerMenuOpen && '-rotate-90'
+                        )}
+                      />
+                    </>
+                  )}
                 </button>
+
+                {!sidebarCollapsed && customerMenuOpen && (
+                  <div className="ml-5 space-y-0.5 border-l border-slate-200 pl-3">
+                    {customerSubItems.map((item) => (
+                      <button
+                        key={item.page}
+                        id={`nav-btn-customer-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'w-full flex items-center px-3 py-2 rounded-lg text-left font-semibold transition-all',
+                          item.active
+                            ? 'bg-blue-50 text-blue-700 font-bold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        )}
+                      >
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </nav>
@@ -275,7 +329,7 @@ export function SoftFintechShell({
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 rounded-lg text-slate-700 transition"
                   title="Theme Selector"
                 >
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
                   <span className="hidden sm:inline capitalize">
                     {currentTheme === 'soft-fintech' ? 'Soft FinTech' : currentTheme === 'glassmorphism' ? 'Glassmorphism' : 'Aurora'}
                   </span>

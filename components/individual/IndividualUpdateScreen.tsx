@@ -362,10 +362,10 @@ export function IndividualUpdateScreen({
             className={cn(
               'flex items-center gap-2 px-5 py-2 text-xs font-bold text-white transition-all shadow-xs shrink-0',
               theme === 'glassmorphism'
-                ? 'rounded-full bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20'
+                ? 'rounded-full bg-blue-500 hover:bg-blue-600 shadow-md shadow-blue-500/20'
                 : theme === 'aurora'
-                ? 'rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/25'
-                : 'rounded-lg bg-blue-600 hover:bg-blue-700'
+                ? 'rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-md shadow-blue-500/25'
+                : 'rounded-lg bg-blue-500 hover:bg-blue-600'
             )}
           >
             <Save className="w-4 h-4" />
@@ -387,7 +387,7 @@ export function IndividualUpdateScreen({
             className={cn(
               'flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-lg transition-all shrink-0 select-none',
               activeTab === tab.key
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-blue-500 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             )}
           >
@@ -759,7 +759,7 @@ export function IndividualUpdateScreen({
                   <button
                     type="button"
                     onClick={handleAddDocument}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold text-xs hover:bg-blue-700 flex items-center justify-center gap-1"
+                    className="px-3 py-1.5 bg-blue-500 text-white rounded-lg font-bold text-xs hover:bg-blue-600 flex items-center justify-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add File</span>
@@ -1304,7 +1304,7 @@ export function IndividualUpdateScreen({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs"
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-xs"
                 >
                   {isSubmitting ? 'Saving...' : 'Save Profile Changes'}
                 </button>

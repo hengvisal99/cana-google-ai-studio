@@ -1298,7 +1298,7 @@ export const MOCK_CUSTOMER_360_DATA: Record<string, Omit<Customer360Profile, 'in
         limit: 50000,
         spent: 6800,
         status: 'Active',
-        colorGradient: 'from-blue-600 via-cyan-600 to-teal-500',
+        colorGradient: 'from-blue-500 via-cyan-600 to-teal-500',
       }
     ],
     transactions: [
@@ -1501,7 +1501,7 @@ export function getCustomer360(individual: Individual): Customer360Profile {
         limit: Math.round(individual.annualIncome * 0.15),
         spent: Math.round(individual.annualIncome * 0.02),
         status: individual.kycStatus === 'rejected' ? 'Frozen' : 'Active',
-        colorGradient: 'from-blue-700 via-indigo-800 to-slate-900',
+        colorGradient: 'from-blue-600 via-indigo-800 to-slate-900',
       }
     ],
     transactions: [

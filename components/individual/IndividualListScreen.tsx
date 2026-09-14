@@ -44,9 +44,17 @@ import {
   Layers,
   SlidersHorizontal,
   Globe,
-  Heart
+  Heart,
+  LayoutList,
+  RotateCcw,
+  Tags,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'motion/react';
+import { CheckBadge, FilterSelect, LIFTED_ACTIVE, MENU_SURFACE, Popover } from './DirectoryControls';
+import { CustomerTypePickerDialog } from '@/components/customer/CustomerTypePickerDialog';
+import type { CustomerTypeRecord } from '@/types';
 
 interface IndividualListScreenProps {
   individuals: Individual[];
@@ -54,6 +62,7 @@ interface IndividualListScreenProps {
   onNavigateToInsert: () => void;
   onNavigateToUpdate: (individual: Individual) => void;
   onNavigateToCustomer360: (individual: Individual) => void;
+  onSaveCustomerTypeRecord?: (record: CustomerTypeRecord) => void;
   onDeleteIndividual: (id: string) => void;
   onAuthorizeIndividual?: (
     id: string,
@@ -84,6 +93,19 @@ const SEARCH_FIELD_OPTIONS: { id: SearchByField; label: string; placeholder: str
   { id: 'roId', label: 'RO ID', placeholder: 'SEARCH RO ID' },
 ];
 
+/** Request-status tabs; the icon carries the status colour. */
+const STATUS_TABS: { id: 'ALL' | RequestStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
+  { id: 'ALL', label: 'All Requests', icon: LayoutList, iconColor: 'text-slate-500' },
+  { id: 'Approved', label: 'Approved', icon: CheckCircle2, iconColor: 'text-emerald-500' },
+  { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, iconColor: 'text-amber-500' },
+  { id: 'Pending', label: 'Pending', icon: Clock, iconColor: 'text-blue-500' },
+  { id: 'Rejected', label: 'Rejected', icon: AlertTriangle, iconColor: 'text-rose-500' },
+];
+
+const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
+const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
+const REQUEST_TYPE_OPTIONS = ['Registration', 'Close Account'];
+
 interface ColumnConfig {
   id: string;
   label: string;
@@ -97,6 +119,7 @@ export function IndividualListScreen({
   onNavigateToInsert,
   onNavigateToUpdate,
   onNavigateToCustomer360,
+  onSaveCustomerTypeRecord,
   onDeleteIndividual,
   onAuthorizeIndividual,
   onCloseAccountIndividual,
@@ -109,7 +132,6 @@ export function IndividualListScreen({
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
   const [searchBy, setSearchBy] = useState<SearchByField>('all');
-  const [isSearchByOpen, setIsSearchByOpen] = useState(false);
 
   // Filter fields
   const [showFilterPanel, setShowFilterPanel] = useState(true);
@@ -172,12 +194,26 @@ export function IndividualListScreen({
   // Delete Confirmation Modal state
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Customer Type dialog: the customer whose row opened it
+  const [customerTypeIndividualId, setCustomerTypeIndividualId] = useState<string | null>(null);
+  const customerTypeIndividual = individuals.find((item) => item.id === customerTypeIndividualId);
+
   // Status Tab counts
   const countAll = individuals.length;
   const countApproved = individuals.filter((i) => i.requestStatus === 'Approved').length;
   const countResubmit = individuals.filter((i) => i.requestStatus === 'Resubmit').length;
   const countPending = individuals.filter((i) => i.requestStatus === 'Pending').length;
   const countRejected = individuals.filter((i) => i.requestStatus === 'Rejected').length;
+  const statusCounts: Record<'ALL' | RequestStatus, number> = {
+    ALL: countAll,
+    Approved: countApproved,
+    Resubmit: countResubmit,
+    Pending: countPending,
+    Rejected: countRejected,
+  };
+
+  const activeSearchField = SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy) ?? SEARCH_FIELD_OPTIONS[0];
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   // Extract unique nationalities for filter dropdown
   const uniqueNationalities = useMemo(() => {
@@ -498,106 +534,109 @@ export function IndividualListScreen({
       )}
 
       {/* ========================================================================= */}
-      {/* THEME 1: SOFT-FINTECH (Institutional Banking / Bloomberg Terminal Layout) */}
+      {/* DIRECTORY HEADER & ACTION BAR                                              */}
       {/* ========================================================================= */}
-      {/* ========================================================================= */}
-      {/* UNIFIED DIRECTORY HEADER & ACTION BAR                                      */}
-      {/* ========================================================================= */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div className="relative z-30 rounded-[20px] border border-slate-200/60 bg-white p-6 shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)]">
+        <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
-                Individual Directory
-              </h1>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <h1 className="text-[26px] font-black tracking-tight text-slate-900">Individual Directory</h1>
+            <p className="mt-1 text-xs text-slate-500">
               Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
             </p>
           </div>
 
-          {/* Grouped Enterprise Toolbar */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-0.5 shadow-2xs divide-x divide-slate-100">
-              {/* Reload */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Toolbar dock */}
+            <div className="inline-flex h-10 items-center gap-1 rounded-xl border border-slate-200/70 bg-slate-50 p-1">
               <button
                 id="btn-individual-reload"
+                type="button"
                 onClick={handleReloadClick}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition rounded-l-lg cursor-pointer"
+                className="inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-slate-600 transition hover:bg-white hover:text-slate-900"
                 title="Reload data from server"
               >
-                <RotateCw className="w-3.5 h-3.5 text-slate-500" />
+                <RotateCw className="h-4 w-4 shrink-0" />
                 <span>Reload</span>
               </button>
 
-              {/* Filter */}
+              {/* Filter: raised while the panel is open; outlined when closed with filters applied */}
               <button
                 id="btn-individual-filter-toggle"
+                type="button"
                 onClick={() => setShowFilterPanel(!showFilterPanel)}
+                aria-expanded={showFilterPanel}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition cursor-pointer',
+                  'inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all',
                   showFilterPanel
-                    ? 'bg-blue-50 text-blue-700 font-bold'
-                    : 'text-slate-700 hover:bg-slate-50'
+                    ? cn(LIFTED_ACTIVE, 'text-blue-600')
+                    : hasActiveFilters
+                      ? 'bg-white text-blue-700 ring-1 ring-inset ring-blue-200 hover:ring-blue-300'
+                      : 'text-slate-600 hover:bg-white hover:text-slate-900'
                 )}
                 title="Toggle Filters"
               >
-                <Filter className={cn('w-3.5 h-3.5', showFilterPanel ? 'text-blue-600' : 'text-slate-500')} />
+                <Filter className="h-4 w-4 shrink-0" />
                 <span>Filter</span>
                 {hasActiveFilters && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                )}
-              </button>
-
-              {/* Columns */}
-              <button
-                id="btn-individual-customize-columns"
-                onClick={() => setShowCustomizeModal(true)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-                title="Configure Table Columns"
-              >
-                <Columns className="w-3.5 h-3.5 text-slate-500" />
-                <span>Columns</span>
-                {columns.filter((c) => c.visible).length > 0 && (
-                  <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-blue-100 text-blue-700">
-                    {columns.filter((c) => c.visible).length}
+                  <span
+                    aria-label={`${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
+                    className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-blue-100 px-1 text-[10px] font-bold leading-none tabular-nums text-blue-700"
+                  >
+                    {activeFilterCount}
                   </span>
                 )}
               </button>
 
-              {/* Export */}
-              <div className="relative group">
+              <button
+                id="btn-individual-customize-columns"
+                type="button"
+                onClick={() => setShowCustomizeModal(true)}
+                className="inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-slate-600 transition hover:bg-white hover:text-slate-900"
+                title="Configure Table Columns"
+              >
+                <Columns className="h-4 w-4 shrink-0" />
+                <span>Columns</span>
+              </button>
+
+              {/* Export: hover menu (pt-2 bridges the gap so it stays open while moving down) */}
+              <div className="group relative">
                 <button
                   id="btn-individual-export"
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition rounded-r-lg cursor-pointer"
+                  type="button"
+                  className="inline-flex h-[30px] cursor-pointer items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-slate-600 transition hover:bg-white hover:text-slate-900"
                 >
-                  <Download className="w-3.5 h-3.5 text-slate-500" />
+                  <Download className="h-4 w-4 shrink-0" />
                   <span>Export</span>
                 </button>
-                <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg hidden group-hover:block z-20 py-1 text-xs">
-                  <button
-                    onClick={() => handleExport('csv')}
-                    className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
-                  >
-                    Export as CSV
-                  </button>
-                  <button
-                    onClick={() => handleExport('json')}
-                    className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 font-medium"
-                  >
-                    Export as JSON
-                  </button>
+                <div className="absolute right-0 top-full z-30 hidden pt-2 group-hover:block">
+                  <div className={cn('w-40', MENU_SURFACE)}>
+                    <button
+                      type="button"
+                      onClick={() => handleExport('csv')}
+                      className="flex w-full cursor-pointer rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Export as CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExport('json')}
+                      className="flex w-full cursor-pointer rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Export as JSON
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Primary Add New Button */}
+            {/* Primary action: the only solid blue control */}
             <button
               id="btn-individual-add-new"
+              type="button"
               onClick={onNavigateToInsert}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition cursor-pointer"
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-blue-500 px-5 text-xs font-bold text-white shadow-md shadow-blue-500/30 transition hover:bg-blue-600"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
               <span>Add Individual</span>
             </button>
           </div>
@@ -609,49 +648,13 @@ export function IndividualListScreen({
       {/* ========================================================================= */}
       <div
         id="individual-filter-section-reference"
-        className="bg-white border border-slate-200/90 rounded-[28px] p-5 sm:p-6 shadow-xs space-y-5"
+        className="relative z-20 space-y-5 rounded-[20px] border border-slate-200/60 bg-white p-5 shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)] sm:p-6"
       >
-        {/* Row 1: Status Pills + Search Capsule Bar */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Status Tabs (Exact Image Design: All Requests, Approved, Resubmit, Pending, Rejected with Icons and Badges) */}
-          <div className="inline-flex items-center gap-1.5 p-1.5 bg-[#f0f4f9] border border-slate-200/70 rounded-2xl shrink-0 overflow-x-auto max-w-full scrollbar-none">
-            {[
-              { 
-                id: 'ALL' as const, 
-                label: 'All Requests', 
-                count: countAll, 
-                icon: null,
-                iconColor: ''
-              },
-              { 
-                id: 'Approved' as const, 
-                label: 'Approved', 
-                count: countApproved, 
-                icon: CheckCircle2,
-                iconColor: 'text-emerald-500'
-              },
-              { 
-                id: 'Resubmit' as const, 
-                label: 'Resubmit', 
-                count: countResubmit, 
-                icon: AlertCircle,
-                iconColor: 'text-amber-500'
-              },
-              { 
-                id: 'Pending' as const, 
-                label: 'Pending', 
-                count: countPending, 
-                icon: Clock,
-                iconColor: 'text-blue-500'
-              },
-              { 
-                id: 'Rejected' as const, 
-                label: 'Rejected', 
-                count: countRejected, 
-                icon: AlertTriangle,
-                iconColor: 'text-rose-500'
-              },
-            ].map((tab) => {
+        {/* Row 1: status tabs + search */}
+        <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-center">
+          {/* 34px tabs + 4px padding + 1px border = 44px, matching the search box and filter selects */}
+          <div className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl border border-slate-200/60 bg-slate-50 p-1">
+            {STATUS_TABS.map((tab) => {
               const isActive = statusTab === tab.id;
               const Icon = tab.icon;
               return (
@@ -661,220 +664,177 @@ export function IndividualListScreen({
                   id={`tab-status-${tab.id.toLowerCase()}`}
                   onClick={() => setStatusTab(tab.id)}
                   className={cn(
-                    'h-9 px-3.5 sm:px-4 inline-flex items-center gap-2 text-xs sm:text-[13px] transition-all cursor-pointer whitespace-nowrap select-none',
-                    isActive
-                      ? 'bg-white rounded-xl shadow-xs border border-slate-200/90 text-blue-600 font-bold'
-                      : 'text-slate-700 hover:text-slate-900 font-medium rounded-xl hover:bg-white/50'
+                    'group relative inline-flex h-[30px] cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[13px] transition-colors',
+                    isActive ? 'font-bold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900'
                   )}
                 >
-                  {Icon && <Icon className={cn('w-4 h-4 shrink-0 stroke-[2.2]', tab.iconColor)} />}
-                  <span>{tab.label}</span>
+                  {isActive && (
+                    <motion.span
+                      layoutId="individual-status-tab"
+                      className={cn('absolute inset-0 rounded-lg', LIFTED_ACTIVE)}
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                    />
+                  )}
+                  <Icon className={cn('relative h-4 w-4 shrink-0 stroke-[2.2]', tab.iconColor)} />
+                  <span className="relative">{tab.label}</span>
                   <span
                     className={cn(
-                      'px-2 py-0.5 min-w-[20px] text-center rounded-md sm:rounded-full text-[11px] font-semibold leading-none transition-colors',
+                      'relative min-w-[22px] rounded-full px-1.5 py-[3px] text-center text-[11px] font-semibold tabular-nums leading-none transition-colors',
                       isActive
                         ? 'bg-blue-50 text-blue-600'
-                        : 'bg-slate-200/70 text-slate-600'
+                        : 'bg-slate-200/60 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700'
                     )}
                   >
-                    {tab.count}
+                    {statusCounts[tab.id]}
                   </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Search & Field Selection Grouped Capsule (Field Group) */}
-          <div className="relative flex items-center max-w-lg w-full">
-            <div className="w-full flex items-center bg-white border border-slate-200/90 rounded-full p-1 shadow-2xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-              {/* Field Selection Addon */}
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  id="btn-search-by-dropdown"
-                  onClick={() => setIsSearchByOpen(!isSearchByOpen)}
-                  className="h-8 flex items-center gap-1.5 px-3.5 bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 rounded-full text-xs font-bold text-blue-600 transition shrink-0 select-none cursor-pointer"
-                >
-                  <span>{SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.label || 'ALL FIELDS'}</span>
-                  {isSearchByOpen ? (
-                    <ChevronUp className="w-3.5 h-3.5 text-blue-600" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5 text-blue-600" />
-                  )}
-                </button>
-
-                {/* Field Dropdown Menu */}
-                {isSearchByOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsSearchByOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95">
-                      <div className="space-y-1">
-                        {SEARCH_FIELD_OPTIONS.map((opt) => {
-                          const isSelected = searchBy === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => {
-                                setSearchBy(opt.id);
-                                setIsSearchByOpen(false);
-                              }}
-                              className={cn(
-                                'w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-left cursor-pointer',
-                                isSelected
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                              )}
-                            >
-                              <span>{opt.label}</span>
-                              {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 ml-2" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Search Input Box */}
-              <div className="relative flex-1 flex items-center px-3">
-                <Search className="w-4 h-4 text-slate-400 shrink-0 mr-2 pointer-events-none" />
-                <input
-                  id="individual-search-input"
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy)?.placeholder || 'RUN ID SEARCH'}
-                  className="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none uppercase tracking-wide"
-                />
-                {searchTerm && (
+          {/* Search with field picker; results filter as you type */}
+          <div className="w-full lg:max-w-lg">
+            <div className="flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-2 pr-1.5 transition focus-within:border-slate-400">
+              <Popover
+                className="shrink-0"
+                trigger={({ open, toggle }) => (
                   <button
+                    id="btn-search-by-dropdown"
                     type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="p-1 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
-                    title="Clear search"
+                    onClick={toggle}
+                    aria-expanded={open}
+                    className="inline-flex h-8 cursor-pointer select-none items-center gap-1 rounded-lg px-2.5 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    {activeSearchField.label}
+                    <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
                   </button>
                 )}
-              </div>
+              >
+                {(close) => (
+                  <div className={cn('absolute left-0 top-full z-50 mt-3 w-60', MENU_SURFACE)}>
+                    {SEARCH_FIELD_OPTIONS.map((opt) => {
+                      const isSelected = searchBy === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchBy(opt.id);
+                            close();
+                            searchInputRef.current?.focus();
+                          }}
+                          className={cn(
+                            'flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider transition',
+                            isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
+                          )}
+                        >
+                          {opt.label}
+                          {isSelected && <CheckBadge />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </Popover>
+              <span className="h-5 w-px shrink-0 bg-slate-200" />
+              <input
+                id="individual-search-input"
+                ref={searchInputRef}
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={activeSearchField.placeholder}
+                enterKeyHint="search"
+                className="min-w-0 flex-1 bg-transparent px-1.5 text-xs font-semibold uppercase tracking-wide text-slate-800 placeholder:text-slate-400 focus:outline-none"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    searchInputRef.current?.focus();
+                  }}
+                  aria-label="Clear search"
+                  title="Clear search"
+                  className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => searchInputRef.current?.focus()}
+                aria-label="Search"
+                title="Search"
+                className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg bg-slate-100 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600 active:scale-95"
+              >
+                <Search className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Row 2: 4-Dropdown Filter Console (Combined in the same card) */}
+        {/* Row 2: "Filters" line with reset + four filter selects (toggled by the Filter button) */}
         {showFilterPanel && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-2">
-            {/* 1. Gender */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
-                GENDER
-              </label>
-              <div className="relative">
-                <select
-                  value={genderFilter}
-                  onChange={(e) => setGenderFilter(e.target.value)}
-                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
+          <div className="space-y-3">
+            <div className="flex h-8 items-center justify-between">
+              <p className="text-[13px] font-bold text-slate-900">Filters</p>
+              {(hasActiveFilters || searchTerm) && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
                 >
-                  <option value="ALL">All Genders</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset filters
+                </button>
+              )}
             </div>
 
-            {/* 2. Marital Status */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
-                MARITAL STATUS
-              </label>
-              <div className="relative">
-                <select
-                  value={maritalFilter}
-                  onChange={(e) => setMaritalFilter(e.target.value)}
-                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
-                >
-                  <option value="ALL">All Marital Statuses</option>
-                  <option value="Single">Single</option>
-                  <option value="Married">Married</option>
-                  <option value="Divorced">Divorced</option>
-                  <option value="Widowed">Widowed</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
+              <FilterSelect
+                id="filter-gender"
+                label="Gender"
+                allLabel="All Genders"
+                value={genderFilter}
+                options={GENDER_OPTIONS}
+                onChange={setGenderFilter}
+              />
+              <FilterSelect
+                id="filter-marital-status"
+                label="Marital Status"
+                allLabel="All Marital Statuses"
+                value={maritalFilter}
+                options={MARITAL_OPTIONS}
+                onChange={setMaritalFilter}
+              />
+              <FilterSelect
+                id="filter-nationality"
+                label="Nationality"
+                allLabel="All Nationalities"
+                value={nationalityFilter}
+                options={uniqueNationalities}
+                onChange={setNationalityFilter}
+              />
+              <FilterSelect
+                id="filter-request-type"
+                label="Request Type"
+                allLabel="All Request Types"
+                value={requestTypeFilter}
+                options={REQUEST_TYPE_OPTIONS}
+                onChange={setRequestTypeFilter}
+              />
             </div>
-
-            {/* 3. Nationality */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
-                NATIONALITY
-              </label>
-              <div className="relative">
-                <select
-                  value={nationalityFilter}
-                  onChange={(e) => setNationalityFilter(e.target.value)}
-                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
-                >
-                  <option value="ALL">All Nationalities</option>
-                  {uniqueNationalities.map((nat) => (
-                    <option key={nat} value={nat}>
-                      {nat}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* 4. Request Type */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 tracking-wider uppercase mb-2">
-                REQUEST TYPE
-              </label>
-              <div className="relative">
-                <select
-                  value={requestTypeFilter}
-                  onChange={(e) => setRequestTypeFilter(e.target.value)}
-                  className="w-full h-10 px-4 text-xs bg-white border border-slate-200 rounded-full text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer appearance-none pr-10"
-                >
-                  <option value="ALL">All Request Types</option>
-                  <option value="Registration">Registration</option>
-                  <option value="Close Account">Close Account</option>
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Optional Reset filters indicator if filtered */}
-        {(hasActiveFilters || searchTerm) && (
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <span className="text-xs text-slate-500">
-              Filtered: <strong className="text-slate-800">{filteredData.length}</strong> of {individuals.length} records
-            </span>
-            <button
-              onClick={handleResetFilters}
-              className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-            >
-              Reset Filters
-            </button>
           </div>
         )}
       </div>
 
       {/* Main Table Container with MD default columns + customizable optional columns */}
-      <div className={cn(
-        'bg-white border border-slate-200 overflow-hidden',
-        theme === 'glassmorphism' ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md' : 'rounded-xl shadow-xs'
-      )}>
+      <div className="relative z-10 overflow-hidden rounded-[20px] border border-slate-200/60 bg-white shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)]">
         <div className="overflow-x-auto">
           <table id="individual-data-table" className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                 {/* Default Column: No */}
                 <th className="py-3 px-3 w-12 text-center">No</th>
 
@@ -1024,7 +984,7 @@ export function IndividualListScreen({
                             className="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-xs text-slate-700 animate-in fade-in zoom-in-95"
                             onMouseLeave={() => setOpenActionMenuId(null)}
                           >
-                            {/* View (Dialog) */}
+                            {/* View: opens the dialog */}
                             <button
                               id={`action-view-${item.id}`}
                               onClick={() => {
@@ -1034,10 +994,10 @@ export function IndividualListScreen({
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
                               <Eye className="w-3.5 h-3.5 text-blue-600" />
-                              <span>View (Dialog)</span>
+                              <span>View</span>
                             </button>
 
-                            {/* Edit (Screen) */}
+                            {/* Edit: opens the update screen */}
                             <button
                               id={`action-edit-${item.id}`}
                               onClick={() => {
@@ -1047,7 +1007,33 @@ export function IndividualListScreen({
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
                               <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                              <span>Edit (Screen)</span>
+                              <span>Edit</span>
+                            </button>
+
+                            {/* Customer Type */}
+                            <button
+                              id={`action-customer-type-${item.id}`}
+                              onClick={() => {
+                                setOpenActionMenuId(null);
+                                setCustomerTypeIndividualId(item.id);
+                              }}
+                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
+                            >
+                              <Tags className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Customer Type</span>
+                            </button>
+
+                            {/* Resend Email: no mail backend yet, so confirm with a toast */}
+                            <button
+                              id={`action-resend-email-${item.id}`}
+                              onClick={() => {
+                                setOpenActionMenuId(null);
+                                triggerToast(item.email ? `Email resent to ${item.email}.` : 'No email address on file.');
+                              }}
+                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
+                            >
+                              <Mail className="w-3.5 h-3.5 text-sky-600" />
+                              <span>Resend Email</span>
                             </button>
 
                             {/* Close Account (Only if Active) */}
@@ -1079,7 +1065,7 @@ export function IndividualListScreen({
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-rose-50 text-rose-600 font-medium"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                              <span>Delete Record</span>
+                              <span>Delete</span>
                             </button>
                           </div>
                         )}
@@ -1098,130 +1084,132 @@ export function IndividualListScreen({
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           {/* THEME 1: GLASSMORPHISM - Crisp Luminous Island Studio */}
           {theme === 'glassmorphism' && (
-            <div className="bg-white/95 backdrop-blur-2xl rounded-3xl max-w-xl w-full p-6 border border-slate-200/90 shadow-2xl shadow-slate-900/15 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 animate-in fade-in zoom-in-95">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-start justify-between gap-4 px-6 pt-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shadow-xs">
-                    <Layers className="w-5 h-5" />
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500 text-white shadow-md shadow-blue-500/25">
+                    <Layers className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-base">Customize Columns</h3>
-                    <p className="text-[11px] font-medium text-slate-500">Select fields to display in table view</p>
+                    <h3 className="text-base font-bold text-slate-900">Customize Columns</h3>
+                    <p className="text-xs text-slate-500">Choose which fields appear in the table</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-[11px] font-bold text-blue-700">
-                    {columns.filter((c) => c.visible).length} of {columns.length} Visible
-                  </span>
-                  <button
-                    onClick={() => {
-                      setShowCustomizeModal(false);
-                      setColumnSearch('');
-                    }}
-                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={() => {
+                    setShowCustomizeModal(false);
+                    setColumnSearch('');
+                  }}
+                  className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
 
-              {/* Integrated Control & Search Bar */}
-              <div className="flex items-center justify-between gap-3 p-1.5 rounded-2xl bg-slate-100/80 border border-slate-200/80">
-                <div className="relative flex-1 flex items-center min-w-0">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
+              {/* Search + bulk actions */}
+              <div className="flex items-center gap-3 px-6 pt-5">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={columnSearch}
                     onChange={(e) => setColumnSearch(e.target.value)}
                     placeholder="Search attributes..."
-                    className="w-full h-8 pl-8 pr-7 bg-transparent text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                    className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-8 text-xs font-medium text-slate-800 transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                   />
                   {columnSearch && (
                     <button
                       type="button"
+                      aria-label="Clear search"
                       onClick={() => setColumnSearch('')}
-                      className="absolute right-2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded-full p-0.5 text-slate-400 transition hover:text-slate-600"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
-
-                {/* Refined Segmented Pill Control */}
-                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200/80 shadow-2xs shrink-0">
+                <div className="flex shrink-0 items-center gap-1 text-xs font-semibold">
                   <button
                     type="button"
                     onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: true })))}
-                    className="px-3 py-1 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                    className="cursor-pointer rounded-md px-2 py-1.5 text-blue-600 transition hover:bg-blue-50"
                   >
                     Select All
                   </button>
-                  <div className="w-px h-3.5 bg-slate-200" />
+                  <span className="h-3.5 w-px bg-slate-200" />
                   <button
                     type="button"
                     onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: false })))}
-                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                    className="cursor-pointer rounded-md px-2 py-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                   >
                     Clear All
                   </button>
                 </div>
               </div>
 
-              {/* Dynamic Column Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1 text-xs">
+              {/* Column options */}
+              <div className="grid max-h-80 grid-cols-1 gap-2 overflow-y-auto px-6 py-5 sm:grid-cols-2">
                 {columns
                   .filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase()))
                   .map((col) => (
-                    <div
+                    <button
                       key={col.id}
+                      type="button"
+                      role="switch"
+                      aria-checked={col.visible}
+                      title={col.label}
                       onClick={() => handleToggleColumn(col.id)}
                       className={cn(
-                        'p-3 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-2 shadow-2xs',
+                        'flex cursor-pointer select-none items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left text-xs transition',
                         col.visible
-                          ? 'bg-blue-50/80 border-2 border-blue-500 text-blue-950 font-bold shadow-xs'
-                          : 'bg-white/80 border-slate-200/90 text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300'
+                          ? 'border-blue-200 bg-blue-50/50 font-semibold text-slate-900'
+                          : 'border-slate-200 bg-white font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
                       )}
                     >
-                      <span className="text-xs truncate">{col.label}</span>
-                      <div className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0",
-                        col.visible ? "bg-blue-600 text-white shadow-xs" : "border-2 border-slate-300 bg-white"
-                      )}>
-                        {col.visible && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                    </div>
+                      <span className="truncate">{col.label}</span>
+                      <span
+                        className={cn(
+                          'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
+                          col.visible ? 'bg-blue-500' : 'bg-slate-200'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
+                            col.visible ? 'translate-x-[18px]' : 'translate-x-0.5'
+                          )}
+                        />
+                      </span>
+                    </button>
                   ))}
+
+                {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
+                  <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+                    <p className="text-xs font-medium text-slate-500">No columns match &quot;{columnSearch}&quot;</p>
+                    <button
+                      type="button"
+                      onClick={() => setColumnSearch('')}
+                      className="mt-2 cursor-pointer text-xs font-bold text-blue-600 hover:underline"
+                    >
+                      Clear Search
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
-                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                  <p className="text-xs font-medium text-slate-500">No columns match &quot;{columnSearch}&quot;</p>
-                  <button
-                    type="button"
-                    onClick={() => setColumnSearch('')}
-                    className="mt-2 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Clear Search
-                  </button>
-                </div>
-              )}
-
               {/* Footer */}
-              <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+              <div className="flex items-center justify-end border-t border-slate-100 bg-slate-50/70 px-6 py-4">
                 <button
-                  onClick={() => setColumns((prev) => prev.map((c) => ({ ...c, visible: false })))}
-                  className="px-4 py-2 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
-                >
-                  Reset Defaults
-                </button>
-                <button
+                  type="button"
                   onClick={() => {
                     setShowCustomizeModal(false);
                     setColumnSearch('');
                     triggerToast('Column preferences saved.');
                   }}
-                  className="px-6 py-2.5 rounded-full bg-blue-600 text-white text-xs font-bold shadow-lg shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer"
+                  className="h-9 cursor-pointer rounded-lg bg-blue-500 px-5 text-xs font-bold text-white shadow-sm shadow-blue-500/30 transition hover:bg-blue-600"
                 >
                   Apply Columns
                 </button>
@@ -1463,7 +1451,7 @@ export function IndividualListScreen({
                       {/* Clean Switch Toggle */}
                       <div className={cn(
                         "w-7.5 h-4 rounded-full transition-colors flex items-center px-0.5 shrink-0",
-                        col.visible ? "bg-blue-600 justify-end" : "bg-slate-300 justify-start"
+                        col.visible ? "bg-blue-500 justify-end" : "bg-slate-300 justify-start"
                       )}>
                         <div className="w-3 h-3 rounded-full bg-white shadow-2xs" />
                       </div>
@@ -1498,7 +1486,7 @@ export function IndividualListScreen({
                     setColumnSearch('');
                     triggerToast('Column preferences saved.');
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-xs transition cursor-pointer"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-bold hover:bg-blue-600 shadow-xs transition cursor-pointer"
                 >
                   Apply Changes
                 </button>
@@ -1789,6 +1777,15 @@ export function IndividualListScreen({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Customer Type: pick a type, then add a record with its dynamic form */}
+      {customerTypeIndividual && (
+        <CustomerTypePickerDialog
+          individual={customerTypeIndividual}
+          onClose={() => setCustomerTypeIndividualId(null)}
+          onSaveRecord={(record) => onSaveCustomerTypeRecord?.(record)}
+        />
       )}
 
       {/* Delete Confirmation Modal */}

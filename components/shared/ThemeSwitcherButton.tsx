@@ -95,7 +95,7 @@ export function ThemeSwitcherButton({ currentTheme, onThemeChange }: ThemeSwitch
                           {t.name}
                         </span>
                         {isActive && (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-blue-600 text-white uppercase tracking-wider">
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-blue-500 text-white uppercase tracking-wider">
                             Active
                           </span>
                         )}
@@ -110,7 +110,7 @@ export function ThemeSwitcherButton({ currentTheme, onThemeChange }: ThemeSwitch
                   </div>
 
                   {isActive && (
-                    <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-1">
+                    <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center shrink-0 mt-1">
                       <Check className="w-3 h-3" />
                     </div>
                   )}
@@ -133,7 +133,7 @@ export function ThemeSwitcherButton({ currentTheme, onThemeChange }: ThemeSwitch
         className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white text-slate-800 shadow-xl shadow-slate-900/10 hover:border-blue-400 hover:bg-blue-50/60 active:scale-95 transition-all duration-200 border border-slate-200"
         title="Switch Design System & Template"
       >
-        <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+        <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
           <Palette className="w-3.5 h-3.5" />
         </div>
         <div className="text-left flex flex-col">

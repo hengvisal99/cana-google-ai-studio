@@ -49,6 +49,22 @@ export function GlassmorphismShell({
   const [showAppMenu, setShowAppMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [customerMenuOpen, setCustomerMenuOpen] = useState(true);
+
+  const isCustomerPage =
+    currentPage === 'individual-list' ||
+    currentPage === 'individual-insert' ||
+    currentPage === 'individual-update' ||
+    currentPage === 'customer-type';
+  const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
+    {
+      label: 'List',
+      page: 'individual-list',
+      active: currentPage === 'individual-list' || currentPage === 'individual-update',
+    },
+    { label: 'Create', page: 'individual-insert', active: currentPage === 'individual-insert' },
+    { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
+  ];
 
   const apps: EnterpriseApp[] = [
     'Nexus Core Banking',
@@ -77,6 +93,8 @@ export function GlassmorphismShell({
         return 'Register Individual (Insert)';
       case 'individual-update':
         return 'Update Individual (Edit)';
+      case 'customer-type':
+        return 'Customer Type';
     }
   };
 
@@ -99,7 +117,7 @@ export function GlassmorphismShell({
         >
           {/* Frosted Brand Capsule */}
           <div className="flex items-center gap-3 pb-5 border-b border-slate-200/60 w-full">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 shrink-0">
               <Compass className="w-6 h-6" />
             </div>
             {!sidebarCollapsed && (
@@ -131,7 +149,7 @@ export function GlassmorphismShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold transition-all duration-200',
                     currentPage === 'dashboard'
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
                   )}
                   title="Dashboard"
@@ -148,7 +166,7 @@ export function GlassmorphismShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold transition-all duration-200',
                     currentPage === 'customer-360'
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
                   )}
                   title="Customer 360"
@@ -157,22 +175,55 @@ export function GlassmorphismShell({
                   {!sidebarCollapsed && <span>Customer 360</span>}
                 </button>
 
-                {/* Individual */}
+                {/* Customer: expandable group (List, Create, Customer Type) */}
                 <button
-                  id="glass-nav-individual"
+                  id="glass-nav-customer"
                   type="button"
-                  onClick={() => onNavigate('individual-list')}
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('individual-list') : setCustomerMenuOpen(!customerMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && customerMenuOpen}
                   className={cn(
                     'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold transition-all duration-200',
-                    currentPage === 'individual-list' || currentPage === 'individual-insert' || currentPage === 'individual-update'
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                    isCustomerPage
+                      ? sidebarCollapsed || !customerMenuOpen
+                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                        : 'bg-blue-50 text-blue-700'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
                   )}
-                  title="Individual (Directory)"
+                  title="Customer"
                 >
                   <User className="w-4 h-4 shrink-0" />
-                  {!sidebarCollapsed && <span>Individual</span>}
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Customer</span>
+                      <ChevronDown
+                        className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !customerMenuOpen && '-rotate-90')}
+                      />
+                    </>
+                  )}
                 </button>
+
+                {!sidebarCollapsed && customerMenuOpen && (
+                  <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
+                    {customerSubItems.map((item) => (
+                      <button
+                        key={item.page}
+                        id={`glass-nav-customer-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'w-full flex items-center px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          item.active
+                            ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
+                        )}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </nav>
@@ -241,7 +292,7 @@ export function GlassmorphismShell({
                         className={cn(
                           'w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between transition',
                           currentApp === app
-                            ? 'bg-blue-600 text-white font-bold'
+                            ? 'bg-blue-500 text-white font-bold'
                             : 'hover:bg-slate-100 text-slate-700'
                         )}
                       >
@@ -282,7 +333,7 @@ export function GlassmorphismShell({
                         className={cn(
                           'w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center justify-between transition',
                           currentLanguage === l.code
-                            ? 'bg-blue-600 text-white font-bold'
+                            ? 'bg-blue-500 text-white font-bold'
                             : 'hover:bg-slate-100 text-slate-700'
                         )}
                       >
