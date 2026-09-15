@@ -3,7 +3,7 @@ import type { CustomerTypeRecord } from '@/types';
 // Mock customer type records for the seeded individuals in lib/data.ts
 export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
   {
-    id: 'CTR-1001',
+    id: 'CSX-000001',
     customerId: 'IND-9021',
     typeId: 'csx-screen',
     values: { customerId: 'IND-9021', createdDate: '2026-01-12', closedDate: '2027-01-12', status: 'Active' },
@@ -11,7 +11,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-01-12T09:00:00.000Z',
   },
   {
-    id: 'CTR-1002',
+    id: 'CSX-000002',
     customerId: 'IND-9023',
     typeId: 'csx-screen',
     values: { customerId: 'IND-9023', createdDate: '2025-03-04', closedDate: '2026-03-04', status: 'Close' },
@@ -19,7 +19,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-03-04T10:30:00.000Z',
   },
   {
-    id: 'CTR-1003',
+    id: 'CARD-000001',
     customerId: 'IND-9021',
     typeId: 'client-card',
     values: { customerId: 'IND-9021', takenDate: '2026-02-01' },
@@ -27,7 +27,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-02-01T08:15:00.000Z',
   },
   {
-    id: 'CTR-1004',
+    id: 'CARD-000002',
     customerId: 'IND-9024',
     typeId: 'client-card',
     values: { customerId: 'IND-9024', takenDate: '2026-05-18' },
@@ -35,7 +35,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-05-18T11:00:00.000Z',
   },
   {
-    id: 'CTR-1005',
+    id: 'EMP-000001',
     customerId: 'IND-9024',
     typeId: 'employee-trading',
     values: {
@@ -52,7 +52,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-05-25T14:20:00.000Z',
   },
   {
-    id: 'CTR-1006',
+    id: 'VIP-000001',
     customerId: 'IND-9022',
     typeId: 'vip-customer',
     values: {
@@ -69,7 +69,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-08-20T16:05:00.000Z',
   },
   {
-    id: 'CTR-1007',
+    id: 'IPO-000001',
     customerId: 'IND-9021',
     typeId: 'ipo-customer',
     values: {
@@ -88,7 +88,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-04-20T10:00:00.000Z',
   },
   {
-    id: 'CTR-1008',
+    id: 'IPO-000002',
     customerId: 'IND-9021',
     typeId: 'ipo-customer',
     values: {
@@ -107,7 +107,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-07-02T09:30:00.000Z',
   },
   {
-    id: 'CTR-1009',
+    id: 'IPO-000003',
     customerId: 'IND-9026',
     typeId: 'ipo-customer',
     values: {
@@ -127,7 +127,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
   },
   // IND-9021 (CID-009021) holds every customer type, for demoing the full profile
   {
-    id: 'CTR-1010',
+    id: 'EMP-000002',
     customerId: 'IND-9021',
     typeId: 'employee-trading',
     values: {
@@ -144,7 +144,7 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
     updatedAt: '2026-07-01T10:15:00.000Z',
   },
   {
-    id: 'CTR-1011',
+    id: 'VIP-000002',
     customerId: 'IND-9021',
     typeId: 'vip-customer',
     values: {

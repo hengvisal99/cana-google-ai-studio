@@ -63,6 +63,8 @@ interface IndividualListScreenProps {
   onNavigateToUpdate: (individual: Individual) => void;
   onNavigateToCustomer360: (individual: Individual) => void;
   onSaveCustomerTypeRecord?: (record: CustomerTypeRecord) => void;
+  /** Ids already in use, so a new customer type record gets the next free one */
+  customerTypeRecordIds?: string[];
   onDeleteIndividual: (id: string) => void;
   onAuthorizeIndividual?: (
     id: string,
@@ -93,14 +95,21 @@ const SEARCH_FIELD_OPTIONS: { id: SearchByField; label: string; placeholder: str
   { id: 'roId', label: 'RO ID', placeholder: 'SEARCH RO ID' },
 ];
 
-/** Request-status tabs; the icon carries the status colour. */
+/** Request-status tabs in lifecycle order (open → closed); the icon carries the status colour. */
 const STATUS_TABS: { id: 'ALL' | RequestStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
-  { id: 'ALL', label: 'All Requests', icon: LayoutList, iconColor: 'text-slate-500' },
+  { id: 'ALL', label: 'All', icon: LayoutList, iconColor: 'text-blue-600' },
+  { id: 'Pending', label: 'Pending', icon: Clock, iconColor: 'text-yellow-500' },
+  { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, iconColor: 'text-orange-600' },
   { id: 'Approved', label: 'Approved', icon: CheckCircle2, iconColor: 'text-emerald-500' },
-  { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, iconColor: 'text-amber-500' },
-  { id: 'Pending', label: 'Pending', icon: Clock, iconColor: 'text-blue-500' },
   { id: 'Rejected', label: 'Rejected', icon: AlertTriangle, iconColor: 'text-rose-500' },
 ];
+
+/** Status icon shared by the tabs' definitions and the Request column, so both always match. */
+function StatusIcon({ status, className }: { status: RequestStatus; className?: string }) {
+  const tab = STATUS_TABS.find((t) => t.id === status) ?? STATUS_TABS[0];
+  const Icon = tab.icon;
+  return <Icon className={cn('h-4 w-4 shrink-0 stroke-[2.2]', tab.iconColor, className)} />;
+}
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
@@ -120,6 +129,7 @@ export function IndividualListScreen({
   onNavigateToUpdate,
   onNavigateToCustomer360,
   onSaveCustomerTypeRecord,
+  customerTypeRecordIds,
   onDeleteIndividual,
   onAuthorizeIndividual,
   onCloseAccountIndividual,
@@ -134,8 +144,7 @@ export function IndividualListScreen({
   const [searchBy, setSearchBy] = useState<SearchByField>('all');
 
   // Filter fields
-  const [showFilterPanel, setShowFilterPanel] = useState(true);
-  const [genderFilter, setGenderFilter] = useState<string>('ALL');
+  const [showFilterPanel, setShowFilterPanel] = useState(true);  const [genderFilter, setGenderFilter] = useState<string>('ALL');
   const [maritalFilter, setMaritalFilter] = useState<string>('ALL');
   const [nationalityFilter, setNationalityFilter] = useState<string>('ALL');
   const [requestTypeFilter, setRequestTypeFilter] = useState<string>('ALL');
@@ -437,14 +446,17 @@ export function IndividualListScreen({
     const isPending = item.requestStatus === 'Pending' || (!isApproved && !isRejected && !isResubmit);
 
     const requestType = item.requestType || 'Registration';
-    const stage = item.currentWorkflowStage || 'SR';
+    // Reviewer after the dot (SR or Manager only): the current stage while in review, otherwise
+    // whoever last acted on it, since reject/resubmit overwrite the stage with the status word
+    const isReviewer = (role?: string): role is 'SR' | 'Manager' => role === 'SR' || role === 'Manager';
+    const reviewer = isReviewer(item.currentWorkflowStage)
+      ? item.currentWorkflowStage
+      : [...(item.authorizationHistory ?? [])].reverse().find((h) => isReviewer(h.role))?.role;
 
     if (isApproved) {
       return (
         <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-          <div className="mt-0.5 shrink-0 text-emerald-600">
-            <Check className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
-          </div>
+          <StatusIcon status="Approved" className="mt-0.5" />
           <div className="flex flex-col">
             <span className="text-[13px] font-bold text-slate-900 leading-tight">
               Approved
@@ -460,16 +472,18 @@ export function IndividualListScreen({
     if (isPending) {
       return (
         <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-          <div className="mt-0.5 shrink-0 text-amber-600">
-            <Clock className="w-4 h-4 text-amber-600" strokeWidth={2.2} />
-          </div>
+          <StatusIcon status="Pending" className="mt-0.5" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1 leading-tight">
               <span className="text-[13px] font-bold text-slate-900">
                 Pending
               </span>
-              <span className="text-slate-400 font-semibold text-xs">·</span>
-              <span className="text-slate-600 font-semibold text-xs">{stage}</span>
+              {reviewer && (
+                <>
+                  <span className="text-slate-400 font-semibold text-xs">·</span>
+                  <span className="text-slate-600 font-semibold text-xs">{reviewer}</span>
+                </>
+              )}
             </div>
             <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
               {requestType}
@@ -482,16 +496,18 @@ export function IndividualListScreen({
     if (isRejected) {
       return (
         <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-          <div className="mt-0.5 shrink-0 text-rose-600">
-            <X className="w-4 h-4 text-rose-600" strokeWidth={2.5} />
-          </div>
+          <StatusIcon status="Rejected" className="mt-0.5" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1 leading-tight">
               <span className="text-[13px] font-bold text-slate-900">
                 Rejected
               </span>
-              <span className="text-slate-400 font-semibold text-xs">·</span>
-              <span className="text-slate-600 font-semibold text-xs">{stage}</span>
+              {reviewer && (
+                <>
+                  <span className="text-slate-400 font-semibold text-xs">·</span>
+                  <span className="text-slate-600 font-semibold text-xs">{reviewer}</span>
+                </>
+              )}
             </div>
             <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
               {requestType}
@@ -504,16 +520,18 @@ export function IndividualListScreen({
     // Resubmit state
     return (
       <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-        <div className="mt-0.5 shrink-0 text-amber-600">
-          <Clock className="w-4 h-4 text-amber-600" strokeWidth={2.2} />
-        </div>
+        <StatusIcon status="Resubmit" className="mt-0.5" />
         <div className="flex flex-col">
           <div className="flex items-center gap-1 leading-tight">
             <span className="text-[13px] font-bold text-slate-900">
               Resubmit
             </span>
-            <span className="text-slate-400 font-semibold text-xs">·</span>
-            <span className="text-slate-600 font-semibold text-xs">{stage}</span>
+            {reviewer && (
+              <>
+                <span className="text-slate-400 font-semibold text-xs">·</span>
+                <span className="text-slate-600 font-semibold text-xs">{reviewer}</span>
+              </>
+            )}
           </div>
           <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
             {requestType}
@@ -634,9 +652,9 @@ export function IndividualListScreen({
               id="btn-individual-add-new"
               type="button"
               onClick={onNavigateToInsert}
-              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-blue-500 px-5 text-xs font-bold text-white shadow-md shadow-blue-500/30 transition hover:bg-blue-600"
+              className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl bg-blue-500 px-3.5 text-xs font-bold text-white shadow-md shadow-blue-500/30 transition hover:bg-blue-600"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
               <span>Add Individual</span>
             </button>
           </div>
@@ -675,7 +693,13 @@ export function IndividualListScreen({
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
                     />
                   )}
-                  <Icon className={cn('relative h-4 w-4 shrink-0 stroke-[2.2]', tab.iconColor)} />
+                  <Icon
+                    className={cn(
+                      'relative h-4 w-4 shrink-0 stroke-[2.2] transition-colors',
+                      // Status icons always carry their colour; the neutral "All" icon only turns blue when active
+                      isActive || tab.id !== 'ALL' ? tab.iconColor : 'text-slate-400 group-hover:text-slate-600'
+                    )}
+                  />
                   <span className="relative">{tab.label}</span>
                   <span
                     className={cn(
@@ -795,7 +819,6 @@ export function IndividualListScreen({
               <FilterSelect
                 id="filter-gender"
                 label="Gender"
-                allLabel="All Genders"
                 value={genderFilter}
                 options={GENDER_OPTIONS}
                 onChange={setGenderFilter}
@@ -803,7 +826,6 @@ export function IndividualListScreen({
               <FilterSelect
                 id="filter-marital-status"
                 label="Marital Status"
-                allLabel="All Marital Statuses"
                 value={maritalFilter}
                 options={MARITAL_OPTIONS}
                 onChange={setMaritalFilter}
@@ -811,7 +833,6 @@ export function IndividualListScreen({
               <FilterSelect
                 id="filter-nationality"
                 label="Nationality"
-                allLabel="All Nationalities"
                 value={nationalityFilter}
                 options={uniqueNationalities}
                 onChange={setNationalityFilter}
@@ -819,7 +840,6 @@ export function IndividualListScreen({
               <FilterSelect
                 id="filter-request-type"
                 label="Request Type"
-                allLabel="All Request Types"
                 value={requestTypeFilter}
                 options={REQUEST_TYPE_OPTIONS}
                 onChange={setRequestTypeFilter}
@@ -906,7 +926,7 @@ export function IndividualListScreen({
                     </td>
 
                     {/* Customer ID */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-blue-600">
+                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-700">
                       <span
                         onClick={() => onViewIndividual(item)}
                         className="cursor-pointer hover:underline"
@@ -931,7 +951,7 @@ export function IndividualListScreen({
                           <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                             <span>{item.fullNameEN || `${item.firstName} ${item.lastName}`}</span>
                           </div>
-                          <div className="text-[11px] text-blue-600/80 font-medium font-khmer">
+                          <div className="text-[11px] text-slate-500 font-medium font-khmer">
                             {item.fullNameKH || 'ឈ្មោះខ្មែរ'}
                           </div>
                         </div>
@@ -993,7 +1013,7 @@ export function IndividualListScreen({
                               }}
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
-                              <Eye className="w-3.5 h-3.5 text-blue-600" />
+                              <Eye className="w-3.5 h-3.5 text-slate-500" />
                               <span>View</span>
                             </button>
 
@@ -1006,9 +1026,11 @@ export function IndividualListScreen({
                               }}
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
-                              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                              <Edit3 className="w-3.5 h-3.5 text-slate-500" />
                               <span>Edit</span>
                             </button>
+
+                            <div className="border-t border-slate-100 my-1" />
 
                             {/* Customer Type */}
                             <button
@@ -1019,7 +1041,7 @@ export function IndividualListScreen({
                               }}
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
-                              <Tags className="w-3.5 h-3.5 text-indigo-600" />
+                              <Tags className="w-3.5 h-3.5 text-slate-500" />
                               <span>Customer Type</span>
                             </button>
 
@@ -1032,7 +1054,7 @@ export function IndividualListScreen({
                               }}
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
-                              <Mail className="w-3.5 h-3.5 text-sky-600" />
+                              <Mail className="w-3.5 h-3.5 text-slate-500" />
                               <span>Resend Email</span>
                             </button>
 
@@ -1046,9 +1068,9 @@ export function IndividualListScreen({
                                   setCloseAccountName(item.tradingAccountInfo?.tradingAccountNumber || 'Primary Account');
                                   setCloseReason('');
                                 }}
-                                className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-purple-700 font-medium"
+                                className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                               >
-                                <Lock className="w-3.5 h-3.5 text-purple-600" />
+                                <Lock className="w-3.5 h-3.5 text-slate-500" />
                                 <span>Close Account</span>
                               </button>
                             )}
@@ -1783,6 +1805,7 @@ export function IndividualListScreen({
       {customerTypeIndividual && (
         <CustomerTypePickerDialog
           individual={customerTypeIndividual}
+          existingIds={customerTypeRecordIds}
           onClose={() => setCustomerTypeIndividualId(null)}
           onSaveRecord={(record) => onSaveCustomerTypeRecord?.(record)}
         />

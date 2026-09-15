@@ -34,11 +34,15 @@ export interface CustomerTypeField {
   format?: 'currency';
   /** Show as a column on the Customer Type list page */
   showInList?: boolean;
+  /** Detail views draw fields sharing a group under one caption */
+  group?: string;
 }
 
 export interface CustomerTypeDefinition {
   id: CustomerTypeId;
   label: string;
+  /** Record id prefix, e.g. `CSX` gives CSX-000020 */
+  idPrefix: string;
   description: string;
   icon: LucideIcon;
   fields: CustomerTypeField[];
@@ -82,6 +86,7 @@ const MEMBERSHIP_FIELDS: CustomerTypeField[] = [
 export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
   {
     id: 'csx-screen',
+    idPrefix: 'CSX',
     label: 'CSX Screen',
     description: 'Access to the CSX trading screen.',
     icon: MonitorSmartphone,
@@ -103,6 +108,7 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
   },
   {
     id: 'client-card',
+    idPrefix: 'CARD',
     label: 'Client Card',
     description: 'Physical client identification card.',
     icon: CreditCard,
@@ -110,6 +116,7 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
   },
   {
     id: 'employee-trading',
+    idPrefix: 'EMP',
     label: 'Employee Trading',
     description: 'Staff account trading under compliance rules.',
     icon: Briefcase,
@@ -117,6 +124,7 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
   },
   {
     id: 'vip-customer',
+    idPrefix: 'VIP',
     label: 'VIP Customer',
     description: 'Priority service and preferential fees.',
     icon: Crown,
@@ -124,6 +132,7 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
   },
   {
     id: 'ipo-customer',
+    idPrefix: 'IPO',
     label: 'IPO Customer',
     description: 'Subscribes to initial public offerings.',
     icon: TrendingUp,
@@ -140,7 +149,14 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
         showInList: true,
       },
       { key: 'bookBuildingDate', label: 'Book Building Date', type: 'date', required: true },
-      { key: 'purchaseQuantity', label: 'Purchase Quantity', type: 'number', required: true, showInList: true },
+      {
+        key: 'purchaseQuantity',
+        label: 'Purchase Quantity',
+        type: 'number',
+        required: true,
+        showInList: true,
+        group: 'Purchase',
+      },
       {
         key: 'purchasePrice',
         label: 'Purchase Price',
@@ -148,6 +164,7 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
         required: true,
         format: 'currency',
         showInList: true,
+        group: 'Purchase',
       },
       {
         key: 'totalAmount',
@@ -156,20 +173,38 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
         format: 'currency',
         compute: (v) => toNumber(v.purchaseQuantity) * toNumber(v.purchasePrice),
         showInList: true,
+        group: 'Purchase',
       },
-      { key: 'subQuantity', label: 'Sub Quantity', type: 'number', required: true },
-      { key: 'subPrice', label: 'Sub Price', type: 'number', required: true, format: 'currency' },
+      { key: 'subQuantity', label: 'Sub Quantity', type: 'number', required: true, group: 'Subscription' },
+      { key: 'subPrice', label: 'Sub Price', type: 'number', required: true, format: 'currency', group: 'Subscription' },
       {
         key: 'subTotalAmount',
         label: 'Sub Total Amount',
         type: 'computed',
         format: 'currency',
         compute: (v) => toNumber(v.subQuantity) * toNumber(v.subPrice),
+        group: 'Subscription',
       },
-      { key: 'subscriptionDate', label: 'Subscription Date', type: 'date', required: true, showInList: true },
+      {
+        key: 'subscriptionDate',
+        label: 'Subscription Date',
+        type: 'date',
+        required: true,
+        showInList: true,
+      },
     ],
   },
 ];
+
+/** Next free record id for a type, zero padded: CSX-000020 */
+export function nextRecordId(type: CustomerTypeDefinition, existingIds: string[] = []): string {
+  const pattern = new RegExp(`^${type.idPrefix}-(\d+)$`);
+  const highest = existingIds.reduce((max, id) => {
+    const match = pattern.exec(id);
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${type.idPrefix}-${String(highest + 1).padStart(6, '0')}`;
+}
 
 export function getCustomerType(id: CustomerTypeId): CustomerTypeDefinition {
   return CUSTOMER_TYPES.find((type) => type.id === id) as CustomerTypeDefinition;

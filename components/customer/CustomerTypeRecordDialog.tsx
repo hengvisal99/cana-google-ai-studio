@@ -6,11 +6,12 @@ import {
   getCustomerFieldKey,
   getCustomerType,
   initialValues,
+  nextRecordId,
   withComputedValues,
   type CustomerTypeValues,
 } from '@/lib/customer-types';
 import type { CustomerTypeFieldValue, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
-import { BTN_GHOST, BTN_PRIMARY, CustomerTypeForm, DialogShell, customerName } from './CustomerTypeForm';
+import { BTN_PRIMARY, BTN_SECONDARY, CustomerTypeForm, DialogShell, customerName } from './CustomerTypeForm';
 
 export type RecordDialogMode = 'insert' | 'edit';
 
@@ -21,6 +22,8 @@ interface CustomerTypeRecordDialogProps {
   customers: Individual[];
   /** Pre-select and lock the customer (e.g. opened from a customer's row or view) */
   lockedCustomerId?: string;
+  /** Ids already in use, so a new record gets the next free one */
+  existingIds?: string[];
   onClose: () => void;
   onSave: (record: CustomerTypeRecord) => void;
   onBack?: () => void;
@@ -33,6 +36,7 @@ export function CustomerTypeRecordDialog({
   record,
   customers,
   lockedCustomerId,
+  existingIds,
   onClose,
   onSave,
   onBack,
@@ -51,7 +55,9 @@ export function CustomerTypeRecordDialog({
 
   const subtitle = customer ? (
     <>
-      <span className="font-mono">{customer.customerId}</span> • {customerName(customer)}
+      <span className="font-mono font-medium">{customer.customerId}</span>
+      <span className="mx-1 text-slate-400">·</span>
+      <span className="font-medium text-slate-600">{customerName(customer)}</span>
     </>
   ) : (
     type.description
@@ -70,7 +76,7 @@ export function CustomerTypeRecordDialog({
     const now = new Date().toISOString();
     const finalValues = withComputedValues(type, values);
     onSave({
-      id: record?.id ?? `CTR-${Date.now()}`,
+      id: record?.id ?? nextRecordId(type, existingIds),
       customerId: customerKey ? String(finalValues[customerKey]) : customerId,
       typeId,
       values: finalValues,
@@ -85,14 +91,13 @@ export function CustomerTypeRecordDialog({
       subtitle={subtitle}
       icon={type.icon}
       onClose={onClose}
-      onBack={onBack}
       footer={
         <>
-          <button type="button" onClick={onBack ?? onClose} className={BTN_GHOST}>
+          <button type="button" onClick={onBack ?? onClose} className={BTN_SECONDARY}>
             {onBack ? 'Back' : 'Cancel'}
           </button>
           <button type="button" onClick={handleSave} className={BTN_PRIMARY}>
-            {isEdit ? 'Save Changes' : `Add ${type.label}`}
+            {isEdit ? 'Save' : 'Add'}
           </button>
         </>
       }

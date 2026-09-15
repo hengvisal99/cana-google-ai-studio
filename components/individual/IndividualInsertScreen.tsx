@@ -21,9 +21,9 @@ import {
   RequestType
 } from '@/types';
 import { 
-  ArrowLeft, 
-  Save, 
-  User, 
+  ArrowLeft,
+  Save,
+  User,
   ShieldCheck, 
   CreditCard, 
   MapPin, 
@@ -76,6 +76,83 @@ interface IndividualInsertScreenProps {
 }
 
 type TabKey = 'personal' | 'identification' | 'contact' | 'employment' | 'family' | 'account';
+
+/** Extension badge colour on the file tile (PDF red, Word blue, anything else gray). */
+function extBadgeClass(ext: string) {
+  if (ext === 'PDF') return 'bg-rose-500';
+  if (ext === 'DOC' || ext === 'DOCX') return 'bg-blue-500';
+  return 'bg-slate-500';
+}
+
+/**
+ * An uploaded document in its slot, the same height as the empty upload card:
+ * preview on top (thumbnail for images, file tile otherwise) with the slot name and a
+ * corner ×, then the file name with a Replace action.
+ */
+function AttachedDocCard({
+  label,
+  doc,
+  onReplace,
+  onRemove,
+}: {
+  label: string;
+  doc: SupportingDocument;
+  onReplace: () => void;
+  onRemove: () => void;
+}) {
+  const ext = doc.fileName.includes('.') ? doc.fileName.split('.').pop()!.toUpperCase() : 'FILE';
+
+  return (
+    <div className="flex h-44 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs transition hover:border-slate-300">
+      <div className="relative min-h-0 flex-1 bg-slate-50">
+        {doc.fileUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={doc.fileUrl} alt={doc.fileName} className="h-full w-full object-cover" />
+        ) : (
+          <div className="grid h-full place-items-center">
+            <div className="relative flex h-14 w-11 flex-col items-center justify-end rounded-md border border-slate-200 bg-white pb-1.5 shadow-2xs">
+              <FileText className="absolute top-2 h-4 w-4 text-slate-300" />
+              <span className={cn('rounded px-1 text-[9px] font-bold leading-4 text-white', extBadgeClass(ext))}>
+                {ext}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <span className="absolute left-2 top-2 inline-flex max-w-[calc(100%-3rem)] items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-2xs ring-1 ring-slate-200/70 backdrop-blur-sm">
+          <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-500" />
+          <span className="truncate">{label}</span>
+        </span>
+
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${label}`}
+          title="Remove document"
+          className="absolute right-2 top-2 grid h-6 w-6 cursor-pointer place-items-center rounded-full bg-slate-900/60 text-white backdrop-blur-sm transition hover:bg-slate-900/80"
+        >
+          <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-slate-100 px-3 py-2.5">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-slate-900" title={doc.fileName}>
+            {doc.fileName}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onReplace}
+          className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+        >
+          <UploadCloud className="h-3.5 w-3.5" />
+          Replace
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function IndividualInsertScreen({
   onCancel,
@@ -235,6 +312,8 @@ export function IndividualInsertScreen({
       id: `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       type: docType,
       fileName: file.name,
+      // Local preview so image uploads can show a thumbnail
+      fileUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
       fileSize: formattedSize,
       uploadedAt: new Date().toISOString().slice(0, 10),
       remark:
@@ -512,37 +591,26 @@ export function IndividualInsertScreen({
                   {/* Left Column: Photo Upload / Preview */}
                   <div className="w-32 sm:w-36 shrink-0 flex flex-col items-center">
                     {avatarUrl ? (
-                      <div className="flex flex-col items-center gap-2.5 p-2.5 bg-white border border-slate-200 rounded-2xl shadow-xs w-full">
-                        <div className="relative group/avatar shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={avatarUrl}
-                            alt="Customer Portrait Preview"
-                            className="w-24 h-24 rounded-xl object-cover border border-slate-200 shadow-xs"
-                          />
-                        </div>
-                        <div className="w-full text-center">
-                          <h4 className="text-[11px] font-bold text-slate-800">Portrait Loaded</h4>
-                          <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                            <button
-                              type="button"
-                              onClick={() => photoInputRef.current?.click()}
-                              className="px-2 py-0.5 text-[10px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition"
-                            >
-                              Change
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAvatarUrl('');
-                                if (photoInputRef.current) photoInputRef.current.value = '';
-                              }}
-                              className="px-2 py-0.5 text-[10px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
+                      // Photo fills the same box as the upload area; the corner × removes it
+                      <div className="relative w-full h-32 sm:h-36 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-2xs">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatarUrl}
+                          alt="Customer portrait"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAvatarUrl('');
+                            if (photoInputRef.current) photoInputRef.current.value = '';
+                          }}
+                          aria-label="Remove photo"
+                          title="Remove photo"
+                          className="absolute right-1.5 top-1.5 grid h-6 w-6 cursor-pointer place-items-center rounded-full bg-slate-900/60 text-white backdrop-blur-sm transition hover:bg-slate-900/80"
+                        >
+                          <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        </button>
                       </div>
                     ) : (
                       <div className="w-full flex flex-col items-center">
@@ -1060,49 +1128,12 @@ export function IndividualInsertScreen({
                             <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
                           </div>
                         ) : (
-                          <div className="h-44 p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
-                            <div className="flex items-start justify-between gap-2.5">
-                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                                  <FileText className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-slate-900 truncate text-xs" title={specimenDoc.fileName}>
-                                    {specimenDoc.fileName}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                                      Account Specimen
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">{specimenDoc.fileSize}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDocument(specimenDoc.id)}
-                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
-                                title="Delete document"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Attached</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => specimenInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 border border-slate-200 rounded-lg transition cursor-pointer"
-                              >
-                                <UploadCloud className="w-3 h-3" />
-                                <span>Replace</span>
-                              </button>
-                            </div>
-                          </div>
+                          <AttachedDocCard
+                            label="Account Specimen"
+                            doc={specimenDoc}
+                            onReplace={() => specimenInputRef.current?.click()}
+                            onRemove={() => handleRemoveDocument(specimenDoc.id)}
+                          />
                         )}
                       </div>
 
@@ -1141,49 +1172,12 @@ export function IndividualInsertScreen({
                             <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
                           </div>
                         ) : (
-                          <div className="h-44 p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
-                            <div className="flex items-start justify-between gap-2.5">
-                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                                  <ShieldCheck className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-slate-900 truncate text-xs" title={idDoc.fileName}>
-                                    {idDoc.fileName}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                      ID / Passport
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">{idDoc.fileSize}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDocument(idDoc.id)}
-                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
-                                title="Delete document"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Attached</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => idDocInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:text-emerald-600 hover:bg-emerald-50/80 border border-slate-200 rounded-lg transition cursor-pointer"
-                              >
-                                <UploadCloud className="w-3 h-3" />
-                                <span>Replace</span>
-                              </button>
-                            </div>
-                          </div>
+                          <AttachedDocCard
+                            label="ID / Passport"
+                            doc={idDoc}
+                            onReplace={() => idDocInputRef.current?.click()}
+                            onRemove={() => handleRemoveDocument(idDoc.id)}
+                          />
                         )}
                       </div>
 
@@ -1222,49 +1216,12 @@ export function IndividualInsertScreen({
                             <span className="text-[10px] text-slate-400 mt-2.5 font-medium">PDF, JPG, PNG (Max 10MB)</span>
                           </div>
                         ) : (
-                          <div className="h-44 p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
-                            <div className="flex items-start justify-between gap-2.5">
-                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
-                                  <FileText className="w-5 h-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-bold text-slate-900 truncate text-xs" title={otherDoc.fileName}>
-                                    {otherDoc.fileName}
-                                  </p>
-                                  <div className="flex items-center gap-1.5 mt-1">
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
-                                      Other Supporting Doc
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-mono">{otherDoc.fileSize}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDocument(otherDoc.id)}
-                                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
-                                title="Delete document"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Attached</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => otherDocInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:text-purple-600 hover:bg-purple-50/80 border border-slate-200 rounded-lg transition cursor-pointer"
-                              >
-                                <UploadCloud className="w-3 h-3" />
-                                <span>Replace</span>
-                              </button>
-                            </div>
-                          </div>
+                          <AttachedDocCard
+                            label="Other Supporting Doc"
+                            doc={otherDoc}
+                            onReplace={() => otherDocInputRef.current?.click()}
+                            onRemove={() => handleRemoveDocument(otherDoc.id)}
+                          />
                         )}
                       </div>
                     </div>
@@ -1927,15 +1884,6 @@ export function IndividualInsertScreen({
           New Customer Onboarding
         </h1>
       </div>
-      <button
-        type="button"
-        onClick={handleFormSubmit}
-        disabled={isSubmitting}
-        className="inline-flex h-10 shrink-0 items-center gap-2 self-start rounded-full bg-blue-500 px-5 text-[13px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(59,130,246,0.4),0_8px_20px_-8px_rgba(59,130,246,0.7)] transition hover:bg-blue-600 active:scale-[0.98] disabled:opacity-70 sm:self-auto cursor-pointer"
-      >
-        <Save className="h-4 w-4" />
-        <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
-      </button>
     </>
   );
 
@@ -2001,8 +1949,8 @@ export function IndividualInsertScreen({
           <div className="p-5 sm:p-7 bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-sm rounded-2xl">
             {renderTabContent()}
 
-            {/* Bottom Footer Navigation */}
-            <div className="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between gap-4">
+            {/* Footer navigation: sticks to the viewport bottom so Next / Submit stay reachable on long steps */}
+            <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-8 flex items-center justify-between gap-4 rounded-b-2xl border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7">
               <button
                 type="button"
                 onClick={() => {
@@ -2010,9 +1958,9 @@ export function IndividualInsertScreen({
                   if (currIdx > 0) setActiveTab(tabs[currIdx - 1].key);
                 }}
                 disabled={activeTab === 'personal'}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-40 cursor-pointer flex items-center gap-1.5"
+                className="h-10 px-3 rounded-xl text-[13px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-40 cursor-pointer flex items-center gap-2"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-4 h-4" />
                 <span>Previous Step</span>
               </button>
 
@@ -2024,20 +1972,21 @@ export function IndividualInsertScreen({
                       const currIdx = tabs.findIndex((t) => t.key === activeTab);
                       if (currIdx < tabs.length - 1) setActiveTab(tabs[currIdx + 1].key);
                     }}
-                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                    className="h-10 px-3 rounded-xl text-[13px] font-bold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer flex items-center gap-2"
                   >
                     <span>Next Step</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
+                  // Last step: the only submit action, in the same spot and colour as Next
                   <button
                     type="button"
                     onClick={handleFormSubmit}
                     disabled={isSubmitting}
-                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                    className="h-10 px-3 rounded-xl text-[13px] font-bold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer disabled:opacity-70 flex items-center gap-2"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Complete & Submit</span>
+                    <Save className="w-4 h-4" />
+                    <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
                   </button>
                 )}
               </div>

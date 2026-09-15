@@ -300,6 +300,7 @@ export default function Home() {
             onAuthorizeIndividual={handleAuthorizeIndividual}
             onCloseAccountIndividual={handleCloseAccountIndividual}
             onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
+            customerTypeRecordIds={customerTypeRecords.map((record) => record.id)}
             onReload={handleReload}
             theme={currentTheme}
           />
@@ -336,6 +337,7 @@ export default function Home() {
             onAuthorizeIndividual={handleAuthorizeIndividual}
             onCloseAccountIndividual={handleCloseAccountIndividual}
             onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
+            customerTypeRecordIds={customerTypeRecords.map((record) => record.id)}
             onReload={handleReload}
             theme={currentTheme}
           />
