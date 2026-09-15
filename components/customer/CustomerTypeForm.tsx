@@ -393,6 +393,7 @@ function CustomerPicker({
         type="text"
         role="combobox"
         aria-expanded={open}
+        aria-controls={`${id}-listbox`}
         autoComplete="off"
         value={open ? query : selectedLabel}
         placeholder={selectedLabel || placeholder}
@@ -423,6 +424,8 @@ function CustomerPicker({
         rect &&
         createPortal(
           <div
+            id={`${id}-listbox`}
+            role="listbox"
             ref={listRef}
             className="fixed z-[60] max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10"
             style={{ top: rect.bottom + 4, left: rect.left, width: rect.width }}
