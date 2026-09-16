@@ -62,7 +62,7 @@ function RecordDialog({
             <Icon className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <h3 id={headingId} className="truncate text-[15px] font-bold tracking-tight text-slate-900">
+            <h3 id={headingId} className="truncate text-[15px] font-semibold tracking-tight text-slate-900">
               {type.label} details
             </h3>
             <p className="font-mono text-[11px] text-slate-400">{item.id}</p>
@@ -119,12 +119,12 @@ export function CustomerTypeViewDialog(props: CustomerTypeViewProps) {
                 unoptimized
               />
             ) : (
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50 text-base font-bold text-blue-600">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50 text-base font-semibold text-blue-600">
                 {name.charAt(0)}
               </span>
             )}
             <div className="min-w-0">
-              <h2 id={titleId} className="truncate text-[19px] font-bold tracking-tight text-slate-900">
+              <h2 id={titleId} className="truncate text-[19px] font-semibold tracking-tight text-slate-900">
                 {name}
               </h2>
               <div className="mt-0.5 flex flex-wrap items-center gap-2">

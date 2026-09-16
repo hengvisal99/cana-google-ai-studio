@@ -121,7 +121,7 @@ export function DocumentSlotRow({
             e.stopPropagation();
             onBrowse?.();
           }}
-          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-linear-to-r from-blue-600 to-sky-500 px-4 text-[12px] font-bold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
+          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-linear-to-r from-blue-600 to-sky-500 px-4 text-[12px] font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
         >
           <UploadCloud className="w-4 h-4" />
           Upload

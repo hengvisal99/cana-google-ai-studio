@@ -186,7 +186,7 @@ function AccountStatusLegend() {
             style={{ backgroundColor: ACCOUNT_STATUS_COLORS[item.status] }}
           />
           <span className="text-slate-600 font-medium flex-1">{item.status}</span>
-          <span className="font-bold text-slate-900 font-mono">{item.customers}</span>
+          <span className="font-semibold text-slate-900 font-mono">{item.customers}</span>
           <span className="text-slate-400 font-mono w-11 text-right">{item.percentage}%</span>
         </div>
       ))}
@@ -360,7 +360,7 @@ export function DashboardScreen({
         />
         <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
               <Calendar className="w-4 h-4 text-blue-600" />
               <span>Select Date Period</span>
             </div>
@@ -375,7 +375,7 @@ export function DashboardScreen({
 
           {/* Quick Presets Grid */}
           <div className="space-y-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Quick Presets</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Quick Presets</span>
             <div className="grid grid-cols-2 gap-1.5">
               {[
                 { id: '7D', label: 'Last 7 Days' },
@@ -408,7 +408,7 @@ export function DashboardScreen({
           {/* Custom Date Inputs */}
           {selectedDatePreset === 'CUSTOM' && (
             <div className="space-y-2 pt-2 border-t border-slate-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Custom Date Range</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Custom Date Range</span>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[10px] text-slate-500 font-medium block mb-1">From</label>
@@ -440,7 +440,7 @@ export function DashboardScreen({
             <button
               type="button"
               onClick={() => setIsDatePopoverOpen(false)}
-              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow-2xs cursor-pointer"
+              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-2xs cursor-pointer"
             >
               Done
             </button>
@@ -465,7 +465,7 @@ export function DashboardScreen({
               <Layers className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-blue-950 tracking-tight leading-tight">
+              <h1 className="text-xl sm:text-2xl font-semibold text-blue-950 tracking-tight leading-tight">
                 Dashboard
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
@@ -485,7 +485,7 @@ export function DashboardScreen({
               >
                 <Calendar className="w-3.5 h-3.5 text-blue-600" />
                 <span className="text-slate-500">Date Range:</span>
-                <span className="font-mono font-bold text-blue-950 text-[11px] leading-none bg-blue-50/80 px-2 py-1 rounded border border-blue-200">
+                <span className="font-mono font-semibold text-blue-950 text-[11px] leading-none bg-blue-50/80 px-2 py-1 rounded border border-blue-200">
                   {formattedDateRange}
                 </span>
                 <ChevronDown className={cn('w-3.5 h-3.5 text-blue-600 transition-transform', isDatePopoverOpen && 'rotate-180')} />
@@ -508,7 +508,7 @@ export function DashboardScreen({
             <button
               type="button"
               onClick={() => setShowPreviewModal(true)}
-              className="flex items-center gap-1.5 h-9 px-4 text-xs font-bold text-white bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl shadow-xs shadow-blue-500/30 transition cursor-pointer"
+              className="flex items-center gap-1.5 h-9 px-4 text-xs font-semibold text-white bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl shadow-xs shadow-blue-500/30 transition cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Preview Report</span>
@@ -532,14 +532,14 @@ export function DashboardScreen({
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <span className="block text-xs font-medium text-slate-500">{label}</span>
-                <span className="block text-3xl font-bold text-slate-900 font-mono tracking-tight">{value}</span>
+                <span className="block text-3xl font-semibold text-slate-900 font-mono tracking-tight">{value}</span>
               </div>
               <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', iconStyle)}>
                 <Icon className="w-5 h-5" />
               </div>
             </div>
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-mono font-bold">
+              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-mono font-semibold">
                 <ArrowUp className="w-3 h-3" />
                 {change}
               </span>
@@ -564,7 +564,7 @@ export function DashboardScreen({
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Customer Growth</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Customer Growth</h2>
             </div>
             <div className="flex items-center gap-3 text-xs font-medium">
               <div className="flex items-center gap-1.5">
@@ -653,7 +653,7 @@ export function DashboardScreen({
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Age Profile</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Age Profile</h2>
             </div>
           </div>
 
@@ -677,7 +677,7 @@ export function DashboardScreen({
                   <span
                     className={cn(
                       'w-12 text-right text-xs font-mono tracking-tight shrink-0 transition-colors',
-                      isHovered ? 'font-bold text-blue-950' : 'font-semibold text-slate-600'
+                      isHovered ? 'font-semibold text-blue-950' : 'font-semibold text-slate-600'
                     )}
                   >
                     {item.group}
@@ -702,7 +702,7 @@ export function DashboardScreen({
                     <span
                       className={cn(
                         'ml-3 font-mono text-xs sm:text-sm tracking-tight shrink-0 transition-colors',
-                        isHovered ? 'font-black text-blue-950 scale-105' : 'font-bold text-slate-700'
+                        isHovered ? 'font-semibold text-blue-950 scale-105' : 'font-semibold text-slate-700'
                       )}
                     >
                       {item.percentage}%
@@ -729,7 +729,7 @@ export function DashboardScreen({
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Customer Risk Profile</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Customer Risk Profile</h2>
             </div>
           </div>
 
@@ -774,8 +774,8 @@ export function DashboardScreen({
 
               {/* Centered Stat under Arc */}
               <div className="absolute inset-0 flex flex-col items-center justify-end pb-3 pointer-events-none">
-                <span className="text-3xl font-black text-slate-900 font-mono tracking-tight">35</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                <span className="text-3xl font-semibold text-slate-900 font-mono tracking-tight">35</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">
                   INDIVIDUAL ACCOUNTS
                 </span>
               </div>
@@ -787,17 +787,17 @@ export function DashboardScreen({
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] shrink-0" />
               <span className="text-slate-600 font-medium text-xs">Low</span>
-              <span className="font-bold text-slate-900 font-mono text-xs ml-0.5">12</span>
+              <span className="font-semibold text-slate-900 font-mono text-xs ml-0.5">12</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] shrink-0" />
               <span className="text-slate-600 font-medium text-xs">Medium</span>
-              <span className="font-bold text-slate-900 font-mono text-xs ml-0.5">12</span>
+              <span className="font-semibold text-slate-900 font-mono text-xs ml-0.5">12</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] shrink-0" />
               <span className="text-slate-600 font-medium text-xs">High</span>
-              <span className="font-bold text-slate-900 font-mono text-xs ml-0.5">11</span>
+              <span className="font-semibold text-slate-900 font-mono text-xs ml-0.5">11</span>
             </div>
           </div>
         </div>
@@ -813,7 +813,7 @@ export function DashboardScreen({
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-bold text-slate-900">Account Status</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Account Status</h2>
           </div>
 
           <div className="pt-2 pb-2 flex-1 flex items-center justify-center min-h-[200px]">
@@ -821,7 +821,7 @@ export function DashboardScreen({
               <AccountStatusDonut />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
                 <span className="text-xs font-medium text-slate-500 tracking-tight">Accounts</span>
-                <span className="text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
+                <span className="text-3xl font-semibold text-slate-900 tracking-tight mt-0.5">
                   {ACCOUNT_STATUS_TOTAL}
                 </span>
               </div>
@@ -843,7 +843,7 @@ export function DashboardScreen({
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Investment Experience Overview</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Investment Experience Overview</h2>
             </div>
           </div>
 
@@ -854,7 +854,7 @@ export function DashboardScreen({
                 <div className="flex items-center justify-between text-xs sm:text-sm">
                   <span className="font-medium text-slate-700">{item.product}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 font-mono">{item.count}</span>
+                    <span className="font-semibold text-slate-900 font-mono">{item.count}</span>
                     <span className="text-xs text-slate-400 font-medium w-7 text-right font-mono">
                       {item.percentage}%
                     </span>
@@ -889,14 +889,14 @@ export function DashboardScreen({
         >
           <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Top Customers by Portfolio Value</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Top Customers by Portfolio Value</h2>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-semibold tracking-wider">
                   <th className="py-3 px-4">Customer</th>
                   <th className="py-3 px-3">Customer Type</th>
                   <th className="py-3 px-3 text-right">Portfolio Value</th>
@@ -937,7 +937,7 @@ export function DashboardScreen({
                           />
                         </div>
                         <div>
-                          <span className="font-bold text-slate-900 group-hover:text-blue-600 transition block">
+                          <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition block">
                             {c.name}
                           </span>
                           <span className="text-[10px] text-slate-400 font-mono">{c.cid}</span>
@@ -951,7 +951,7 @@ export function DashboardScreen({
                       </span>
                     </td>
 
-                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                    <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900">
                       {c.portfolioValue}
                     </td>
 
@@ -960,7 +960,7 @@ export function DashboardScreen({
                     </td>
 
                     <td className="py-3 px-4 text-right">
-                      <span className="inline-flex items-center gap-0.5 font-bold font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px]">
+                      <span className="inline-flex items-center gap-0.5 font-semibold font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px]">
                         <ArrowUpRight className="w-3 h-3" />
                         {c.momChange}
                       </span>
@@ -969,10 +969,10 @@ export function DashboardScreen({
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-bold text-slate-900">
-                  <td className="py-3 px-4 font-bold">Total</td>
+                <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-semibold text-slate-900">
+                  <td className="py-3 px-4 font-semibold">Total</td>
                   <td className="py-3 px-3 text-slate-400 font-normal">—</td>
-                  <td className="py-3 px-3 text-right font-mono font-extrabold text-blue-700 text-sm">
+                  <td className="py-3 px-3 text-right font-mono font-semibold text-blue-700 text-sm">
                     $8,570,000
                   </td>
                   <td className="py-3 px-3 text-slate-400 text-right">—</td>
@@ -995,14 +995,14 @@ export function DashboardScreen({
         >
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Customer Segment</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Customer Segment</h2>
             </div>
           </div>
 
           <div className="overflow-x-auto flex-1">
             <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-semibold tracking-wider">
                   <th className="py-2.5 px-3">Customer Type</th>
                   <th className="py-2.5 px-2 text-right">Customers</th>
                   <th className="py-2.5 px-2 text-right">Active</th>
@@ -1021,7 +1021,7 @@ export function DashboardScreen({
                     <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">
                       {s.activeAccounts}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
+                    <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
                       {s.portfolioValue}
                     </td>
                   </tr>
@@ -1032,15 +1032,15 @@ export function DashboardScreen({
                 </tr>
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-bold text-slate-900">
-                  <td className="py-2.5 px-3 font-bold">Total</td>
-                  <td className="py-2.5 px-2 text-right font-mono font-extrabold text-slate-900">
+                <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-semibold text-slate-900">
+                  <td className="py-2.5 px-3 font-semibold">Total</td>
+                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
                     51
                   </td>
-                  <td className="py-2.5 px-2 text-right font-mono font-extrabold text-slate-900">
+                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
                     44
                   </td>
-                  <td className="py-2.5 px-3 text-right font-mono font-extrabold text-blue-700">
+                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-blue-700">
                     $12.85M
                   </td>
                 </tr>
@@ -1061,14 +1061,14 @@ export function DashboardScreen({
         >
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Product Performance</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Product Performance</h2>
             </div>
           </div>
 
           <div className="overflow-x-auto flex-1">
             <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-semibold tracking-wider">
                   <th className="py-2.5 px-3">Product</th>
                   <th className="py-2.5 px-2 text-right">Customers</th>
                   <th className="py-2.5 px-2 text-right">Active</th>
@@ -1087,7 +1087,7 @@ export function DashboardScreen({
                     <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">
                       {p.active}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
+                    <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
                       {p.portfolioValue}
                     </td>
                   </tr>
@@ -1098,15 +1098,15 @@ export function DashboardScreen({
                 </tr>
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-bold text-slate-900">
-                  <td className="py-2.5 px-3 font-bold">Total</td>
-                  <td className="py-2.5 px-2 text-right font-mono font-extrabold text-slate-900">
+                <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-semibold text-slate-900">
+                  <td className="py-2.5 px-3 font-semibold">Total</td>
+                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
                     80
                   </td>
-                  <td className="py-2.5 px-2 text-right font-mono font-extrabold text-slate-900">
+                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
                     72
                   </td>
-                  <td className="py-2.5 px-3 text-right font-mono font-extrabold text-blue-700">
+                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-blue-700">
                     $16.07M
                   </td>
                 </tr>
@@ -1130,7 +1130,7 @@ export function DashboardScreen({
             <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 text-slate-900 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
-                <span className="font-bold text-sm text-slate-900">Executive Report Preview</span>
+                <span className="font-semibold text-sm text-slate-900">Executive Report Preview</span>
                 <span className="text-xs text-slate-500 font-mono">[{formattedDateRange}]</span>
               </div>
               <div className="flex items-center gap-2">
@@ -1154,10 +1154,10 @@ export function DashboardScreen({
             <div className="p-6 sm:p-8 space-y-6 max-h-[80vh] overflow-y-auto print:max-h-none">
               <div className="border-b border-slate-200 pb-5 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
                 <div>
-                  <span className="text-xs uppercase font-mono tracking-wider font-bold text-blue-600">
+                  <span className="text-xs uppercase font-mono tracking-wider font-semibold text-blue-600">
                     Cambodia Securities Exchange (CSX) • Member Firm
                   </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 mt-1">
                     Monthly Executive Performance & Customer Summary
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -1166,7 +1166,7 @@ export function DashboardScreen({
                 </div>
                 <div className="text-right font-mono text-xs text-slate-500">
                   <div>Generated: 09 Sep 2026, 08:00 AM</div>
-                  <div className="font-bold text-slate-900">Status: Verified Official</div>
+                  <div className="font-semibold text-slate-900">Status: Verified Official</div>
                 </div>
               </div>
 
@@ -1174,29 +1174,29 @@ export function DashboardScreen({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50">
                   <div className="text-[11px] text-slate-500 font-medium uppercase">Total Customers</div>
-                  <div className="text-xl font-bold font-mono text-slate-900 mt-1">51</div>
-                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">↑ 18.6% vs last month</div>
+                  <div className="text-xl font-semibold font-mono text-slate-900 mt-1">51</div>
+                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 18.6% vs last month</div>
                 </div>
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50">
                   <div className="text-[11px] text-slate-500 font-medium uppercase">Active Accounts</div>
-                  <div className="text-xl font-bold font-mono text-slate-900 mt-1">44</div>
-                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">↑ 22.2% vs last month</div>
+                  <div className="text-xl font-semibold font-mono text-slate-900 mt-1">44</div>
+                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 22.2% vs last month</div>
                 </div>
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50">
                   <div className="text-[11px] text-slate-500 font-medium uppercase">New Customers</div>
-                  <div className="text-xl font-bold font-mono text-slate-900 mt-1">8</div>
-                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">↑ 33.3% vs last month</div>
+                  <div className="text-xl font-semibold font-mono text-slate-900 mt-1">8</div>
+                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 33.3% vs last month</div>
                 </div>
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50">
                   <div className="text-[11px] text-slate-500 font-medium uppercase">Total Portfolio</div>
-                  <div className="text-xl font-bold font-mono text-blue-700 mt-1">$12.85M</div>
-                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">↑ 14.8% vs last month</div>
+                  <div className="text-xl font-semibold font-mono text-blue-700 mt-1">$12.85M</div>
+                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 14.8% vs last month</div>
                 </div>
               </div>
 
               {/* Top Customers Section in Report */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
                   1. Top Customers by Portfolio Value
                 </h3>
                 <table className="w-full text-xs border border-slate-200">
@@ -1214,12 +1214,12 @@ export function DashboardScreen({
                       <tr key={c.name}>
                         <td className="p-2 font-semibold text-slate-900">{c.name}</td>
                         <td className="p-2 text-slate-600">{c.type}</td>
-                        <td className="p-2 text-right font-mono font-bold">{c.portfolioValue}</td>
+                        <td className="p-2 text-right font-mono font-semibold">{c.portfolioValue}</td>
                         <td className="p-2 text-right font-mono text-slate-600">{c.tenure}</td>
-                        <td className="p-2 text-right font-mono text-emerald-600 font-bold">{c.momChange}</td>
+                        <td className="p-2 text-right font-mono text-emerald-600 font-semibold">{c.momChange}</td>
                       </tr>
                     ))}
-                    <tr className="bg-slate-50 font-bold">
+                    <tr className="bg-slate-50 font-semibold">
                       <td className="p-2">Total (Top 5)</td>
                       <td className="p-2">—</td>
                       <td className="p-2 text-right font-mono text-blue-700">$8,570,000</td>
@@ -1233,7 +1233,7 @@ export function DashboardScreen({
               {/* Breakdown Grid in Report */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
                     2. Customer Segment Performance
                   </h3>
                   <table className="w-full text-xs border border-slate-200">
@@ -1251,10 +1251,10 @@ export function DashboardScreen({
                           <td className="p-2 font-medium">{s.type}</td>
                           <td className="p-2 text-right font-mono">{s.customers}</td>
                           <td className="p-2 text-right font-mono">{s.activeAccounts}</td>
-                          <td className="p-2 text-right font-mono font-bold">{s.portfolioValue}</td>
+                          <td className="p-2 text-right font-mono font-semibold">{s.portfolioValue}</td>
                         </tr>
                       ))}
-                      <tr className="bg-slate-50 font-bold">
+                      <tr className="bg-slate-50 font-semibold">
                         <td className="p-2">Total</td>
                         <td className="p-2 text-right font-mono">51</td>
                         <td className="p-2 text-right font-mono">44</td>
@@ -1265,7 +1265,7 @@ export function DashboardScreen({
                 </div>
 
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
                     3. Product Performance
                   </h3>
                   <table className="w-full text-xs border border-slate-200">
@@ -1283,10 +1283,10 @@ export function DashboardScreen({
                           <td className="p-2 font-medium">{p.product}</td>
                           <td className="p-2 text-right font-mono">{p.customers}</td>
                           <td className="p-2 text-right font-mono">{p.active}</td>
-                          <td className="p-2 text-right font-mono font-bold">{p.portfolioValue}</td>
+                          <td className="p-2 text-right font-mono font-semibold">{p.portfolioValue}</td>
                         </tr>
                       ))}
-                      <tr className="bg-slate-50 font-bold">
+                      <tr className="bg-slate-50 font-semibold">
                         <td className="p-2">Total</td>
                         <td className="p-2 text-right font-mono">80</td>
                         <td className="p-2 text-right font-mono">72</td>

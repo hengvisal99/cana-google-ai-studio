@@ -114,8 +114,8 @@ export function DatePicker({
               weekday: 'w-8 h-8 text-xs font-medium text-slate-400 text-center',
               day: 'w-8 h-8 text-center text-xs p-0 m-0.5 rounded-lg transition-colors',
               day_button: 'w-full h-full rounded-lg hover:bg-blue-50 text-slate-700 hover:text-blue-600 font-medium',
-              selected: 'bg-blue-500 text-white font-bold hover:bg-blue-600 hover:text-white',
-              today: 'text-blue-600 font-bold underline',
+              selected: 'bg-blue-500 text-white font-semibold hover:bg-blue-600 hover:text-white',
+              today: 'text-blue-600 font-semibold underline',
               outside: 'text-slate-300 opacity-50',
             }}
           />

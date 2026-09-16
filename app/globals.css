@@ -16,3 +16,8 @@ body {
   font-family: "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Kantumruy Pro", "Noto Sans Khmer", sans-serif !important;
 }
 
+/* Typography: keep weights light — semibold is the heaviest weight in the UI. */
+strong,
+b {
+  font-weight: 600;
+}

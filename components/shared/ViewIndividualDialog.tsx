@@ -307,7 +307,7 @@ export function ViewIndividualDialog({
               unoptimized
             />
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight truncate">
+              <h2 className="text-xl font-semibold text-slate-900 tracking-tight truncate">
                 {individual.fullNameEN || `${individual.firstName} ${individual.lastName}`}
               </h2>
               <div className="flex items-center gap-2.5 mt-1 flex-wrap">
@@ -324,7 +324,7 @@ export function ViewIndividualDialog({
           <div className="flex items-center gap-2.5 shrink-0">
             {/* Request status */}
             <span className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold uppercase tracking-wide',
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold uppercase tracking-wide',
               individual.requestStatus === 'Approved'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : individual.requestStatus === 'Rejected'
@@ -337,7 +337,7 @@ export function ViewIndividualDialog({
 
             {/* Account status */}
             <span className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold uppercase tracking-wide',
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold uppercase tracking-wide',
               individual.accountStatus === 'Active'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : 'bg-slate-50 text-slate-600 border-slate-200'
@@ -389,12 +389,12 @@ export function ViewIndividualDialog({
           {/* If Close Account, show banner across all tabs */}
           {individual.requestType === 'Close Account' && (
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
-              <div className="flex items-center gap-2 text-purple-900 font-bold">
+              <div className="flex items-center gap-2 text-purple-900 font-semibold">
                 <Lock className="w-4 h-4 text-purple-700" />
                 <span>Account Closure Pending Authorization</span>
               </div>
               <p className="text-purple-800 text-[11px]">
-                Close Date: <strong>{individual.closeAccountInfo?.closeDate || 'N/A'}</strong> • Target Account: <strong>{individual.closeAccountInfo?.account || 'Primary'}</strong>
+                Close Date: <strong className="font-semibold">{individual.closeAccountInfo?.closeDate || 'N/A'}</strong> • Target Account: <strong className="font-semibold">{individual.closeAccountInfo?.account || 'Primary'}</strong>
               </p>
               <p className="text-purple-700 text-[11px]">
                 Closure Reason: {individual.closeAccountInfo?.reason || 'Customer request'}
@@ -714,7 +714,7 @@ export function ViewIndividualDialog({
               id="btn-view-dialog-reject"
               type="button"
               onClick={() => handleOpenAuthDialog('reject')}
-              className="h-[35px] px-3.5 text-xs font-bold rounded-lg border border-rose-300 hover:border-rose-400 bg-white hover:bg-rose-50 text-rose-600 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-[35px] px-3.5 text-xs font-semibold rounded-lg border border-rose-300 hover:border-rose-400 bg-white hover:bg-rose-50 text-rose-600 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Reject application"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
@@ -726,7 +726,7 @@ export function ViewIndividualDialog({
               id="btn-view-dialog-resubmit"
               type="button"
               onClick={() => handleOpenAuthDialog('resubmit')}
-              className="h-[35px] px-3.5 text-xs font-bold rounded-lg border border-amber-300 hover:border-amber-400 bg-white hover:bg-amber-50 text-amber-700 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-[35px] px-3.5 text-xs font-semibold rounded-lg border border-amber-300 hover:border-amber-400 bg-white hover:bg-amber-50 text-amber-700 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Request resubmission"
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
@@ -738,7 +738,7 @@ export function ViewIndividualDialog({
               id="btn-view-dialog-approve"
               type="button"
               onClick={() => handleOpenAuthDialog('authorize')}
-              className="h-[35px] px-4 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              className="h-[35px] px-4 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
               title="Approve & advance workflow"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />

@@ -88,11 +88,9 @@ const SKINS: Record<TableSkin, SkinTokens> = {
 
 export function DirectoryTable({
   rows,
-  onReset,
   skin,
 }: {
   rows: Individual[];
-  onReset: () => void;
   skin: TableSkin;
 }) {
   const s = SKINS[skin];
@@ -105,11 +103,11 @@ export function DirectoryTable({
           <thead>
             <tr className={cn('text-[10px] font-semibold uppercase tracking-wider', s.head)}>
               <th className="w-12 px-3 py-3 text-center">No</th>
-              <th className={cn('px-4 py-3 text-left font-bold', s.headStrong)}>Customer ID</th>
-              <th className={cn('px-4 py-3 text-left font-bold', s.headStrong)}>Full Name (EN / KH)</th>
+              <th className={cn('px-4 py-3 text-left font-semibold', s.headStrong)}>Customer ID</th>
+              <th className={cn('px-4 py-3 text-left font-semibold', s.headStrong)}>Full Name (EN / KH)</th>
               <th className="px-4 py-3">Profile Status</th>
               <th className="px-4 py-3">Account Status</th>
-              <th className={cn('min-w-[160px] px-4 py-3 text-left font-bold', s.headStrong)}>Request</th>
+              <th className={cn('min-w-[160px] px-4 py-3 text-left font-semibold', s.headStrong)}>Request</th>
               <th className="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
@@ -119,11 +117,7 @@ export function DirectoryTable({
                 <td colSpan={7} className="py-12 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FileText className="h-8 w-8 text-slate-300" />
-                    <p className="font-semibold text-slate-600">No individual records found</p>
-                    <p className="text-xs text-slate-400">Try adjusting your status tab, search terms, or filter criteria.</p>
-                    <button onClick={onReset} className="mt-2 text-xs font-bold text-blue-600 hover:underline">
-                      Reset filters
-                    </button>
+                    <p className="font-semibold text-slate-600">No record found</p>
                   </div>
                 </td>
               </tr>
@@ -132,7 +126,7 @@ export function DirectoryTable({
                 <tr key={item.id} className={cn('group transition-colors', s.row)}>
                   <td className="px-3 py-3.5 text-center font-mono text-[11px] text-slate-400">{index + 1}</td>
 
-                  <td className={cn('px-4 py-3.5 font-mono font-bold', s.id)}>
+                  <td className={cn('px-4 py-3.5 font-mono font-semibold', s.id)}>
                     <span className="cursor-pointer hover:underline">{item.customerId || item.id}</span>
                   </td>
 
@@ -148,7 +142,7 @@ export function DirectoryTable({
                         unoptimized
                       />
                       <div>
-                        <div className={cn('font-bold text-slate-900 transition-colors', s.nameHover)}>
+                        <div className={cn('font-semibold text-slate-900 transition-colors', s.nameHover)}>
                           {item.fullNameEN || `${item.firstName} ${item.lastName}`}
                         </div>
                         <div className={cn('font-khmer text-[11px] font-medium', s.kh)}>
@@ -302,7 +296,7 @@ function RequestBadge({ item }: { item: Individual }) {
       </div>
       <div className="flex flex-col">
         <div className="flex items-center gap-1 leading-tight">
-          <span className="text-[13px] font-bold text-slate-900">{label}</span>
+          <span className="text-[13px] font-semibold text-slate-900">{label}</span>
           {showStage && (
             <>
               <span className="text-xs font-semibold text-slate-400">·</span>

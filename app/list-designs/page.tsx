@@ -89,7 +89,7 @@ export default function ListDesignsPage() {
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="leading-none">
-                <h1 className="text-[15px] font-black tracking-tight text-slate-900">Individual list — 6 designs</h1>
+                <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Individual list — 6 designs</h1>
                 <p className="mt-1.5 text-[11.5px] text-slate-500">
                   Same outer layout as the current screen. Every toolbar, tab, search and field is designed differently.
                 </p>
@@ -108,7 +108,7 @@ export default function ListDesignsPage() {
                       setStackAll(false);
                     }}
                     className={cn(
-                      'inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-bold transition',
+                      'inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-semibold transition',
                       isActive
                         ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
@@ -123,7 +123,7 @@ export default function ListDesignsPage() {
               <button
                 onClick={() => setStackAll((c) => !c)}
                 className={cn(
-                  'ml-1 rounded-xl border px-3 py-2 text-[12px] font-bold transition',
+                  'ml-1 rounded-xl border px-3 py-2 text-[12px] font-semibold transition',
                   stackAll
                     ? 'border-blue-500 bg-blue-500 text-white'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900',
@@ -165,8 +165,8 @@ function Caption({ version }: { version: Version }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
       <div className="flex items-baseline gap-2">
-        <span className="text-[13px] font-black tabular-nums text-slate-400">{String(version.n).padStart(2, '0')}</span>
-        <h2 className="text-[15px] font-black tracking-tight text-slate-900">{version.name}</h2>
+        <span className="text-[13px] font-semibold tabular-nums text-slate-400">{String(version.n).padStart(2, '0')}</span>
+        <h2 className="text-[15px] font-semibold tracking-tight text-slate-900">{version.name}</h2>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {version.controls.map((c) => (

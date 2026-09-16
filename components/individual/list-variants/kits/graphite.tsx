@@ -60,7 +60,7 @@ function Toolbar({ filterOpen, onToggleFilter, hasActiveFilters }: ToolbarProps)
         className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-500 pl-3 pr-2 text-[13px] font-semibold text-white transition hover:bg-blue-600"
       >
         <Plus className="h-4 w-4" />
-        Add Individual
+        Add New
         <kbd className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[10px] text-white/80">N</kbd>
       </button>
     </div>

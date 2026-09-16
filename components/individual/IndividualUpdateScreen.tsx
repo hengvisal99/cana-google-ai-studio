@@ -225,7 +225,7 @@ export function IndividualUpdateScreen({
       onBack={onCancel}
       title="Update Individual Profile"
       badge={
-        <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+        <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
           {individual.customerId || individual.id}
         </span>
       }

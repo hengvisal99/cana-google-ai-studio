@@ -21,7 +21,7 @@ import {
 /*
  * V6 — Prism Glass. Clean white cards: a labelled toolbar dock and status tabs
  * whose active state lifts as white with a soft shadow (blue only in text, so
- * Add Individual stays the one solid button), a search box with a search
+ * Add New stays the one solid button), a search box with a search
  * button, plain fields, and a "Filters" header line holding Reset filters.
  */
 
@@ -66,7 +66,7 @@ function Toolbar({ filterOpen, onToggleFilter, activeFilterCount }: ToolbarProps
                 // Inline count: part of the button, so it reads the same with the panel open or closed.
                 <span
                   aria-label={`${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
-                  className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-blue-100 px-1 text-[10px] font-bold leading-none tabular-nums text-blue-700"
+                  className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-blue-100 px-1 text-[10px] font-semibold leading-none tabular-nums text-blue-700"
                 >
                   {activeFilterCount}
                 </span>
@@ -77,10 +77,10 @@ function Toolbar({ filterOpen, onToggleFilter, activeFilterCount }: ToolbarProps
       </div>
       <button
         type="button"
-        className="relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-500/30 transition hover:shadow-blue-500/50"
+        className="relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-blue-500 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:shadow-blue-500/50"
       >
         <Plus className="relative h-4 w-4" />
-        <span className="relative">Add Individual</span>
+        <span className="relative">Add New</span>
       </button>
     </div>
   );
@@ -101,7 +101,7 @@ function StatusTabs({ value, onChange, counts }: StatusTabsProps) {
             onClick={() => onChange(tab.id)}
             className={cn(
               'group relative inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[13px] transition-colors',
-              active ? 'font-bold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900',
+              active ? 'font-semibold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900',
             )}
           >
             {active && (
@@ -144,7 +144,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
             <button
               type="button"
               onClick={toggle}
-              className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
             >
               {field.label}
               <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
@@ -164,7 +164,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
                       close();
                     }}
                     className={cn(
-                      'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider transition',
+                      'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider transition',
                       selected ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50',
                     )}
                   >
@@ -219,7 +219,7 @@ function Field({ label, allLabel, value, options, onChange }: FieldProps) {
   const current = items.find((i) => i.value === value) ?? items[0];
   return (
     <div>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600">{label}</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">{label}</p>
       <Dropdown
         trigger={({ open, toggle }) => (
           // Plain field: looks the same whether or not a value is chosen.
@@ -250,7 +250,7 @@ function Field({ label, allLabel, value, options, onChange }: FieldProps) {
                   }}
                   className={cn(
                     'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition',
-                    isSelected ? 'bg-blue-50 font-bold text-blue-700' : 'font-medium text-slate-700 hover:bg-slate-50',
+                    isSelected ? 'bg-blue-50 font-semibold text-blue-700' : 'font-medium text-slate-700 hover:bg-slate-50',
                   )}
                 >
                   {item.label}
@@ -270,12 +270,12 @@ function Summary({ onReset, active }: SummaryProps) {
   // Fixed-height line: the label holds the space, so reset can appear without a jump.
   return (
     <div className="flex h-8 items-center justify-between">
-      <p className="text-[13px] font-bold text-slate-900">Filters</p>
+      <p className="text-[13px] font-semibold text-slate-900">Filters</p>
       {active && (
         <button
           type="button"
           onClick={onReset}
-          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
+          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Reset filters
@@ -288,7 +288,7 @@ function Summary({ onReset, active }: SummaryProps) {
 export const prismKit: DesignKit = {
   canvas: 'space-y-4 rounded-[24px] bg-slate-100/70 p-3 sm:p-6',
   headerCard: cn('rounded-[20px] border border-slate-200/60 bg-white p-6', CARD_SHADOW),
-  title: 'text-[26px] font-black tracking-tight text-slate-900',
+  title: 'text-[26px] font-semibold tracking-tight text-slate-900',
   subtitle: 'mt-1 text-xs text-slate-500',
   filterCard: cn('space-y-5 rounded-[20px] border border-slate-200/60 bg-white p-5 sm:p-6', CARD_SHADOW),
   fieldGrid: 'gap-4 sm:gap-6',

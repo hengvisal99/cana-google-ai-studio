@@ -72,7 +72,7 @@ const SKIN: Record<
     profileBtnOpen: 'bg-blue-50 ring-1 ring-blue-200',
     panel: 'bg-white border border-slate-200 rounded-xl shadow-xl',
     item: 'rounded-lg',
-    itemActive: 'bg-blue-50 text-blue-700 font-bold',
+    itemActive: 'bg-blue-50 text-blue-700 font-semibold',
     itemIdle: 'text-slate-700 hover:bg-slate-50',
     checkActive: 'text-blue-600',
     badge: 'bg-blue-600 text-white',
@@ -88,7 +88,7 @@ const SKIN: Record<
     panel:
       'bg-white/95 backdrop-blur-xl border border-white/90 rounded-2xl shadow-2xl shadow-slate-400/20',
     item: 'rounded-xl',
-    itemActive: 'bg-blue-500 text-white font-bold',
+    itemActive: 'bg-blue-500 text-white font-semibold',
     itemIdle: 'text-slate-700 hover:bg-slate-100',
     checkActive: 'text-white',
     badge: 'bg-blue-500 text-white',
@@ -103,7 +103,7 @@ const SKIN: Record<
     profileBtnOpen: 'bg-blue-50 ring-1 ring-blue-200',
     panel: 'bg-white border border-slate-200 rounded-2xl shadow-2xl',
     item: 'rounded-xl',
-    itemActive: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold',
+    itemActive: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold',
     itemIdle: 'text-slate-700 hover:bg-slate-100',
     checkActive: 'text-white',
     badge: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white',
@@ -191,7 +191,7 @@ export function HeaderActions({
               skin.panel
             )}
           >
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1 block">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-1 block">
               Switch Application
             </span>
             {APPS.map((app) => (
@@ -230,7 +230,7 @@ export function HeaderActions({
           <Globe className="w-4 h-4" />
           <span
             className={cn(
-              'absolute -bottom-1 -right-1 px-1 py-px rounded-full text-[8px] font-bold leading-none tracking-wide',
+              'absolute -bottom-1 -right-1 px-1 py-px rounded-full text-[8px] font-semibold leading-none tracking-wide',
               skin.badge
             )}
           >
@@ -246,7 +246,7 @@ export function HeaderActions({
               skin.panel
             )}
           >
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1 block">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-1 block">
               Language
             </span>
             {LANGUAGES.map((l) => (
@@ -296,7 +296,7 @@ export function HeaderActions({
               skin.panel
             )}
           >
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 py-1 block">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-1 block">
               Appearance
             </span>
             {APPEARANCES.map((mode) =>
@@ -328,7 +328,7 @@ export function HeaderActions({
                     <span className="shrink-0">{mode.icon}</span>
                     <span>{mode.label}</span>
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+                  <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
                     Soon
                   </span>
                 </div>
@@ -364,7 +364,7 @@ export function HeaderActions({
             unoptimized
           />
           <span className="hidden sm:block text-left leading-tight">
-            <span className="block text-xs font-bold text-slate-900">{USER.name}</span>
+            <span className="block text-xs font-semibold text-slate-900">{USER.name}</span>
             <span className="block text-[10px] text-blue-600 font-semibold">{USER.role}</span>
           </span>
         </button>
@@ -388,7 +388,7 @@ export function HeaderActions({
                 unoptimized
               />
               <div className="min-w-0">
-                <h4 className="text-xs font-bold text-slate-900 truncate">{USER.name}</h4>
+                <h4 className="text-xs font-semibold text-slate-900 truncate">{USER.name}</h4>
                 <span className="text-[11px] text-blue-600 font-semibold block truncate">
                   {USER.role}
                 </span>
@@ -398,15 +398,15 @@ export function HeaderActions({
             <div className="pt-2.5 text-[11px] space-y-1">
               <div className="flex justify-between gap-3 text-slate-500">
                 <span>Clearance</span>
-                <strong className="text-slate-800">{USER.clearance}</strong>
+                <strong className="font-semibold text-slate-800">{USER.clearance}</strong>
               </div>
               <div className="flex justify-between gap-3 text-slate-500 min-w-0">
                 <span className="shrink-0">Application</span>
-                <strong className="text-slate-800 truncate">{currentApp}</strong>
+                <strong className="font-semibold text-slate-800 truncate">{currentApp}</strong>
               </div>
               <div className="flex justify-between gap-3 text-slate-500">
                 <span>Session</span>
-                <strong className="text-emerald-600">● Active</strong>
+                <strong className="font-semibold text-emerald-600">● Active</strong>
               </div>
             </div>
           </div>

@@ -85,7 +85,7 @@ export function GlassmorphismShell({
             </div>
             {!sidebarCollapsed && (
               <div className="min-w-0">
-                <h1 className="text-xs font-bold text-slate-900 tracking-tight">
+                <h1 className="text-xs font-semibold text-slate-900 tracking-tight">
                   GLASS 360
                 </h1>
                 <span className="text-[10px] text-blue-600 font-semibold block">
@@ -99,7 +99,7 @@ export function GlassmorphismShell({
           <nav className="flex-1 min-h-0 py-5 space-y-6 overflow-y-auto w-full text-xs">
             <div>
               {!sidebarCollapsed && (
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
                   Island Modules
                 </span>
               )}
@@ -110,7 +110,7 @@ export function GlassmorphismShell({
                   type="button"
                   onClick={() => onNavigate('dashboard')}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold transition-all duration-200',
+                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-semibold transition-all duration-200',
                     currentPage === 'dashboard'
                       ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
@@ -127,7 +127,7 @@ export function GlassmorphismShell({
                   type="button"
                   onClick={() => onNavigate('customer-360')}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold transition-all duration-200',
+                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-semibold transition-all duration-200',
                     currentPage === 'customer-360'
                       ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
@@ -147,7 +147,7 @@ export function GlassmorphismShell({
                   }
                   aria-expanded={!sidebarCollapsed && customerMenuOpen}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold transition-all duration-200',
+                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-semibold transition-all duration-200',
                     isCustomerPage
                       ? sidebarCollapsed || !customerMenuOpen
                         ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
@@ -194,7 +194,7 @@ export function GlassmorphismShell({
           {/* Frosted Bottom Island Pill */}
           {!sidebarCollapsed && (
             <div className="shrink-0 p-3 bg-white/60 rounded-2xl border border-white/80 text-[11px] text-slate-500">
-              <span className="font-bold text-slate-800 block">Frosted Island Active</span>
+              <span className="font-semibold text-slate-800 block">Frosted Island Active</span>
               <span>Ultra-low blur overhead</span>
             </div>
           )}

@@ -480,7 +480,7 @@ export function IndividualFormFields({
           {activeTab === 'personal' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
                   <span>Personal Information</span>
                 </h2>
@@ -549,7 +549,7 @@ export function IndividualFormFields({
                           <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mb-1.5 group-hover:scale-105 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all">
                             <Camera className="w-4.5 h-4.5 stroke-[1.75]" />
                           </div>
-                          <span className="text-[10px] font-bold tracking-wider text-slate-700 group-hover:text-blue-600 transition-colors uppercase">
+                          <span className="text-[10px] font-semibold tracking-wider text-slate-700 group-hover:text-blue-600 transition-colors uppercase">
                             UPLOAD
                           </span>
                         </div>
@@ -563,7 +563,7 @@ export function IndividualFormFields({
                   {/* Right Side Fields: Customer Type, Investor Status, Risk Rating & Mobile */}
                   <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Customer Type *
                       </label>
                       <select
@@ -579,7 +579,7 @@ export function IndividualFormFields({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Investor Status *
                       </label>
                       <select
@@ -594,7 +594,7 @@ export function IndividualFormFields({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Risk Rating Category *
                       </label>
                       <select
@@ -609,7 +609,7 @@ export function IndividualFormFields({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Mobile Phone Number *
                       </label>
                       <input
@@ -627,7 +627,7 @@ export function IndividualFormFields({
               {/* Name Fields (EN & KH) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Surname (English) *
                   </label>
                   <input
@@ -644,7 +644,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Given Name (English) *
                   </label>
                   <input
@@ -661,7 +661,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Surname (Khmer)
                   </label>
                   <input
@@ -674,7 +674,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Given Name (Khmer)
                   </label>
                   <input
@@ -690,7 +690,7 @@ export function IndividualFormFields({
               {/* Demographics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Date of Birth
                   </label>
                   <input
@@ -702,7 +702,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Gender
                   </label>
                   <select
@@ -717,7 +717,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Marital Status
                   </label>
                   <select
@@ -733,7 +733,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Nationality
                   </label>
                   <input
@@ -748,12 +748,12 @@ export function IndividualFormFields({
 
               {/* Investor Profile & Categorization */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
                   Investor Profile & Appropriateness
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Customer Type
                     </label>
                     <select
@@ -769,7 +769,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Education Background
                     </label>
                     <select
@@ -786,7 +786,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Securities Knowledge
                     </label>
                     <select
@@ -803,7 +803,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Risk Category
                     </label>
                     <select
@@ -818,7 +818,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Investment Experience
                     </label>
                     <select
@@ -841,7 +841,7 @@ export function IndividualFormFields({
           {activeTab === 'identification' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>Identification & Supporting Documents</span>
                 </h2>
@@ -849,7 +849,7 @@ export function IndividualFormFields({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Residency *
                   </label>
                   <select
@@ -863,7 +863,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     ID Type *
                   </label>
                   <select
@@ -880,7 +880,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     ID Number *
                   </label>
                   <input
@@ -897,7 +897,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Issued By
                   </label>
                   <input
@@ -909,7 +909,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Issued Date
                   </label>
                   <input
@@ -921,7 +921,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Expired Date
                   </label>
                   <input
@@ -933,7 +933,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Taxpayer ID Number (TIN)
                   </label>
                   <input
@@ -949,7 +949,7 @@ export function IndividualFormFields({
               {/* Supporting Documents Section with Integrated Card Upload UI */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                  <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
                     Supporting Documents
                   </span>
                   {documents.length > 0 && (
@@ -1060,7 +1060,7 @@ export function IndividualFormFields({
           {activeTab === 'contact' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-blue-600" />
                   <span>Contact Information & Residential Address</span>
                 </h2>
@@ -1068,7 +1068,7 @@ export function IndividualFormFields({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Email Address *
                   </label>
                   <div className="relative">
@@ -1088,7 +1088,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Mobile Phone
                   </label>
                   <div className="relative">
@@ -1104,7 +1104,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Telephone (Fixed Line)
                   </label>
                   <input
@@ -1119,12 +1119,12 @@ export function IndividualFormFields({
 
               {/* Address details */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
                   Residential Address
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                   <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Street Address
                     </label>
                     <input
@@ -1137,7 +1137,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       City
                     </label>
                     <input
@@ -1149,7 +1149,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       State / Khan / Province
                     </label>
                     <input
@@ -1161,7 +1161,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Postal Code
                     </label>
                     <input
@@ -1173,7 +1173,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Country
                     </label>
                     <input
@@ -1192,7 +1192,7 @@ export function IndividualFormFields({
           {activeTab === 'employment' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-blue-600" />
                   <span>Employment & Banking Information</span>
                 </h2>
@@ -1201,7 +1201,7 @@ export function IndividualFormFields({
               {/* Employment */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Occupation</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Occupation</label>
                   <input
                     type="text"
                     value={occupation}
@@ -1212,7 +1212,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Position / Title</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Position / Title</label>
                   <input
                     type="text"
                     value={position}
@@ -1223,7 +1223,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Type of Business</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Type of Business</label>
                   <input
                     type="text"
                     value={typeOfBusiness}
@@ -1234,7 +1234,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Level of Position</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Level of Position</label>
                   <select
                     value={levelOfPosition}
                     onChange={(e) => setLevelOfPosition(e.target.value as PositionLevel)}
@@ -1248,7 +1248,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Organization / Employer Name</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Organization / Employer Name</label>
                   <input
                     type="text"
                     value={organizationName}
@@ -1259,7 +1259,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Length of Work</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Length of Work</label>
                   <input
                     type="text"
                     value={lengthOfWork}
@@ -1270,7 +1270,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Office Telephone</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Office Telephone</label>
                   <input
                     type="text"
                     value={officeTelephone}
@@ -1281,7 +1281,7 @@ export function IndividualFormFields({
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Organization Address</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Organization Address</label>
                   <input
                     type="text"
                     value={organizationAddress}
@@ -1294,12 +1294,12 @@ export function IndividualFormFields({
 
               {/* Designated Bank Account */}
               <div className="pt-4 border-t border-slate-100">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-3">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
                   Designated Settlement Bank Account
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Bank Name</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Bank Name</label>
                     <select
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
@@ -1313,7 +1313,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Account Owner Name</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Account Owner Name</label>
                     <input
                       type="text"
                       value={accountOwner}
@@ -1324,7 +1324,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Saving / Account Type</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Saving / Account Type</label>
                     <input
                       type="text"
                       value={savingAccount}
@@ -1335,7 +1335,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Bank Account Number</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Bank Account Number</label>
                     <input
                       type="text"
                       value={accountNumber}
@@ -1353,7 +1353,7 @@ export function IndividualFormFields({
           {activeTab === 'family' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-600" />
                   <span>Family & Related Persons</span>
                 </h2>
@@ -1364,7 +1364,7 @@ export function IndividualFormFields({
                 <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
                       Spouse Information
                     </span>
                   </div>
@@ -1375,7 +1375,7 @@ export function IndividualFormFields({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Full Name (English / Khmer)</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Full Name (English / Khmer)</label>
                     <input
                       type="text"
                       value={spouseName}
@@ -1385,7 +1385,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Latin Name</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Latin Name</label>
                     <input
                       type="text"
                       value={spouseLatin}
@@ -1395,7 +1395,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Relationship</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Relationship</label>
                     <input
                       type="text"
                       value={spouseRelationship}
@@ -1405,7 +1405,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
                     <input
                       type="email"
                       value={spouseEmail}
@@ -1415,7 +1415,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Mobile Phone</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Mobile Phone</label>
                     <input
                       type="text"
                       value={spouseMobile}
@@ -1425,7 +1425,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Office Telephone</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Office Telephone</label>
                     <input
                       type="text"
                       value={spouseOfficePhone}
@@ -1435,7 +1435,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Occupation</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Occupation</label>
                     <input
                       type="text"
                       value={spouseOccupation}
@@ -1445,7 +1445,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Position / Title</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Position / Title</label>
                     <input
                       type="text"
                       value={spousePosition}
@@ -1455,7 +1455,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Type of Business</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Type of Business</label>
                     <input
                       type="text"
                       value={spouseBusiness}
@@ -1465,7 +1465,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div className="sm:col-span-2 md:col-span-3">
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Residential / Working Address</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Residential / Working Address</label>
                     <input
                       type="text"
                       value={spouseAddress}
@@ -1482,7 +1482,7 @@ export function IndividualFormFields({
                 <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
                       Related Person / Emergency Contact
                     </span>
                   </div>
@@ -1493,7 +1493,7 @@ export function IndividualFormFields({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Full Name</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Full Name</label>
                     <input
                       type="text"
                       value={relName}
@@ -1503,7 +1503,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Latin Name</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Latin Name</label>
                     <input
                       type="text"
                       value={relLatin}
@@ -1513,7 +1513,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Gender</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Gender</label>
                     <select
                       value={relGender}
                       onChange={(e) => setRelGender(e.target.value as any)}
@@ -1525,7 +1525,7 @@ export function IndividualFormFields({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Relationship</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Relationship</label>
                     <input
                       type="text"
                       value={relRelationship}
@@ -1535,7 +1535,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Mobile Phone</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Mobile Phone</label>
                     <input
                       type="text"
                       value={relMobile}
@@ -1545,7 +1545,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Email</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
                     <input
                       type="email"
                       value={relEmail}
@@ -1555,7 +1555,7 @@ export function IndividualFormFields({
                     />
                   </div>
                   <div className="sm:col-span-2 md:col-span-3">
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Residential Address</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Residential Address</label>
                     <input
                       type="text"
                       value={relAddress}
@@ -1573,7 +1573,7 @@ export function IndividualFormFields({
           {activeTab === 'account' && (
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-blue-600" />
                   <span>Account Information (Investor ID & Trading Account)</span>
                 </h2>
@@ -1581,12 +1581,12 @@ export function IndividualFormFields({
 
               {/* Investor ID info */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
                   Investor ID Information
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Investor ID Number</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Investor ID Number</label>
                     <input
                       type="text"
                       value={investorIdNumber}
@@ -1597,7 +1597,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Securities Firm</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Securities Firm</label>
                     <input
                       type="text"
                       value={securitiesFirm}
@@ -1607,7 +1607,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Customer Received By (CSO)</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Customer Received By (CSO)</label>
                     <input
                       type="text"
                       value={customerReceivedBy}
@@ -1617,7 +1617,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Customer Status</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Customer Status</label>
                     <select
                       value={investorStatus}
                       onChange={(e) => setInvestorStatus(e.target.value as any)}
@@ -1630,7 +1630,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Application Date</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Application Date</label>
                     <input
                       type="date"
                       value={applicationDate}
@@ -1640,7 +1640,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Date Sent to SECC</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Date Sent to SECC</label>
                     <input
                       type="date"
                       value={dateSentToSECC}
@@ -1653,12 +1653,12 @@ export function IndividualFormFields({
 
               {/* Trading Account info */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
                   Trading Account Information
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Trading Account Number</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Trading Account Number</label>
                     <input
                       type="text"
                       value={tradingAccountNumber}
@@ -1669,7 +1669,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Account Opening Date</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Account Opening Date</label>
                     <input
                       type="date"
                       value={accountDate}
@@ -1679,7 +1679,7 @@ export function IndividualFormFields({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Assigned SR</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Assigned SR</label>
                     <input
                       type="text"
                       value={currentAssignedSR}

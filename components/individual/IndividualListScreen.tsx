@@ -458,7 +458,7 @@ export function IndividualListScreen({
         <div className="flex items-start gap-2.5 select-none text-left py-0.5">
           <StatusIcon status="Approved" className="mt-0.5" />
           <div className="flex flex-col">
-            <span className="text-[13px] font-bold text-slate-900 leading-tight">
+            <span className="text-[13px] font-semibold text-slate-900 leading-tight">
               Approved
             </span>
             <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
@@ -475,7 +475,7 @@ export function IndividualListScreen({
           <StatusIcon status="Pending" className="mt-0.5" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1 leading-tight">
-              <span className="text-[13px] font-bold text-slate-900">
+              <span className="text-[13px] font-semibold text-slate-900">
                 Pending
               </span>
               {reviewer && (
@@ -499,7 +499,7 @@ export function IndividualListScreen({
           <StatusIcon status="Rejected" className="mt-0.5" />
           <div className="flex flex-col">
             <div className="flex items-center gap-1 leading-tight">
-              <span className="text-[13px] font-bold text-slate-900">
+              <span className="text-[13px] font-semibold text-slate-900">
                 Rejected
               </span>
               {reviewer && (
@@ -523,7 +523,7 @@ export function IndividualListScreen({
         <StatusIcon status="Resubmit" className="mt-0.5" />
         <div className="flex flex-col">
           <div className="flex items-center gap-1 leading-tight">
-            <span className="text-[13px] font-bold text-slate-900">
+            <span className="text-[13px] font-semibold text-slate-900">
               Resubmit
             </span>
             {reviewer && (
@@ -557,7 +557,7 @@ export function IndividualListScreen({
       <div className="relative z-30 rounded-[20px] border border-slate-200/60 bg-white p-6 shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)]">
         <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <div>
-            <h1 className="text-[26px] font-black tracking-tight text-slate-900">Individual Directory</h1>
+            <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Individual Directory</h1>
             <p className="mt-1 text-xs text-slate-500">
               Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
             </p>
@@ -598,7 +598,7 @@ export function IndividualListScreen({
                 {hasActiveFilters && (
                   <span
                     aria-label={`${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}`}
-                    className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-blue-100 px-1 text-[10px] font-bold leading-none tabular-nums text-blue-700"
+                    className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-blue-100 px-1 text-[10px] font-semibold leading-none tabular-nums text-blue-700"
                   >
                     {activeFilterCount}
                   </span>
@@ -652,10 +652,10 @@ export function IndividualListScreen({
               id="btn-individual-add-new"
               type="button"
               onClick={onNavigateToInsert}
-              className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl bg-blue-500 px-3.5 text-xs font-bold text-white shadow-md shadow-blue-500/30 transition hover:bg-blue-600"
+              className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl bg-blue-500 px-3.5 text-xs font-semibold text-white shadow-md shadow-blue-500/30 transition hover:bg-blue-600"
             >
               <Plus className="h-5 w-5" />
-              <span>Add Individual</span>
+              <span>Add New</span>
             </button>
           </div>
         </div>
@@ -683,7 +683,7 @@ export function IndividualListScreen({
                   onClick={() => setStatusTab(tab.id)}
                   className={cn(
                     'group relative inline-flex h-[30px] cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[13px] transition-colors',
-                    isActive ? 'font-bold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900'
+                    isActive ? 'font-semibold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900'
                   )}
                 >
                   {isActive && (
@@ -727,7 +727,7 @@ export function IndividualListScreen({
                     type="button"
                     onClick={toggle}
                     aria-expanded={open}
-                    className="inline-flex h-8 cursor-pointer select-none items-center gap-1 rounded-lg px-2.5 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="inline-flex h-8 cursor-pointer select-none items-center gap-1 rounded-lg px-2.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                   >
                     {activeSearchField.label}
                     <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
@@ -748,7 +748,7 @@ export function IndividualListScreen({
                             searchInputRef.current?.focus();
                           }}
                           className={cn(
-                            'flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wider transition',
+                            'flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider transition',
                             isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'
                           )}
                         >
@@ -798,22 +798,21 @@ export function IndividualListScreen({
           </div>
         </div>
 
-        {/* Row 2: "Filters" line with reset + four filter selects (toggled by the Filter button) */}
+        {/* Row 2: reset link + four filter selects (toggled by the Filter button) */}
         {showFilterPanel && (
           <div className="space-y-3">
-            <div className="flex h-8 items-center justify-between">
-              <p className="text-[13px] font-bold text-slate-900">Filters</p>
-              {(hasActiveFilters || searchTerm) && (
+            {(hasActiveFilters || searchTerm) && (
+              <div className="flex h-8 items-center justify-end">
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
+                  className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   Reset filters
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
               <FilterSelect
@@ -859,12 +858,12 @@ export function IndividualListScreen({
                 <th className="py-3 px-3 w-12 text-center">No</th>
 
                 {/* Default Column: Customer ID */}
-                <th className="py-3 px-4 font-bold text-slate-700 text-left">
+                <th className="py-3 px-4 font-semibold text-slate-700 text-left">
                   Customer ID
                 </th>
 
                 {/* Default Column: Full Name */}
-                <th className="py-3 px-4 font-bold text-slate-700 text-left">
+                <th className="py-3 px-4 font-semibold text-slate-700 text-left">
                   Full Name (EN / KH)
                 </th>
 
@@ -888,7 +887,7 @@ export function IndividualListScreen({
                 <th className="py-3 px-4">Account Status</th>
 
                 {/* Default Column: Request */}
-                <th className="py-3 px-4 min-w-[160px] font-bold text-slate-700 text-left">
+                <th className="py-3 px-4 min-w-[160px] font-semibold text-slate-700 text-left">
                   Request
                 </th>
 
@@ -902,14 +901,7 @@ export function IndividualListScreen({
                   <td colSpan={10} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-8 h-8 text-slate-300" />
-                      <p className="font-semibold text-slate-600">No individual records found</p>
-                      <p className="text-xs text-slate-400">Try adjusting your status tab, search terms, or filter criteria.</p>
-                      <button
-                        onClick={handleResetFilters}
-                        className="mt-2 text-xs font-bold text-blue-600 hover:underline"
-                      >
-                        Reset filters
-                      </button>
+                      <p className="font-semibold text-slate-600">No record found</p>
                     </div>
                   </td>
                 </tr>
@@ -948,7 +940,7 @@ export function IndividualListScreen({
                           unoptimized
                         />
                         <div>
-                          <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                          <div className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                             <span>{item.fullNameEN || `${item.firstName} ${item.lastName}`}</span>
                           </div>
                           <div className="text-[11px] text-slate-500 font-medium font-khmer">
@@ -1114,7 +1106,7 @@ export function IndividualListScreen({
                     <Layers className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">Customize Columns</h3>
+                    <h3 className="text-base font-semibold text-slate-900">Customize Columns</h3>
                     <p className="text-xs text-slate-500">Choose which fields appear in the table</p>
                   </div>
                 </div>
@@ -1214,7 +1206,7 @@ export function IndividualListScreen({
                     <button
                       type="button"
                       onClick={() => setColumnSearch('')}
-                      className="mt-2 cursor-pointer text-xs font-bold text-blue-600 hover:underline"
+                      className="mt-2 cursor-pointer text-xs font-semibold text-blue-600 hover:underline"
                     >
                       Clear Search
                     </button>
@@ -1231,7 +1223,7 @@ export function IndividualListScreen({
                     setColumnSearch('');
                     triggerToast('Column preferences saved.');
                   }}
-                  className="h-9 cursor-pointer rounded-lg bg-blue-500 px-5 text-xs font-bold text-white shadow-sm shadow-blue-500/30 transition hover:bg-blue-600"
+                  className="h-9 cursor-pointer rounded-lg bg-blue-500 px-5 text-xs font-semibold text-white shadow-sm shadow-blue-500/30 transition hover:bg-blue-600"
                 >
                   Apply Columns
                 </button>
@@ -1253,14 +1245,14 @@ export function IndividualListScreen({
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
+                    <h3 className="font-semibold text-base bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
                       Customize Columns
                     </h3>
                     <p className="text-[11px] font-medium text-slate-500">Configure visible telemetry fields</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-mono font-bold text-indigo-700 shadow-2xs">
+                  <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-mono font-semibold text-indigo-700 shadow-2xs">
                     {columns.filter((c) => c.visible).length} / {columns.length} ON
                   </span>
                   <button
@@ -1302,7 +1294,7 @@ export function IndividualListScreen({
                   <button
                     type="button"
                     onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: true })))}
-                    className="px-3 py-1 rounded-lg text-xs font-bold text-indigo-700 hover:bg-indigo-50 transition cursor-pointer"
+                    className="px-3 py-1 rounded-lg text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition cursor-pointer"
                   >
                     Enable All
                   </button>
@@ -1310,7 +1302,7 @@ export function IndividualListScreen({
                   <button
                     type="button"
                     onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: false })))}
-                    className="px-3 py-1 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
+                    className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
                   >
                     Disable All
                   </button>
@@ -1328,11 +1320,11 @@ export function IndividualListScreen({
                       className={cn(
                         'p-3 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-2.5 relative overflow-hidden',
                         col.visible
-                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-500 text-indigo-950 font-bold shadow-xs'
+                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-500 text-indigo-950 font-semibold shadow-xs'
                           : 'bg-slate-50/80 border-slate-200 text-slate-700 font-semibold hover:border-indigo-200 hover:bg-indigo-50/30'
                       )}
                     >
-                      <span className="text-xs font-bold truncate">{col.label}</span>
+                      <span className="text-xs font-semibold truncate">{col.label}</span>
 
                       {/* Radiant Neon Switch */}
                       <div className={cn(
@@ -1351,7 +1343,7 @@ export function IndividualListScreen({
                   <button
                     type="button"
                     onClick={() => setColumnSearch('')}
-                    className="mt-2 text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+                    className="mt-2 text-xs font-semibold text-indigo-600 hover:underline cursor-pointer"
                   >
                     Reset Filter
                   </button>
@@ -1372,7 +1364,7 @@ export function IndividualListScreen({
                     setColumnSearch('');
                     triggerToast('Column preferences saved.');
                   }}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:opacity-95 shadow-lg shadow-indigo-500/20 transition cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl font-semibold text-xs text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:opacity-95 shadow-lg shadow-indigo-500/20 transition cursor-pointer"
                 >
                   Save Layout
                 </button>
@@ -1390,7 +1382,7 @@ export function IndividualListScreen({
                     <Sliders className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm">Customize Columns</h3>
+                    <h3 className="font-semibold text-slate-900 text-sm">Customize Columns</h3>
                     <p className="text-[11px] text-slate-500">Configure visible table fields</p>
                   </div>
                 </div>
@@ -1443,7 +1435,7 @@ export function IndividualListScreen({
                       }}
                       className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
                     />
-                    <span className="text-xs font-bold text-slate-800">
+                    <span className="text-xs font-semibold text-slate-800">
                       Select All
                     </span>
                   </label>
@@ -1487,7 +1479,7 @@ export function IndividualListScreen({
                   <button
                     type="button"
                     onClick={() => setColumnSearch('')}
-                    className="mt-1 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                    className="mt-1 text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
                   >
                     Clear Search
                   </button>
@@ -1508,7 +1500,7 @@ export function IndividualListScreen({
                     setColumnSearch('');
                     triggerToast('Column preferences saved.');
                   }}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-bold hover:bg-blue-600 shadow-xs transition cursor-pointer"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600 shadow-xs transition cursor-pointer"
                 >
                   Apply Changes
                 </button>
@@ -1526,7 +1518,7 @@ export function IndividualListScreen({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-600" />
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">
+                  <h3 className="font-semibold text-slate-900 text-sm">
                     Workflow Authorization & Sign-off
                   </h3>
                   <span className="text-[11px] text-slate-500 font-mono">
@@ -1544,12 +1536,12 @@ export function IndividualListScreen({
 
             {/* Workflow Progress visualization */}
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 Workflow Pipeline: CSO → SR → Manager
               </span>
               <div className="flex items-center justify-between text-xs">
                 <div className={cn(
-                  'flex items-center gap-1 font-bold',
+                  'flex items-center gap-1 font-semibold',
                   authModalIndividual.currentWorkflowStage === 'CSO' ? 'text-blue-600' : 'text-slate-700'
                 )}>
                   <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">1</span>
@@ -1557,7 +1549,7 @@ export function IndividualListScreen({
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-300" />
                 <div className={cn(
-                  'flex items-center gap-1 font-bold',
+                  'flex items-center gap-1 font-semibold',
                   authModalIndividual.currentWorkflowStage === 'SR' ? 'text-blue-600' : 'text-slate-700'
                 )}>
                   <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">2</span>
@@ -1565,7 +1557,7 @@ export function IndividualListScreen({
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-300" />
                 <div className={cn(
-                  'flex items-center gap-1 font-bold',
+                  'flex items-center gap-1 font-semibold',
                   authModalIndividual.currentWorkflowStage === 'Manager' ? 'text-blue-600' : 'text-slate-700'
                 )}>
                   <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">3</span>
@@ -1573,15 +1565,15 @@ export function IndividualListScreen({
                 </div>
               </div>
               <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200 flex items-center justify-between">
-                <span>Current Stage: <strong className="text-slate-800">{authModalIndividual.currentWorkflowStage}</strong></span>
-                <span>Request Type: <strong className="text-slate-800">{authModalIndividual.requestType}</strong></span>
+                <span>Current Stage: <strong className="font-semibold text-slate-800">{authModalIndividual.currentWorkflowStage}</strong></span>
+                <span>Request Type: <strong className="font-semibold text-slate-800">{authModalIndividual.requestType}</strong></span>
               </div>
             </div>
 
             {/* Role & Officer Acting */}
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Authorizer Role</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Authorizer Role</label>
                 <select
                   value={authRole}
                   onChange={(e) => {
@@ -1600,7 +1592,7 @@ export function IndividualListScreen({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Officer Name</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Officer Name</label>
                 <input
                   type="text"
                   value={authOfficer}
@@ -1612,13 +1604,13 @@ export function IndividualListScreen({
 
             {/* Action Type: Authorize / Resubmit / Reject */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 mb-1.5">Decision</label>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">Decision</label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setAuthActionType('authorize')}
                   className={cn(
-                    'py-2 px-3 rounded-lg font-bold text-xs border transition flex items-center justify-center gap-1.5',
+                    'py-2 px-3 rounded-lg font-semibold text-xs border transition flex items-center justify-center gap-1.5',
                     authActionType === 'authorize'
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -1632,7 +1624,7 @@ export function IndividualListScreen({
                   type="button"
                   onClick={() => setAuthActionType('resubmit')}
                   className={cn(
-                    'py-2 px-3 rounded-lg font-bold text-xs border transition flex items-center justify-center gap-1.5',
+                    'py-2 px-3 rounded-lg font-semibold text-xs border transition flex items-center justify-center gap-1.5',
                     authActionType === 'resubmit'
                       ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -1646,7 +1638,7 @@ export function IndividualListScreen({
                   type="button"
                   onClick={() => setAuthActionType('reject')}
                   className={cn(
-                    'py-2 px-3 rounded-lg font-bold text-xs border transition flex items-center justify-center gap-1.5',
+                    'py-2 px-3 rounded-lg font-semibold text-xs border transition flex items-center justify-center gap-1.5',
                     authActionType === 'reject'
                       ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -1661,7 +1653,7 @@ export function IndividualListScreen({
             {/* Reason field (Mandatory for Resubmit or Reject) */}
             {authActionType !== 'authorize' && (
               <div>
-                <label className="block text-[11px] font-bold text-rose-700 mb-1">
+                <label className="block text-[11px] font-semibold text-rose-700 mb-1">
                   Reason for {authActionType === 'resubmit' ? 'Resubmission' : 'Rejection'} *
                 </label>
                 <textarea
@@ -1676,7 +1668,7 @@ export function IndividualListScreen({
 
             {/* General Comment */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                 Internal Remarks & Compliance Comments
               </label>
               <textarea
@@ -1701,7 +1693,7 @@ export function IndividualListScreen({
                 type="button"
                 onClick={handleSubmitAuthorization}
                 className={cn(
-                  'px-4 py-2 text-xs font-bold text-white rounded-lg transition shadow-xs',
+                  'px-4 py-2 text-xs font-semibold text-white rounded-lg transition shadow-xs',
                   authActionType === 'authorize' ? 'bg-emerald-600 hover:bg-emerald-700' : authActionType === 'resubmit' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-rose-600 hover:bg-rose-700'
                 )}
               >
@@ -1720,7 +1712,7 @@ export function IndividualListScreen({
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-purple-600" />
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Close Trading Account</h3>
+                  <h3 className="font-semibold text-slate-900 text-sm">Close Trading Account</h3>
                   <span className="text-[11px] text-slate-500 font-mono">
                     {closeAccountIndividual.customerId || closeAccountIndividual.id} • {closeAccountIndividual.fullNameEN || closeAccountIndividual.firstName}
                   </span>
@@ -1735,12 +1727,12 @@ export function IndividualListScreen({
             </div>
 
             <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs text-purple-900">
-              Initiating account closure transitions this profile to <strong>Close Account</strong> request status and routes through SR and Manager authorizations.
+              Initiating account closure transitions this profile to <strong className="font-semibold">Close Account</strong> request status and routes through SR and Manager authorizations.
             </div>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Close Date</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Close Date</label>
                 <input
                   type="date"
                   value={closeDate}
@@ -1750,7 +1742,7 @@ export function IndividualListScreen({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Account to Close</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Account to Close</label>
                 <input
                   type="text"
                   value={closeAccountName}
@@ -1760,7 +1752,7 @@ export function IndividualListScreen({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Processed By (Officer)</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Processed By (Officer)</label>
                 <input
                   type="text"
                   value={closeOfficer}
@@ -1770,7 +1762,7 @@ export function IndividualListScreen({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">Reason for Closure *</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Reason for Closure *</label>
                 <textarea
                   rows={2}
                   value={closeReason}
@@ -1792,7 +1784,7 @@ export function IndividualListScreen({
               <button
                 type="button"
                 onClick={handleSubmitCloseAccount}
-                className="px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition shadow-xs"
+                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition shadow-xs"
               >
                 Submit Close Request
               </button>
@@ -1815,7 +1807,7 @@ export function IndividualListScreen({
       {deletingId && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-5 border border-slate-200 shadow-2xl space-y-3">
-            <div className="flex items-center gap-2.5 text-rose-600 font-bold text-sm">
+            <div className="flex items-center gap-2.5 text-rose-600 font-semibold text-sm">
               <AlertTriangle className="w-5 h-5" />
               <span>Confirm Deletion</span>
             </div>
@@ -1835,7 +1827,7 @@ export function IndividualListScreen({
                   setDeletingId(null);
                   triggerToast('Record deleted from directory.');
                 }}
-                className="px-3.5 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
+                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
               >
                 Delete Record
               </button>

@@ -40,7 +40,7 @@ export function SectionHead({ title, recordId }: { title: string; recordId?: str
   return (
     <div className="mb-6 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
       <span className="h-[18px] w-1 shrink-0 rounded-full bg-blue-600" />
-      <h3 className="text-[12px] font-bold uppercase tracking-[0.1em] text-slate-600">{title}</h3>
+      <h3 className="text-[12px] font-semibold uppercase tracking-[0.1em] text-slate-600">{title}</h3>
       {recordId && <CopyableId id={recordId} />}
     </div>
   );

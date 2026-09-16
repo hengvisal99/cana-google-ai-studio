@@ -47,7 +47,7 @@ function CustomerId({ variant }: { variant: VariantId }) {
 
   if (variant === 'hash') {
     return (
-      <span className="inline-flex items-center gap-0.5 font-mono text-[13px] font-bold text-blue-600">
+      <span className="inline-flex items-center gap-0.5 font-mono text-[13px] font-semibold text-blue-600">
         <Hash className="h-3.5 w-3.5 text-blue-400" />
         {CUSTOMER_ID}
       </span>
@@ -56,7 +56,7 @@ function CustomerId({ variant }: { variant: VariantId }) {
 
   if (variant === 'tint') {
     return (
-      <span className="rounded-md bg-blue-50 px-2 py-1 font-mono text-[12px] font-bold text-blue-600">
+      <span className="rounded-md bg-blue-50 px-2 py-1 font-mono text-[12px] font-semibold text-blue-600">
         {CUSTOMER_ID}
       </span>
     );
@@ -64,7 +64,7 @@ function CustomerId({ variant }: { variant: VariantId }) {
 
   // outline, subline and right all use the neutral chip
   return (
-    <span className="rounded-lg bg-white px-2.5 py-1 font-mono text-[12px] font-bold text-slate-600 shadow-2xs ring-1 ring-slate-200">
+    <span className="rounded-lg bg-white px-2.5 py-1 font-mono text-[12px] font-semibold text-slate-600 shadow-2xs ring-1 ring-slate-200">
       {CUSTOMER_ID}
     </span>
   );
@@ -118,7 +118,7 @@ export default function IdBadgeStylesPage() {
   return (
     <main className="min-h-screen bg-[#eef2f7] px-4 py-10 sm:px-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-[15px] font-black tracking-tight text-slate-900">Update screen header</h1>
+        <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Update screen header</h1>
         <p className="mt-1.5 text-[11.5px] text-slate-500">
           Same three things as today — back link, title, customer ID — drawn six ways.
         </p>
@@ -134,7 +134,7 @@ export default function IdBadgeStylesPage() {
                   aria-pressed={isOn}
                   onClick={() => setVariant(item.id)}
                   className={cn(
-                    'cursor-pointer rounded-xl px-4 py-2 text-[12px] font-bold transition',
+                    'cursor-pointer rounded-xl px-4 py-2 text-[12px] font-semibold transition',
                     isOn ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
@@ -159,12 +159,12 @@ export default function IdBadgeStylesPage() {
                   key={label}
                   className={cn(
                     'flex h-11 flex-1 items-center gap-2.5 rounded-xl px-3 text-[12.5px]',
-                    idx === 0 ? 'bg-blue-500 font-bold text-white' : 'bg-slate-100/70 font-medium text-slate-500'
+                    idx === 0 ? 'bg-blue-500 font-semibold text-white' : 'bg-slate-100/70 font-medium text-slate-500'
                   )}
                 >
                   <span
                     className={cn(
-                      'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-bold',
+                      'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-semibold',
                       idx === 0 ? 'bg-white text-blue-600' : 'bg-white text-slate-500 ring-1 ring-slate-200'
                     )}
                   >
@@ -179,7 +179,7 @@ export default function IdBadgeStylesPage() {
 
         {/* All six together */}
         <div className="mt-4 rounded-[22px] bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">
-          <p className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">All six together</p>
+          <p className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">All six together</p>
           <div className="mt-4 space-y-4">
             {VARIANTS.map((item) => (
               <div

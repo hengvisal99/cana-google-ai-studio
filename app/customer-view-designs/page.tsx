@@ -24,7 +24,7 @@ export default function CustomerViewDesignsPage() {
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="leading-none">
-            <h1 className="text-[15px] font-black tracking-tight text-slate-900">Customer type view</h1>
+            <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Customer type view</h1>
             <p className="mt-1.5 text-[11.5px] text-slate-500">
               Click the tabs, open a record from the IPO table, or view the whole thing as a real dialog.
             </p>
@@ -33,7 +33,7 @@ export default function CustomerViewDesignsPage() {
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[12px] font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+            className="ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[12px] font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
           >
             <Maximize2 className="h-3.5 w-3.5" />
             Open as dialog

@@ -32,7 +32,7 @@ function Chip({ selected, onClick, children }: { selected: boolean; onClick: () 
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-full px-3 py-1.5 text-[11px] font-bold transition',
+        'rounded-full px-3 py-1.5 text-[11px] font-semibold transition',
         selected ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25' : 'bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700',
       )}
     >
@@ -71,12 +71,12 @@ function Toolbar({ filterOpen, onToggleFilter, hasActiveFilters }: ToolbarProps)
       })}
       <button
         type="button"
-        className="ml-1.5 inline-flex h-10 items-center gap-2 rounded-2xl bg-blue-500 py-1.5 pl-1.5 pr-4 text-xs font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-600"
+        className="ml-1.5 inline-flex h-10 items-center gap-2 rounded-2xl bg-blue-500 py-1.5 pl-1.5 pr-4 text-xs font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-600"
       >
         <span className="grid h-7 w-7 place-items-center rounded-xl bg-white/20">
           <Plus className="h-4 w-4" />
         </span>
-        Add Individual
+        Add New
       </button>
     </div>
   );
@@ -99,10 +99,10 @@ function StatusTabs({ value, onChange, counts }: StatusTabsProps) {
             )}
           >
             <span className="flex items-center justify-between gap-3">
-              <span className={cn('whitespace-nowrap text-[12px] font-bold', active ? 'text-blue-700' : 'text-slate-600')}>
+              <span className={cn('whitespace-nowrap text-[12px] font-semibold', active ? 'text-blue-700' : 'text-slate-600')}>
                 {tab.label}
               </span>
-              <span className={cn('text-[12px] font-black tabular-nums', active ? 'text-slate-900' : 'text-slate-400')}>
+              <span className={cn('text-[12px] font-semibold tabular-nums', active ? 'text-slate-900' : 'text-slate-400')}>
                 {counts[tab.id]}
               </span>
             </span>
@@ -130,7 +130,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
         value={query}
         onChange={(e) => onQuery(e.target.value)}
         placeholder={field.placeholder}
-        className="min-w-0 flex-1 bg-transparent px-1 text-xs font-bold uppercase tracking-wide text-slate-800 placeholder:text-slate-400 focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent px-1 text-xs font-semibold uppercase tracking-wide text-slate-800 placeholder:text-slate-400 focus:outline-none"
       />
       {query && (
         <button type="button" onClick={() => onQuery('')} className="rounded-lg p-1 text-slate-400 hover:text-slate-600">
@@ -144,7 +144,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
             type="button"
             onClick={toggle}
             className={cn(
-              'flex h-full items-center gap-1.5 rounded-xl px-3 text-[11px] font-bold shadow-sm transition',
+              'flex h-full items-center gap-1.5 rounded-xl px-3 text-[11px] font-semibold shadow-sm transition',
               open ? 'bg-blue-500 text-white' : 'bg-white text-slate-600 hover:text-blue-700',
             )}
           >
@@ -156,7 +156,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
       >
         {(close) => (
           <div className={cn('absolute right-0 top-full z-50 mt-2 w-64', MENU)}>
-            <p className="px-1 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Search in</p>
+            <p className="px-1 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Search in</p>
             <div className="flex flex-wrap gap-1.5">
               {SEARCH_FIELD_OPTIONS.map((opt) => (
                 <Chip
@@ -203,8 +203,8 @@ function Field({ fieldKey, label, allLabel, value, options, onChange }: FieldPro
             <Icon className="h-4 w-4" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{label}</span>
-            <span className={cn('block truncate text-[13px] font-bold', selected ? 'text-slate-900' : 'text-slate-600')}>
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</span>
+            <span className={cn('block truncate text-[13px] font-semibold', selected ? 'text-slate-900' : 'text-slate-600')}>
               {current.label}
             </span>
           </span>
@@ -238,7 +238,7 @@ function Summary({ shown, total, onReset }: SummaryProps) {
   return (
     <div className="flex items-center justify-between rounded-2xl bg-blue-50/80 p-1.5 pl-3">
       <span className="flex items-center gap-2 text-xs font-semibold text-blue-900/70">
-        <span className="grid h-6 min-w-6 place-items-center rounded-lg bg-blue-500 px-1.5 text-[11px] font-black text-white">
+        <span className="grid h-6 min-w-6 place-items-center rounded-lg bg-blue-500 px-1.5 text-[11px] font-semibold text-white">
           {shown}
         </span>
         of {total} records match
@@ -246,7 +246,7 @@ function Summary({ shown, total, onReset }: SummaryProps) {
       <button
         type="button"
         onClick={onReset}
-        className="rounded-xl bg-white px-3 py-1.5 text-[11px] font-bold text-blue-700 shadow-sm transition hover:bg-blue-500 hover:text-white"
+        className="rounded-xl bg-white px-3 py-1.5 text-[11px] font-semibold text-blue-700 shadow-sm transition hover:bg-blue-500 hover:text-white"
       >
         Reset filters
       </button>
@@ -257,7 +257,7 @@ function Summary({ shown, total, onReset }: SummaryProps) {
 export const bentoKit: DesignKit = {
   canvas: 'space-y-3 rounded-[30px] bg-slate-100/80 p-3 sm:p-5',
   headerCard: 'rounded-3xl border border-white bg-white p-6 shadow-sm',
-  title: 'text-[26px] font-black tracking-tight text-slate-900',
+  title: 'text-[26px] font-semibold tracking-tight text-slate-900',
   subtitle: 'mt-1 text-xs text-slate-500',
   filterCard: 'space-y-4 rounded-3xl border border-white bg-white p-5 shadow-sm sm:p-6',
   fieldGrid: 'gap-3',

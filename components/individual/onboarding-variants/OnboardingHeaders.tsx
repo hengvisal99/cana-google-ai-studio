@@ -114,7 +114,7 @@ export function OnboardingHeaderChevron({ activeIdx, onStep, onBack, onSubmit, s
                 >
                   <span
                     className={cn(
-                      'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-bold tabular-nums',
+                      'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-semibold tabular-nums',
                       state === 'current' && 'bg-white text-blue-600 shadow-[0_0_0_3px_rgba(255,255,255,0.25)]',
                       state === 'done' && 'bg-white text-blue-600',
                       state === 'upcoming' && 'bg-white text-slate-500 ring-1 ring-slate-200',
@@ -123,7 +123,7 @@ export function OnboardingHeaderChevron({ activeIdx, onStep, onBack, onSubmit, s
                     {state === 'done' ? <Check className="h-3 w-3" strokeWidth={3} /> : idx + 1}
                   </span>
                   <span
-                    className={cn('min-w-0 truncate text-[12.5px]', state === 'current' ? 'font-bold' : 'font-medium')}
+                    className={cn('min-w-0 truncate text-[12.5px]', state === 'current' ? 'font-semibold' : 'font-medium')}
                   >
                     {step.label}
                     <span className="sr-only"> ({STATUS_TEXT[state]})</span>
@@ -158,13 +158,13 @@ export function OnboardingHeaderStepper({ activeIdx, onStep, onBack, onSubmit, s
             <span className="text-slate-300">/</span>
             <span className="text-slate-400">Individuals</span>
           </nav>
-          <h1 className="text-[22px] font-bold tracking-[-0.025em] text-slate-950 sm:text-2xl">New Customer Onboarding</h1>
+          <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-slate-950 sm:text-2xl">New Customer Onboarding</h1>
         </div>
 
         <div className="flex items-center gap-4 self-start sm:self-auto">
           <div className="hidden text-right leading-tight md:block">
             <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-slate-400">Step</p>
-            <p className="text-[13px] font-bold tabular-nums text-slate-900">
+            <p className="text-[13px] font-semibold tabular-nums text-slate-900">
               {activeIdx + 1}
               <span className="font-medium text-slate-400"> / {total}</span>
             </p>
@@ -199,7 +199,7 @@ export function OnboardingHeaderStepper({ activeIdx, onStep, onBack, onSubmit, s
                 >
                   <span
                     className={cn(
-                      'grid h-8 w-8 place-items-center rounded-full text-[12px] font-bold tabular-nums transition-all',
+                      'grid h-8 w-8 place-items-center rounded-full text-[12px] font-semibold tabular-nums transition-all',
                       state === 'current' && 'bg-blue-500 text-white ring-[5px] ring-blue-500/15',
                       state === 'done' && 'bg-blue-500/10 text-blue-600',
                       state === 'upcoming' &&
@@ -284,7 +284,7 @@ export function OnboardingHeaderTrack({ activeIdx, onStep, onBack, onSubmit, sub
               />
             </svg>
             <div className="leading-tight">
-              <p className="text-[12px] font-bold tabular-nums text-slate-900">{pct}%</p>
+              <p className="text-[12px] font-semibold tabular-nums text-slate-900">{pct}%</p>
               <p className="text-[10.5px] font-medium text-slate-500">complete</p>
             </div>
           </div>
@@ -327,7 +327,7 @@ export function OnboardingHeaderTrack({ activeIdx, onStep, onBack, onSubmit, sub
                 >
                   <span
                     className={cn(
-                      'grid h-7 w-7 place-items-center rounded-full text-[11px] font-bold tabular-nums transition-all',
+                      'grid h-7 w-7 place-items-center rounded-full text-[11px] font-semibold tabular-nums transition-all',
                       state === 'current' && 'bg-white ring-[3px] ring-blue-500 shadow-[0_0_0_7px_rgba(59,130,246,0.12)]',
                       state === 'done' && 'bg-blue-500 text-white',
                       state === 'upcoming' && 'bg-white text-slate-400 ring-2 ring-slate-200 group-hover:ring-blue-300 group-hover:text-blue-600',
@@ -392,7 +392,7 @@ export function OnboardingHeaderTiles({ activeIdx, onStep, onBack, onSubmit, sub
               <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
               Back to Directory
             </button>
-            <h1 className="text-xl font-bold tracking-[-0.02em] text-slate-900 sm:text-[22px]">New Customer Onboarding</h1>
+            <h1 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-[22px]">New Customer Onboarding</h1>
           </div>
         </div>
 
@@ -458,7 +458,7 @@ export function OnboardingHeaderTiles({ activeIdx, onStep, onBack, onSubmit, sub
                       <span className="min-w-0 leading-tight">
                         <span
                           className={cn(
-                            'block text-[9.5px] font-bold uppercase tracking-[0.1em]',
+                            'block text-[9.5px] font-semibold uppercase tracking-[0.1em]',
                             state === 'upcoming' ? 'text-slate-400' : 'text-blue-600',
                           )}
                         >

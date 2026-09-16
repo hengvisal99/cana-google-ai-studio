@@ -114,7 +114,7 @@ export function AuroraShell({
           <nav className="flex-1 min-h-0 p-3 space-y-6 overflow-y-auto text-xs">
             <div>
               {!sidebarCollapsed && (
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
                   Studio Operations
                 </span>
               )}
@@ -125,7 +125,7 @@ export function AuroraShell({
                   type="button"
                   onClick={() => onNavigate('dashboard')}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all duration-150',
                     currentPage === 'dashboard'
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -142,7 +142,7 @@ export function AuroraShell({
                   type="button"
                   onClick={() => onNavigate('customer-360')}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all duration-150',
                     currentPage === 'customer-360'
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -161,7 +161,7 @@ export function AuroraShell({
                   }
                   aria-expanded={!sidebarCollapsed && customerMenuOpen}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all duration-150',
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all duration-150',
                     isCustomerPage
                       ? sidebarCollapsed || !customerMenuOpen
                         ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
@@ -208,7 +208,7 @@ export function AuroraShell({
           {/* Bottom Pulse Meter */}
           {!sidebarCollapsed && (
             <div className="shrink-0 p-3.5 m-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 mb-1">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-800 mb-1">
                 <span>Cluster Throughput</span>
                 <span className="text-blue-600 font-mono">99.98%</span>
               </div>

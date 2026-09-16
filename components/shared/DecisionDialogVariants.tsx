@@ -163,7 +163,7 @@ export function DecisionDialogMatchedMark({
               <tone.Icon className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-[18px] font-bold leading-tight tracking-tight text-slate-900">
+              <h3 className="text-[18px] font-semibold leading-tight tracking-tight text-slate-900">
                 {tone.title}
               </h3>
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{tone.lede}</p>
@@ -200,7 +200,7 @@ export function DecisionDialogMatchedMark({
               type="button"
               onClick={submit}
               className={cn(
-                'h-11 rounded-xl px-6 text-[13px] font-bold text-white transition cursor-pointer',
+                'h-11 rounded-xl px-6 text-[13px] font-semibold text-white transition cursor-pointer',
                 tone.button
               )}
             >
@@ -242,7 +242,7 @@ export function DecisionDialogBannerHead({
             <tone.Icon className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1 pr-6">
-            <h3 className="text-[16px] font-bold leading-tight text-slate-900">{tone.title}</h3>
+            <h3 className="text-[16px] font-semibold leading-tight text-slate-900">{tone.title}</h3>
             <p className="mt-1 text-[12px] leading-relaxed text-slate-600">{tone.lede}</p>
           </div>
           <CloseButton onCancel={onCancel} className="right-3 top-3" />
@@ -279,7 +279,7 @@ export function DecisionDialogBannerHead({
             type="button"
             onClick={submit}
             className={cn(
-              'h-9 rounded-lg px-4 text-[12px] font-bold text-white transition cursor-pointer',
+              'h-9 rounded-lg px-4 text-[12px] font-semibold text-white transition cursor-pointer',
               tone.button
             )}
           >

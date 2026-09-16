@@ -17,7 +17,7 @@ import type { CustomerTypeFieldValue, Individual } from '@/types';
 export const BTN_SECONDARY =
   'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200';
 export const BTN_PRIMARY =
-  'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-blue-500 px-5 text-xs font-bold text-white shadow-md shadow-blue-500/25 transition hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 active:scale-[0.98]';
+  'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-blue-500 px-5 text-xs font-semibold text-white shadow-md shadow-blue-500/25 transition hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 active:scale-[0.98]';
 
 const SEGMENT_SELECTED: Record<SegmentTone, string> = {
   primary: 'bg-blue-500 text-white',
@@ -107,7 +107,7 @@ export function DialogShell({
               </span>
             )}
             <div className="min-w-0">
-              <h3 id={titleId} className="truncate text-sm font-bold text-slate-900">
+              <h3 id={titleId} className="truncate text-sm font-semibold text-slate-900">
                 {title}
               </h3>
               {subtitle && <div className="mt-0.5 truncate text-xs text-slate-500">{subtitle}</div>}
@@ -163,7 +163,7 @@ export function CustomerTypeForm({
             className={cn((field.type === 'textarea' || field.type === 'checkbox') && 'col-span-full')}
           >
             {field.type !== 'checkbox' && (
-              <label htmlFor={id} className="mb-1 block text-[11px] font-bold text-slate-600">
+              <label htmlFor={id} className="mb-1 block text-[11px] font-semibold text-slate-600">
                 {field.label}
                 {field.required && <span className="text-rose-500"> *</span>}
               </label>
@@ -441,7 +441,7 @@ function CustomerPicker({
                   className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition hover:bg-slate-50"
                 >
                   <span className="min-w-0">
-                    <span className="block font-mono font-bold text-blue-600">{customer.customerId}</span>
+                    <span className="block font-mono font-semibold text-blue-600">{customer.customerId}</span>
                     <span className="block truncate text-slate-600">{customerName(customer)}</span>
                   </span>
                   {customer.id === value && <Check className="h-3.5 w-3.5 shrink-0 text-blue-600" />}
@@ -473,7 +473,7 @@ export function FieldValue({
     if (customer) {
       return (
         <span className="flex flex-col">
-          <span className="font-mono font-bold text-blue-600">{customer.customerId}</span>
+          <span className="font-mono font-semibold text-blue-600">{customer.customerId}</span>
           <span className="text-slate-600">{customerName(customer)}</span>
         </span>
       );

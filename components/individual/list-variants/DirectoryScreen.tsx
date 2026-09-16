@@ -82,7 +82,7 @@ export function DirectoryScreen({ kit }: { kit: DesignKit }) {
 
       {/* 3. Table */}
       <div className={cn('relative z-10', kit.tableWrap)}>
-        <DirectoryTable rows={d.rows} onReset={d.reset} skin={kit.table} />
+        <DirectoryTable rows={d.rows} skin={kit.table} />
       </div>
     </div>
   );

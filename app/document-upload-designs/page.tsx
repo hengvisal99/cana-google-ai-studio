@@ -113,7 +113,7 @@ function IdCardMock({ className }: { className?: string }) {
       <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-white/10" />
       <div className="absolute -bottom-16 -left-6 h-32 w-32 rounded-full bg-white/5" />
       <div className="relative flex items-center justify-between">
-        <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-white/80">National ID</span>
+        <span className="text-[7px] font-semibold uppercase tracking-[0.2em] text-white/80">National ID</span>
         <div className="h-3 w-4 rounded-[3px] bg-amber-200/90" />
       </div>
       <div className="relative mt-2.5 flex gap-2.5">
@@ -209,7 +209,7 @@ function VersionPreview({ filled, onUpload, onRemove }: VersionProps) {
                 <Icon className="h-6 w-6 text-blue-600 transition group-hover:-translate-y-0.5" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-bold text-slate-900">{slot.label}</span>
+                <span className="block text-[13px] font-semibold text-slate-900">{slot.label}</span>
                 <span className="mt-0.5 block text-[11.5px] text-slate-500">
                   Drag & drop or <span className="font-semibold text-blue-600">browse</span> · {slot.hint}
                 </span>
@@ -217,7 +217,7 @@ function VersionPreview({ filled, onUpload, onRemove }: VersionProps) {
                   {FORMATS}
                 </span>
               </span>
-              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-[12px] font-bold text-blue-600 shadow-sm ring-1 ring-blue-100 transition group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600">
+              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-[12px] font-semibold text-blue-600 shadow-sm ring-1 ring-blue-100 transition group-hover:bg-blue-600 group-hover:text-white group-hover:ring-blue-600">
                 <UploadCloud className="h-4 w-4" />
                 Browse
               </span>
@@ -237,11 +237,11 @@ function VersionPreview({ filled, onUpload, onRemove }: VersionProps) {
               </span>
             </button>
             <div className="min-w-0 flex-1">
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
                 <Check className="h-3 w-3" strokeWidth={3} />
                 {slot.label}
               </span>
-              <p className="mt-1.5 truncate text-[13px] font-bold text-slate-900" title={slot.file.name}>
+              <p className="mt-1.5 truncate text-[13px] font-semibold text-slate-900" title={slot.file.name}>
                 {slot.file.name}
               </p>
               <p className="mt-0.5 text-[11px] text-slate-500">
@@ -252,7 +252,7 @@ function VersionPreview({ filled, onUpload, onRemove }: VersionProps) {
               <button
                 type="button"
                 onClick={() => onUpload(slot.id)}
-                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-blue-600 px-4 text-[12px] font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.98]"
+                className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-blue-600 px-4 text-[12px] font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.98]"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Replace
@@ -315,7 +315,7 @@ function VersionRows({ filled, onUpload, onRemove }: VersionProps) {
                 <button
                   type="button"
                   onClick={() => onUpload(slot.id)}
-                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-linear-to-r from-blue-600 to-sky-500 px-4 text-[12px] font-bold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
+                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-linear-to-r from-blue-600 to-sky-500 px-4 text-[12px] font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
                 >
                   <UploadCloud className="h-4 w-4" />
                   Upload
@@ -411,7 +411,7 @@ function FormFieldRow({ slot, isFilled, onUpload, onRemove }: RowProps) {
             isOver ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-200'
           )}
         >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-[9px] font-bold text-blue-600">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-[9px] font-semibold text-blue-600">
             {slot.file.ext}
           </span>
           <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-slate-900" title={slot.file.name}>
@@ -455,7 +455,7 @@ function FormFieldRow({ slot, isFilled, onUpload, onRemove }: RowProps) {
           <span className={cn('min-w-0 flex-1 truncate text-[12.5px]', isOver ? 'font-semibold text-blue-600' : 'text-slate-400')}>
             {isOver ? 'Release to upload' : 'Drag a file here or browse'}
           </span>
-          <span className="inline-flex h-9 shrink-0 items-center rounded-lg bg-blue-600 px-4 text-[12px] font-bold text-white shadow-sm shadow-blue-600/20">
+          <span className="inline-flex h-9 shrink-0 items-center rounded-lg bg-blue-600 px-4 text-[12px] font-semibold text-white shadow-sm shadow-blue-600/20">
             Browse
           </span>
         </button>
@@ -518,7 +518,7 @@ function VersionGrouped({ filled, onUpload, onRemove }: VersionProps) {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-[13px] font-bold text-slate-900">{slot.label}</p>
+                  <p className="text-[13px] font-semibold text-slate-900">{slot.label}</p>
                   <span
                     className={cn(
                       'inline-flex items-center gap-1.5 text-[10.5px] font-semibold',
@@ -548,7 +548,7 @@ function VersionGrouped({ filled, onUpload, onRemove }: VersionProps) {
                 <div className="flex items-center gap-0.5 rounded-full bg-slate-100/80 p-1">
                   <button
                     type="button"
-                    className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full px-3 text-[11px] font-bold text-slate-700 transition hover:bg-white hover:shadow-2xs"
+                    className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-white hover:shadow-2xs"
                   >
                     <Eye className="h-3.5 w-3.5" />
                     View
@@ -576,7 +576,7 @@ function VersionGrouped({ filled, onUpload, onRemove }: VersionProps) {
                 <button
                   type="button"
                   onClick={() => onUpload(slot.id)}
-                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-blue-50 px-4 text-[12px] font-bold text-blue-600 transition hover:bg-blue-100"
+                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-blue-50 px-4 text-[12px] font-semibold text-blue-600 transition hover:bg-blue-100"
                 >
                   <Plus className="h-4 w-4" strokeWidth={2.5} />
                   Add file
@@ -608,11 +608,11 @@ function DropzoneRow({ slot, isFilled, onUpload, onRemove }: RowProps) {
   return (
     <div className="grid gap-3 py-5 first:pt-0 last:pb-0 sm:grid-cols-[190px_minmax(0,1fr)] sm:gap-6">
       <div className="sm:pt-1">
-        <p className="text-[13px] font-bold text-slate-900">{slot.label}</p>
+        <p className="text-[13px] font-semibold text-slate-900">{slot.label}</p>
         <p className="mt-0.5 text-[11.5px] text-slate-500">{slot.hint}</p>
         <span
           className={cn(
-            'mt-2 inline-block rounded-md px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide',
+            'mt-2 inline-block rounded-md px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide',
             slot.required ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
           )}
         >
@@ -630,7 +630,7 @@ function DropzoneRow({ slot, isFilled, onUpload, onRemove }: RowProps) {
         >
           <Thumb slot={slot} small />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[12.5px] font-bold text-slate-900" title={slot.file.name}>
+            <p className="truncate text-[12.5px] font-semibold text-slate-900" title={slot.file.name}>
               {slot.file.name}
             </p>
             <p className="mt-0.5 text-[11px] text-slate-500">
@@ -669,10 +669,10 @@ function DropzoneRow({ slot, isFilled, onUpload, onRemove }: RowProps) {
           <span className="min-w-0 flex-1">
             <span className="block text-[12.5px] text-slate-600">
               {isOver ? (
-                <span className="font-bold text-blue-600">Release to upload</span>
+                <span className="font-semibold text-blue-600">Release to upload</span>
               ) : (
                 <>
-                  <span className="font-bold text-blue-600">Click to upload</span> or drag and drop
+                  <span className="font-semibold text-blue-600">Click to upload</span> or drag and drop
                 </>
               )}
             </span>
@@ -752,7 +752,7 @@ function VersionPill({ filled, onUpload, onRemove }: VersionProps) {
           >
             <Ring done={isFilled} icon={slot.icon} />
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-bold text-slate-900">{slot.label}</p>
+              <p className="text-[13px] font-semibold text-slate-900">{slot.label}</p>
               <p className="truncate text-[11px] text-slate-500">
                 {isFilled ? `Uploaded ${UPLOADED_ON}` : `${slot.required ? 'Required' : 'Optional'} · ${FORMATS}`}
               </p>
@@ -761,7 +761,7 @@ function VersionPill({ filled, onUpload, onRemove }: VersionProps) {
             {isFilled ? (
               <>
                 <span className="hidden min-w-0 max-w-[240px] items-center gap-1.5 rounded-full bg-blue-50 py-1 pl-1 pr-3 text-[11px] font-semibold text-blue-700 md:inline-flex">
-                  <span className="shrink-0 rounded-full bg-blue-600 px-1.5 text-[9px] font-bold leading-4 text-white">
+                  <span className="shrink-0 rounded-full bg-blue-600 px-1.5 text-[9px] font-semibold leading-4 text-white">
                     {slot.file.ext}
                   </span>
                   <span className="truncate" title={slot.file.name}>
@@ -779,7 +779,7 @@ function VersionPill({ filled, onUpload, onRemove }: VersionProps) {
               <button
                 type="button"
                 onClick={() => onUpload(slot.id)}
-                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-linear-to-r from-blue-600 to-sky-500 pl-4 pr-1.5 text-[12px] font-bold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
+                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-linear-to-r from-blue-600 to-sky-500 pl-4 pr-1.5 text-[12px] font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
               >
                 Upload
                 <span className="grid h-7 w-7 place-items-center rounded-full bg-white/20">
@@ -830,7 +830,7 @@ export default function DocumentUploadDesignsPage() {
   return (
     <main className="min-h-screen bg-[#eef2f7] px-4 py-10 sm:px-8">
       <div className="mx-auto max-w-5xl">
-        <h1 className="text-[15px] font-black tracking-tight text-slate-900">Supporting documents · dialog designs</h1>
+        <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Supporting documents · dialog designs</h1>
         <p className="mt-1.5 text-[11.5px] text-slate-500">
           Pick a version, then toggle between the upload and display state. Upload or remove single slots to see a mixed state, or drag any file onto versions 3 and 5.
         </p>
@@ -846,7 +846,7 @@ export default function DocumentUploadDesignsPage() {
                   aria-pressed={isOn}
                   onClick={() => setVersionId(item.id)}
                   className={cn(
-                    'cursor-pointer rounded-xl px-4 py-2 text-[12px] font-bold transition',
+                    'cursor-pointer rounded-xl px-4 py-2 text-[12px] font-semibold transition',
                     isOn ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
@@ -867,7 +867,7 @@ export default function DocumentUploadDesignsPage() {
                   aria-pressed={isOn}
                   onClick={item.onClick}
                   className={cn(
-                    'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-[12px] font-bold transition',
+                    'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-[12px] font-semibold transition',
                     isOn ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15' : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
@@ -887,7 +887,7 @@ export default function DocumentUploadDesignsPage() {
               <FolderOpen className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="text-[14px] font-bold text-slate-900">Supporting Documents</h2>
+              <h2 className="text-[14px] font-semibold text-slate-900">Supporting Documents</h2>
               <p className="text-[11.5px] text-slate-500">Attach the files required to open this account</p>
             </div>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-slate-600">
@@ -912,7 +912,7 @@ export default function DocumentUploadDesignsPage() {
             </button>
             <button
               type="button"
-              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-blue-600 px-6 text-xs font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 active:scale-[0.98]"
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-blue-600 px-6 text-xs font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 active:scale-[0.98]"
             >
               <Check className="h-4 w-4" strokeWidth={2.5} />
               Save Documents

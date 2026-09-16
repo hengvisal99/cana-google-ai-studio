@@ -27,7 +27,7 @@ function HeaderAccentRule() {
           </button>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[26px]">{TITLE}</h1>
-            <span className="rounded-lg bg-white px-2.5 py-1 font-mono text-[12px] font-bold text-slate-600 shadow-2xs ring-1 ring-slate-200">
+            <span className="rounded-lg bg-white px-2.5 py-1 font-mono text-[12px] font-semibold text-slate-600 shadow-2xs ring-1 ring-slate-200">
               {CUSTOMER_ID}
             </span>
           </div>
@@ -57,8 +57,8 @@ function HeaderSplitLabelled() {
       <div className="flex flex-wrap items-end justify-between gap-4 border-t border-slate-100 px-5 py-4 sm:px-6">
         <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[26px]">{TITLE}</h1>
         <div className="text-right">
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-400">Customer ID</p>
-          <p className="mt-0.5 font-mono text-[15px] font-bold tracking-tight text-blue-600">{CUSTOMER_ID}</p>
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-slate-400">Customer ID</p>
+          <p className="mt-0.5 font-mono text-[15px] font-semibold tracking-tight text-blue-600">{CUSTOMER_ID}</p>
         </div>
       </div>
     </div>
@@ -82,7 +82,7 @@ function HeaderGhostButton() {
       </button>
       <div className="mt-3 flex flex-wrap items-center gap-2.5">
         <h1 className="text-[24px] font-semibold tracking-[-0.03em] text-slate-900 sm:text-[28px]">{TITLE}</h1>
-        <span className="inline-flex items-center gap-0.5 rounded-md bg-blue-50 px-2 py-1 font-mono text-[12px] font-bold text-blue-700">
+        <span className="inline-flex items-center gap-0.5 rounded-md bg-blue-50 px-2 py-1 font-mono text-[12px] font-semibold text-blue-700">
           <Hash className="h-3.5 w-3.5 text-blue-400" />
           {CUSTOMER_ID}
         </span>
@@ -116,8 +116,8 @@ function HeaderTintedBand() {
             <IdCard className="h-4 w-4" />
           </span>
           <span className="leading-tight">
-            <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Customer</span>
-            <span className="block font-mono text-[12.5px] font-bold text-slate-700">{CUSTOMER_ID}</span>
+            <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Customer</span>
+            <span className="block font-mono text-[12.5px] font-semibold text-slate-700">{CUSTOMER_ID}</span>
           </span>
         </div>
       </div>
@@ -152,7 +152,7 @@ function HeaderToolbarRow() {
           </h1>
         </div>
 
-        <span className="shrink-0 rounded-full bg-blue-600 px-3 py-1.5 font-mono text-[12px] font-bold tracking-tight text-white shadow-[0_6px_16px_-10px_rgba(37,99,235,0.9)]">
+        <span className="shrink-0 rounded-full bg-blue-600 px-3 py-1.5 font-mono text-[12px] font-semibold tracking-tight text-white shadow-[0_6px_16px_-10px_rgba(37,99,235,0.9)]">
           {CUSTOMER_ID}
         </span>
       </div>
@@ -198,7 +198,7 @@ export default function IndividualHeaderDesignsPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-5 py-10 sm:px-8">
       <div className="mx-auto max-w-[72rem]">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Update Individual — header versions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Update Individual — header versions</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
           Only the header block: back link, title and customer ID. Same layout in every one — what changes is the
           internal arrangement and the visual treatment.
@@ -208,7 +208,7 @@ export default function IndividualHeaderDesignsPage() {
           {VERSIONS.map(({ id, name, hint, Header }) => (
             <section key={id}>
               <div className="mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <h2 className="text-[13px] font-bold text-slate-900">{name}</h2>
+                <h2 className="text-[13px] font-semibold text-slate-900">{name}</h2>
                 <p className="text-[12px] text-slate-500">{hint}</p>
               </div>
               <Header />

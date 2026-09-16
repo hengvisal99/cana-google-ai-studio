@@ -81,12 +81,12 @@ export function SoftFintechShell({
           {/* Company Brand Box */}
           <div className="p-4 border-b border-slate-200 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-blue-500 flex items-center justify-center text-white font-semibold shadow-xs shrink-0">
                 <Building2 className="w-5 h-5" />
               </div>
               {!sidebarCollapsed && (
                 <div className="min-w-0">
-                  <h1 className="text-xs font-bold text-slate-900 uppercase tracking-wider truncate">
+                  <h1 className="text-xs font-semibold text-slate-900 uppercase tracking-wider truncate">
                     NEXUS SYSTEM
                   </h1>
                   <span className="text-[10px] text-blue-600 font-semibold block truncate">
@@ -102,7 +102,7 @@ export function SoftFintechShell({
             {/* Group 1: Core Systems */}
             <div>
               {!sidebarCollapsed && (
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
                   Core Management
                 </span>
               )}
@@ -115,7 +115,7 @@ export function SoftFintechShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     currentPage === 'dashboard'
-                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-500'
+                      ? 'bg-blue-50 text-blue-700 font-semibold border-l-3 border-blue-500'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Dashboard"
@@ -132,7 +132,7 @@ export function SoftFintechShell({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     currentPage === 'customer-360'
-                      ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-500'
+                      ? 'bg-blue-50 text-blue-700 font-semibold border-l-3 border-blue-500'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Customer 360 (Left Customer Sidebar)"
@@ -153,8 +153,8 @@ export function SoftFintechShell({
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
                     isCustomerPage
                       ? sidebarCollapsed || !customerMenuOpen
-                        ? 'bg-blue-50 text-blue-700 font-bold border-l-3 border-blue-500'
-                        : 'text-blue-700 font-bold'
+                        ? 'bg-blue-50 text-blue-700 font-semibold border-l-3 border-blue-500'
+                        : 'text-blue-700 font-semibold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   )}
                   title="Customer"
@@ -184,7 +184,7 @@ export function SoftFintechShell({
                         className={cn(
                           'w-full flex items-center px-3 py-2 rounded-lg text-left font-semibold transition-all',
                           item.active
-                            ? 'bg-blue-50 text-blue-700 font-bold'
+                            ? 'bg-blue-50 text-blue-700 font-semibold'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         )}
                       >

@@ -746,16 +746,7 @@ export function Customer360Screen({
                             <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
                               <div className="flex flex-col items-center justify-center gap-1.5">
                                 <AlertCircle className="w-5 h-5 text-slate-300" />
-                                <span>No transactions found matching your filter criteria.</span>
-                                {activeTxFilterCount > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={handleResetTxFilters}
-                                    className="text-xs text-blue-600 hover:underline font-semibold mt-1"
-                                  >
-                                    Clear Filters
-                                  </button>
-                                )}
+                                <span>No record found</span>
                               </div>
                             </td>
                           </tr>

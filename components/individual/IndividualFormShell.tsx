@@ -97,7 +97,7 @@ export function IndividualFormShell<K extends string>({
                   >
                     <span
                       className={cn(
-                        'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-bold tabular-nums',
+                        'grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10.5px] font-semibold tabular-nums',
                         isActive && 'bg-white text-blue-600 shadow-[0_0_0_3px_rgba(255,255,255,0.25)]',
                         isPassed && 'bg-white text-blue-600',
                         !isActive && !isPassed && 'bg-white text-slate-500 ring-1 ring-slate-200'
@@ -105,7 +105,7 @@ export function IndividualFormShell<K extends string>({
                     >
                       {isPassed ? <Check className="h-3 w-3" strokeWidth={3} /> : idx + 1}
                     </span>
-                    <span className={cn('min-w-0 truncate text-[12.5px]', isActive ? 'font-bold' : 'font-medium')}>
+                    <span className={cn('min-w-0 truncate text-[12.5px]', isActive ? 'font-semibold' : 'font-medium')}>
                       {step.label}
                       <span className="sr-only">
                         {isActive ? ' (current step)' : isPassed ? ' (completed)' : ' (upcoming)'}
@@ -131,7 +131,7 @@ export function IndividualFormShell<K extends string>({
               if (activeIdx > 0) onStepChange(steps[activeIdx - 1].key);
             }}
             disabled={activeIdx <= 0}
-            className="h-10 px-3 rounded-xl text-[13px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-40 cursor-pointer flex items-center gap-2"
+            className="h-10 px-3 rounded-xl text-[13px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-40 cursor-pointer flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Previous Step</span>
@@ -144,7 +144,7 @@ export function IndividualFormShell<K extends string>({
                 onClick={() => {
                   if (activeIdx < steps.length - 1) onStepChange(steps[activeIdx + 1].key);
                 }}
-                className="h-10 px-3 rounded-xl text-[13px] font-bold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer flex items-center gap-2"
+                className="h-10 px-3 rounded-xl text-[13px] font-semibold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer flex items-center gap-2"
               >
                 <span>Next Step</span>
                 <ArrowRight className="w-4 h-4" />
@@ -155,7 +155,7 @@ export function IndividualFormShell<K extends string>({
                 type="button"
                 onClick={onSubmit}
                 disabled={isSubmitting}
-                className="h-10 px-3 rounded-xl text-[13px] font-bold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer disabled:opacity-70 flex items-center gap-2"
+                className="h-10 px-3 rounded-xl text-[13px] font-semibold text-white bg-blue-500 hover:bg-blue-600 shadow-xs transition cursor-pointer disabled:opacity-70 flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 <span>{isSubmitting ? submittingLabel : submitLabel}</span>

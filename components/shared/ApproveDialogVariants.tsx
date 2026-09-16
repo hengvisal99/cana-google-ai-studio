@@ -82,7 +82,7 @@ export function ApproveDialogAuroraGlass({
             <ShieldCheck className="h-6 w-6 text-white" />
           </div>
 
-          <h3 className="text-center text-[22px] font-bold leading-tight tracking-tight text-slate-900">
+          <h3 className="text-center text-[22px] font-semibold leading-tight tracking-tight text-slate-900">
             Approve this application?
           </h3>
           <p className="mx-auto mt-2.5 max-w-[19rem] text-center text-[13px] leading-relaxed text-slate-500">
@@ -113,7 +113,7 @@ export function ApproveDialogAuroraGlass({
             <button
               type="button"
               onClick={onConfirm}
-              className="h-11 rounded-xl bg-emerald-600 text-[13px] font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 cursor-pointer"
+              className="h-11 rounded-xl bg-emerald-600 text-[13px] font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 cursor-pointer"
             >
               Approve
             </button>
@@ -171,7 +171,7 @@ export function ApproveDialogQuietFocus({
           </span>
         </div>
 
-        <h3 className="text-[21px] font-bold leading-tight tracking-tight text-slate-900">
+        <h3 className="text-[21px] font-semibold leading-tight tracking-tight text-slate-900">
           Approve application
         </h3>
         <p className="mx-auto mt-3 max-w-[20rem] text-[13px] leading-relaxed text-slate-500">
@@ -189,7 +189,7 @@ export function ApproveDialogQuietFocus({
           <button
             type="button"
             onClick={onConfirm}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-[14px] font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 hover:shadow-emerald-700/30 cursor-pointer"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-[14px] font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 hover:shadow-emerald-700/30 cursor-pointer"
           >
             <Sparkles className="h-4 w-4" />
             Yes, approve it

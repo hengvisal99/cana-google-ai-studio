@@ -74,10 +74,10 @@ function Toolbar({ filterOpen, onToggleFilter, hasActiveFilters }: ToolbarProps)
       })}
       <button
         type="button"
-        className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-xs font-bold text-white shadow-[0_8px_20px_-10px_rgba(59,130,246,0.6)] transition hover:bg-blue-600"
+        className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-4 py-2.5 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(59,130,246,0.6)] transition hover:bg-blue-600"
       >
         <Plus className="h-4 w-4" />
-        Add Individual
+        Add New
       </button>
     </div>
   );
@@ -103,7 +103,7 @@ function StatusTabs({ value, onChange, counts }: StatusTabsProps) {
           >
             {active && <span className="absolute inset-x-0 top-0 h-0.5 bg-blue-500" />}
             <span className="flex items-center justify-between gap-3">
-              <span className={cn('text-[19px] font-extrabold leading-none tabular-nums', active ? 'text-slate-900' : 'text-slate-600')}>
+              <span className={cn('text-[19px] font-semibold leading-none tabular-nums', active ? 'text-slate-900' : 'text-slate-600')}>
                 {counts[tab.id]}
               </span>
               <Icon className={cn('h-3.5 w-3.5', tab.id === 'ALL' ? 'text-blue-500' : tab.color)} />
@@ -130,7 +130,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
             type="button"
             onClick={toggle}
             className={cn(
-              'flex h-full items-center gap-1.5 rounded-lg px-3 text-[11px] font-bold uppercase tracking-wider transition',
+              'flex h-full items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold uppercase tracking-wider transition',
               open ? 'bg-blue-100 text-blue-800' : 'bg-blue-50 text-blue-700 hover:bg-blue-100',
             )}
           >
@@ -181,7 +181,7 @@ function Search({ query, onQuery, searchBy, onSearchBy }: SearchProps) {
       <button
         type="button"
         onClick={() => inputRef.current?.focus()}
-        className="h-full rounded-lg bg-blue-500 px-4 text-xs font-bold text-white transition hover:bg-blue-600"
+        className="h-full rounded-lg bg-blue-500 px-4 text-xs font-semibold text-white transition hover:bg-blue-600"
       >
         Search
       </button>
@@ -208,7 +208,7 @@ function Field({ fieldKey, label, allLabel, value, options, onChange }: FieldPro
         >
           <span
             className={cn(
-              'absolute -top-2 left-3 rounded bg-white px-1.5 text-[10px] font-bold uppercase leading-4 tracking-wider',
+              'absolute -top-2 left-3 rounded bg-white px-1.5 text-[10px] font-semibold uppercase leading-4 tracking-wider',
               open || selected ? 'text-blue-700' : 'text-slate-400',
             )}
           >
@@ -254,12 +254,12 @@ function Summary({ shown, total, onReset }: SummaryProps) {
   return (
     <div className="flex items-center justify-between rounded-xl bg-blue-50 px-4 py-2.5">
       <span className="text-xs text-blue-900/70">
-        Showing <strong className="text-blue-900">{shown}</strong> of {total} records
+        Showing <strong className="font-semibold text-blue-900">{shown}</strong> of {total} records
       </span>
       <button
         type="button"
         onClick={onReset}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700 transition hover:border-blue-300"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:border-blue-300"
       >
         <RotateCcw className="h-3 w-3" />
         Reset
@@ -271,7 +271,7 @@ function Summary({ shown, total, onReset }: SummaryProps) {
 export const frostKit: DesignKit = {
   canvas: 'space-y-4 rounded-[28px] bg-blue-50/50 p-3 sm:p-5',
   headerCard: cn('rounded-2xl border border-blue-100 bg-white/90 p-5 backdrop-blur', FROST_SHADOW),
-  title: 'text-[24px] font-extrabold tracking-tight text-slate-900',
+  title: 'text-[24px] font-semibold tracking-tight text-slate-900',
   subtitle: 'mt-1 text-xs text-slate-500',
   filterCard: cn('space-y-5 rounded-2xl border border-blue-100 bg-white/90 p-5 backdrop-blur sm:p-6', FROST_SHADOW),
   fieldGrid: 'gap-4 sm:gap-5',

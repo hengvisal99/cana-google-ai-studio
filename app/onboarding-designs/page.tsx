@@ -68,7 +68,7 @@ export default function OnboardingDesignsPage() {
               <Sparkles className="h-4 w-4" />
             </span>
             <div className="leading-none">
-              <h1 className="text-[15px] font-black tracking-tight text-slate-900">Onboarding header — 5 designs</h1>
+              <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Onboarding header — 5 designs</h1>
               <p className="mt-1.5 text-[11.5px] text-slate-500">
                 Same outer layout: back link, title and Submit on top, a stepper below. Click the steps and Submit.
               </p>
@@ -79,7 +79,7 @@ export default function OnboardingDesignsPage() {
               <a
                 key={v.id}
                 href={`#${v.id}`}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
               >
                 <span className="tabular-nums">{v.n}.</span>
                 <span className="hidden sm:inline">{v.name}</span>
@@ -112,8 +112,8 @@ function VersionSection({ version }: { version: Version }) {
     <section id={version.id} className="scroll-mt-28">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex items-baseline gap-2">
-          <span className="text-[13px] font-black tabular-nums text-slate-400">{String(version.n).padStart(2, '0')}</span>
-          <h2 className="text-[15px] font-black tracking-tight text-slate-900">{version.name}</h2>
+          <span className="text-[13px] font-semibold tabular-nums text-slate-400">{String(version.n).padStart(2, '0')}</span>
+          <h2 className="text-[15px] font-semibold tracking-tight text-slate-900">{version.name}</h2>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {version.traits.map((t) => (

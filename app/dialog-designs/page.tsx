@@ -18,7 +18,7 @@ function Card({
   return (
     <section>
       <div className="mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-        <h2 className="text-[13px] font-bold text-slate-900">{title}</h2>
+        <h2 className="text-[13px] font-semibold text-slate-900">{title}</h2>
         <p className="text-[12px] text-slate-500">{blurb}</p>
       </div>
       {children}
@@ -31,7 +31,7 @@ export default function DialogDesignsPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-12">
       <div className="mx-auto max-w-[84rem]">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Authorization dialogs
         </h1>
         <p className="mt-2 text-sm text-slate-500">

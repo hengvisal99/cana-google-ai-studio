@@ -57,14 +57,14 @@ function Toolbar({ style, active, onPick }: { style: StyleId; active: string; on
       <button
         type="button"
         className={cn(
-          'inline-flex h-11 cursor-pointer items-center gap-2 bg-blue-500 text-[13px] font-bold text-white transition hover:bg-blue-600 active:scale-[0.98]',
+          'inline-flex h-11 cursor-pointer items-center gap-2 bg-blue-500 text-[13px] font-semibold text-white transition hover:bg-blue-600 active:scale-[0.98]',
           isPill
             ? 'rounded-full px-6 shadow-lg shadow-blue-500/30'
             : 'rounded-xl px-5 shadow-md shadow-blue-500/25'
         )}
       >
         <Plus className="h-4 w-4" />
-        Add Individual
+        Add New
       </button>
     </div>
   );
@@ -80,7 +80,7 @@ export default function ToolbarStylesPage() {
   return (
     <main className="min-h-screen bg-[#eef2f7] px-4 py-10 sm:px-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="text-[15px] font-black tracking-tight text-slate-900">Toolbar button style</h1>
+        <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Toolbar button style</h1>
         <p className="mt-1.5 text-[11.5px] text-slate-500">
           Switch between the current rounded rectangles and the pill shape from the Submit button.
         </p>
@@ -96,7 +96,7 @@ export default function ToolbarStylesPage() {
                   aria-pressed={isOn}
                   onClick={() => setStyle(item.id)}
                   className={cn(
-                    'cursor-pointer rounded-xl px-4 py-2 text-[12px] font-bold transition',
+                    'cursor-pointer rounded-xl px-4 py-2 text-[12px] font-semibold transition',
                     isOn ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
@@ -126,7 +126,7 @@ export default function ToolbarStylesPage() {
             <button
               type="button"
               className={cn(
-                'inline-flex h-10 cursor-pointer items-center gap-2 bg-blue-500 text-xs font-bold text-white transition hover:bg-blue-600 active:scale-[0.98]',
+                'inline-flex h-10 cursor-pointer items-center gap-2 bg-blue-500 text-xs font-semibold text-white transition hover:bg-blue-600 active:scale-[0.98]',
                 style === 'pill'
                   ? 'rounded-full px-6 shadow-lg shadow-blue-500/30'
                   : 'rounded-lg px-5 shadow-md shadow-blue-500/25'
@@ -150,14 +150,14 @@ export default function ToolbarStylesPage() {
             <button
               type="button"
               className={cn(
-                'inline-flex h-11 cursor-pointer items-center gap-2 bg-blue-500 text-[13px] font-bold text-white transition hover:bg-blue-600',
+                'inline-flex h-11 cursor-pointer items-center gap-2 bg-blue-500 text-[13px] font-semibold text-white transition hover:bg-blue-600',
                 style === 'pill'
                   ? 'rounded-full px-6 shadow-lg shadow-blue-500/30'
                   : 'rounded-xl px-5 shadow-md shadow-blue-500/25'
               )}
             >
               <Plus className="h-4 w-4" />
-              Add Record
+              Add New
             </button>
           </div>
         </div>
