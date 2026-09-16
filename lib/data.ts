@@ -1,6 +1,8 @@
 import { Individual, Customer360Profile } from '@/types';
+import { GENERATED_INDIVIDUALS } from './seed-customers';
 
-export const INITIAL_INDIVIDUALS: Individual[] = [
+/** The eight hand-written seeds; generated customers are appended below. */
+const BASE_INDIVIDUALS: Individual[] = [
   {
     id: 'IND-9021',
     customerId: 'CID-009021',
@@ -1243,6 +1245,8 @@ export const INITIAL_INDIVIDUALS: Individual[] = [
     relationshipManager: 'Gabriel Ross',
   }
 ];
+
+export const INITIAL_INDIVIDUALS: Individual[] = [...BASE_INDIVIDUALS, ...GENERATED_INDIVIDUALS];
 
 export const MOCK_CUSTOMER_360_DATA: Record<string, Omit<Customer360Profile, 'individual'>> = {
   'IND-9021': {

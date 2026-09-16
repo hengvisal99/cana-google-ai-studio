@@ -90,10 +90,109 @@ const RISK_PROFILE_DATA = [
 ];
 
 const ACCOUNT_STATUS_DATA = [
-  { status: 'Active', customers: 44, percentage: 86.3, color: '#00B074' },
-  { status: 'Not Opened', customers: 4, percentage: 7.8, color: '#EB5757' },
-  { status: 'Closed', customers: 3, percentage: 5.9, color: '#EF4444' },
+  { status: 'Active', customers: 44, percentage: 86.3 },
+  { status: 'Not Opened', customers: 4, percentage: 7.8 },
+  { status: 'Closed', customers: 3, percentage: 5.9 },
 ];
+
+const ACCOUNT_STATUS_TOTAL = ACCOUNT_STATUS_DATA.reduce((sum, s) => sum + s.customers, 0);
+const ACCOUNT_STATUS_SUMMARY = ACCOUNT_STATUS_DATA.map(
+  (s) => `${s.status}: ${s.customers} (${s.percentage}%)`
+).join(', ');
+
+/**
+ * "Not Opened" moves off red — it is a pending state, not a failure — and the two
+ * old reds (#EB5757 / #EF4444) sat ΔE 3.0 apart, which nobody can tell apart.
+ * These three clear the lightness, chroma, CVD and normal-vision checks on a light
+ * surface; all three are under 3:1 against it, which the legend's visible labels
+ * and counts cover.
+ */
+const ACCOUNT_STATUS_COLORS: Record<string, string> = {
+  Active: '#10b981',
+  'Not Opened': '#3b82f6',
+  Closed: '#f87171',
+};
+
+const DONUT_RADIUS = 65;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+const DONUT_GAP = 12; // blank arc between segments, in user units
+
+/**
+ * Arc length and start offset per status, accumulated once rather than during render.
+ * Gaps come out of the ring *before* the split, so each arc stays proportional to its
+ * share — subtracting a flat gap per segment would shrink the small ones far more.
+ */
+const ACCOUNT_STATUS_ARCS = (() => {
+  const drawable = DONUT_CIRCUMFERENCE - DONUT_GAP * ACCOUNT_STATUS_DATA.length;
+
+  return ACCOUNT_STATUS_DATA.reduce<{ status: string; dash: number; offset: number }[]>(
+    (arcs, item) => {
+      const previous = arcs[arcs.length - 1];
+      const offset = previous ? previous.offset + previous.dash + DONUT_GAP : 0;
+      const dash = (item.customers / ACCOUNT_STATUS_TOTAL) * drawable;
+      arcs.push({ status: item.status, dash, offset });
+      return arcs;
+    },
+    []
+  );
+})();
+
+/** Donut built from ACCOUNT_STATUS_DATA: one arc per status, butt caps, even gaps. */
+function AccountStatusDonut() {
+  const radius = DONUT_RADIUS;
+  const circumference = DONUT_CIRCUMFERENCE;
+
+  return (
+    <svg
+      viewBox="0 0 180 180"
+      role="img"
+      aria-label={`Account status of ${ACCOUNT_STATUS_TOTAL} accounts. ${ACCOUNT_STATUS_SUMMARY}`}
+      className="w-full h-full max-w-[180px] max-h-[180px]"
+    >
+      {ACCOUNT_STATUS_DATA.map((item, index) => {
+        const { dash, offset } = ACCOUNT_STATUS_ARCS[index];
+
+        return (
+          <circle
+            key={item.status}
+            cx="90"
+            cy="90"
+            r={radius}
+            fill="none"
+            stroke={ACCOUNT_STATUS_COLORS[item.status]}
+            strokeWidth="15"
+            strokeLinecap="butt"
+            strokeDasharray={`${dash} ${circumference - dash}`}
+            strokeDashoffset={-offset}
+            transform="rotate(-90 90 90)"
+            className="transition-opacity duration-200 hover:opacity-80 cursor-pointer"
+          >
+            <title>{`${item.status}: ${item.customers} (${item.percentage}%)`}</title>
+          </circle>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Shared legend: label, count and share on one row each, so identity is never colour-alone. */
+function AccountStatusLegend() {
+  return (
+    <div className="pt-3 border-t border-slate-100 space-y-1.5">
+      {ACCOUNT_STATUS_DATA.map((item) => (
+        <div key={item.status} className="flex items-center gap-2 text-xs">
+          <span
+            className="w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: ACCOUNT_STATUS_COLORS[item.status] }}
+          />
+          <span className="text-slate-600 font-medium flex-1">{item.status}</span>
+          <span className="font-bold text-slate-900 font-mono">{item.customers}</span>
+          <span className="text-slate-400 font-mono w-11 text-right">{item.percentage}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const INVESTMENT_EXPERIENCE_DATA = [
   { product: 'Stock', count: 22, percentage: 43, color: '#3B82F6' },
@@ -219,9 +318,6 @@ export function DashboardScreen({
     () => false
   );
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  // Design preview: compare header styles (remove once a style is chosen)
-  const [headerVariant, setHeaderVariant] = useState<'classic' | 'gradient'>('classic');
-
   const [hoveredAgeGroup, setHoveredAgeGroup] = useState<string | null>('18–24');
   const [selectedDatePreset, setSelectedDatePreset] = useState<string>('MTD');
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
@@ -356,36 +452,12 @@ export function DashboardScreen({
 
   return (
     <div id="dashboard-screen" className="space-y-4">
-      {/* Header style toggle (design preview) */}
-      <div className="fixed bottom-5 right-5 z-50 flex items-center gap-1 p-1 bg-white border border-blue-200 rounded-xl shadow-md print:hidden">
-        {(['classic', 'gradient'] as const).map((variant) => (
-          <button
-            key={variant}
-            type="button"
-            onClick={() => setHeaderVariant(variant)}
-            className={cn(
-              'h-8 px-3 rounded-lg text-xs font-semibold capitalize transition cursor-pointer',
-              headerVariant === variant
-                ? 'bg-blue-500 text-white shadow-xs shadow-blue-500/30'
-                : 'text-blue-900 hover:bg-blue-50'
-            )}
-          >
-            {variant}
-          </button>
-        ))}
-      </div>
-
       {/* =========================================================================
           DASHBOARD HEADER: FINTECH DOCK
          ========================================================================= */}
       <div
         id="dashboard-header-fintech-dock"
-        className={cn(
-          'p-5 sm:p-6 border border-blue-200/90 rounded-2xl shadow-2xs',
-          headerVariant === 'gradient'
-            ? 'bg-[linear-gradient(90deg,var(--color-blue-50)_0%,var(--color-white)_32%)]'
-            : 'bg-white'
-        )}
+        className="p-5 sm:p-6 border border-blue-200/90 rounded-2xl shadow-2xs bg-[linear-gradient(90deg,var(--color-blue-50)_0%,var(--color-white)_32%)]"
       >
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -493,7 +565,6 @@ export function DashboardScreen({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Customer Growth</h2>
-              <p className="text-xs text-slate-400">Total vs New Customer trajectory over time (Jan – Aug 2026)</p>
             </div>
             <div className="flex items-center gap-3 text-xs font-medium">
               <div className="flex items-center gap-1.5">
@@ -583,11 +654,7 @@ export function DashboardScreen({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Age Profile</h2>
-              <p className="text-xs text-slate-400">Distribution by age group (Total: 51 • 100%)</p>
             </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono">
-              5 Tiers
-            </span>
           </div>
 
           {/* Single-Color Horizontal Bar Chart */}
@@ -645,17 +712,6 @@ export function DashboardScreen({
               );
             })}
           </div>
-
-          {/* Active Highlight Info Strip */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-slate-400 text-[11px]">
-              Active: <span className="font-bold text-blue-700 font-mono">{hoveredAgeGroup || '18–24'}</span>
-            </span>
-            <span className="font-mono text-slate-600 font-medium text-[11px]">
-              {AGE_PROFILE_DATA.find((a) => a.group === (hoveredAgeGroup || '18–24'))?.customers || 12} Customers (
-              {AGE_PROFILE_DATA.find((a) => a.group === (hoveredAgeGroup || '18–24'))?.percentage || 24}%)
-            </span>
-          </div>
         </div>
       </div>
 
@@ -674,7 +730,6 @@ export function DashboardScreen({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Customer Risk Profile</h2>
-              <p className="text-xs text-slate-400">Distribution by risk category (Total: 35)</p>
             </div>
           </div>
 
@@ -747,7 +802,7 @@ export function DashboardScreen({
           </div>
         </div>
 
-        {/* Card 2: Account Status (Donut Ring Chart with Rounded Caps matching UI) */}
+        {/* Card 2: Account Status (Donut Ring, driven by ACCOUNT_STATUS_DATA) */}
         <div
           id="chart-account-status"
           className={cn(
@@ -758,67 +813,22 @@ export function DashboardScreen({
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">Account Status</h2>
-              <p className="text-xs text-slate-400">Account status distribution (Total: 51)</p>
-            </div>
+            <h2 className="text-sm font-bold text-slate-900">Account Status</h2>
           </div>
 
-          {/* Donut Chart Area Matching Image */}
-          <div className="pt-2 pb-2 flex-1 flex flex-col items-center justify-center min-h-[200px]">
+          <div className="pt-2 pb-2 flex-1 flex items-center justify-center min-h-[200px]">
             <div className="w-full max-w-[220px] h-[190px] relative flex items-center justify-center">
-              <svg viewBox="0 0 180 180" className="w-full h-full max-w-[180px] max-h-[180px] overflow-visible">
-                {/* Active Accounts Arc (Lush Green with Rounded Caps) */}
-                <path
-                  d="M 105.72 26.93 A 65 65 0 1 1 29.73 114.35"
-                  fill="none"
-                  stroke="#00B074"
-                  strokeWidth="15"
-                  strokeLinecap="round"
-                  className="transition-all duration-300 hover:opacity-90 hover:stroke-[16.5] cursor-pointer"
-                >
-                  <title>Active Accounts: 44 (86.3%)</title>
-                </path>
-
-                {/* Inactive / Closed Arc (Coral Red with Rounded Caps) */}
-                <path
-                  d="M 46.51 41.70 A 65 65 0 0 1 74.28 26.93"
-                  fill="none"
-                  stroke="#EB5757"
-                  strokeWidth="15"
-                  strokeLinecap="round"
-                  className="transition-all duration-300 hover:opacity-90 hover:stroke-[16.5] cursor-pointer"
-                >
-                  <title>Inactive / Closed Accounts: 7 (13.7%)</title>
-                </path>
-              </svg>
-
-              {/* Centered Ring Text matching image */}
+              <AccountStatusDonut />
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-                <span className="text-xs sm:text-sm font-medium text-[#5A6A85] tracking-tight">Accounts</span>
-                <span className="text-2xl sm:text-3xl font-bold text-[#1E293B] tracking-tight mt-0.5 font-sans">51</span>
+                <span className="text-xs font-medium text-slate-500 tracking-tight">Accounts</span>
+                <span className="text-3xl font-bold text-slate-900 tracking-tight mt-0.5">
+                  {ACCOUNT_STATUS_TOTAL}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Bottom Status Breakdown */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs px-1">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00B074] shrink-0" />
-              <span className="text-slate-600 font-medium text-xs">Active</span>
-              <span className="font-bold text-slate-900 font-mono text-xs ml-0.5">44</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EB5757] shrink-0" />
-              <span className="text-slate-600 font-medium text-xs">Not Opened</span>
-              <span className="font-bold text-slate-900 font-mono text-xs ml-0.5">4</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444] shrink-0" />
-              <span className="text-slate-600 font-medium text-xs">Closed</span>
-              <span className="font-bold text-slate-900 font-mono text-xs ml-0.5">3</span>
-            </div>
-          </div>
+          <AccountStatusLegend />
         </div>
 
         {/* Card 3: Investment Experience Overview (Horizontal Bars UI matching image) */}
@@ -834,7 +844,6 @@ export function DashboardScreen({
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Investment Experience Overview</h2>
-              <p className="text-xs text-slate-400">Share of customers holding each product experience</p>
             </div>
           </div>
 
@@ -863,27 +872,16 @@ export function DashboardScreen({
               </div>
             ))}
           </div>
-
-          {/* Bottom Summary Footer */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs px-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-500 font-medium text-xs">Total Product Records</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-slate-900 font-mono text-xs">65</span>
-              <span className="text-slate-400 text-[11px]">(51 Active Profiles)</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* 4. PERFORMANCE TABLES (4-Column Grid, Ratio 2 : 1 : 1) */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start">
-        {/* Table 1: Top Customers by Portfolio Value (2 Columns x 2 Rows) */}
+      {/* 4. PERFORMANCE TABLES (4-Column Grid, Ratio 2 : 1 : 1 — one row, equal heights) */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
+        {/* Table 1: Top Customers by Portfolio Value (2 Columns) */}
         <div
           id="table-top-customers"
           className={cn(
-            'xl:col-span-2 xl:row-span-2 bg-white border border-slate-200 overflow-hidden flex flex-col',
+            'xl:col-span-2 bg-white border border-slate-200 overflow-hidden flex flex-col',
             theme === 'glassmorphism'
               ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md'
               : 'rounded-xl shadow-xs'
@@ -892,7 +890,6 @@ export function DashboardScreen({
           <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Top Customers by Portfolio Value</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Top 5 capital allocators by aggregate asset balance</p>
             </div>
           </div>
 
@@ -986,11 +983,11 @@ export function DashboardScreen({
           </div>
         </div>
 
-        {/* Table 2: Customer Segment Performance (1 Column x 1 Row, flex-col) */}
+        {/* Table 2: Customer Segment (1 Column) */}
         <div
           id="table-customer-segment"
           className={cn(
-            'xl:col-span-1 xl:row-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
+            'xl:col-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
             theme === 'glassmorphism'
               ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md'
               : 'rounded-xl shadow-xs'
@@ -999,12 +996,11 @@ export function DashboardScreen({
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Customer Segment</h2>
-              <p className="text-[11px] text-slate-400">Classification distribution</p>
             </div>
           </div>
 
           <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
                   <th className="py-2.5 px-3">Customer Type</th>
@@ -1030,6 +1026,10 @@ export function DashboardScreen({
                     </td>
                   </tr>
                 ))}
+                {/* Absorbs leftover card height so the Total row sits at the bottom */}
+                <tr aria-hidden="true" className="h-full">
+                  <td colSpan={4} className="p-0" />
+                </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-bold text-slate-900">
@@ -1049,11 +1049,11 @@ export function DashboardScreen({
           </div>
         </div>
 
-        {/* Table 3: Product Performance (1 Column x 1 Row, flex-col) */}
+        {/* Table 3: Product Performance (1 Column) */}
         <div
           id="table-product-performance"
           className={cn(
-            'xl:col-span-1 xl:row-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
+            'xl:col-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
             theme === 'glassmorphism'
               ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md'
               : 'rounded-xl shadow-xs'
@@ -1062,12 +1062,11 @@ export function DashboardScreen({
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-slate-900">Product Performance</h2>
-              <p className="text-[11px] text-slate-400">CSX securities product uptake</p>
             </div>
           </div>
 
           <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
                   <th className="py-2.5 px-3">Product</th>
@@ -1093,6 +1092,10 @@ export function DashboardScreen({
                     </td>
                   </tr>
                 ))}
+                {/* Absorbs leftover card height so the Total row sits at the bottom */}
+                <tr aria-hidden="true" className="h-full">
+                  <td colSpan={4} className="p-0" />
+                </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-bold text-slate-900">
@@ -1109,10 +1112,6 @@ export function DashboardScreen({
                 </tr>
               </tfoot>
             </table>
-          </div>
-
-          <div className="p-2.5 bg-slate-50/80 border-t border-slate-100 text-[10px] text-slate-400 italic">
-            * Product totals exceed 51 because customers can hold multiple active products concurrently.
           </div>
         </div>
       </div>

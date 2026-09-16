@@ -280,7 +280,6 @@ function VersionPreview({ filled, onUpload, onRemove }: VersionProps) {
 
 function VersionRows({ filled, onUpload, onRemove }: VersionProps) {
   const count = SLOTS.filter((slot) => filled[slot.id]).length;
-  const [buttonStyle, setButtonStyle] = useState<'solid' | 'gradient' | 'outline'>('gradient');
 
   return (
     <div>
@@ -296,25 +295,6 @@ function VersionRows({ filled, onUpload, onRemove }: VersionProps) {
         <span className="text-[11px] font-semibold text-slate-500">
           {Math.round((count / SLOTS.length) * 100)}% complete
         </span>
-        <div className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 p-0.5">
-          {(['solid', 'gradient', 'outline'] as const).map((style) => {
-            const isOn = style === buttonStyle;
-            return (
-              <button
-                key={style}
-                type="button"
-                aria-pressed={isOn}
-                onClick={() => setButtonStyle(style)}
-                className={cn(
-                  'h-7 cursor-pointer rounded-full px-3 text-[11px] font-bold capitalize transition',
-                  isOn ? 'bg-white text-blue-600 shadow-2xs ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-900'
-                )}
-              >
-                {style}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       <div className="space-y-2.5">
@@ -330,19 +310,12 @@ function VersionRows({ filled, onUpload, onRemove }: VersionProps) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-semibold text-slate-900">{slot.label}</p>
-                  <p className="mt-0.5 text-[12px] text-slate-500">{FORMATS}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500">{FORMATS}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => onUpload(slot.id)}
-                  className={cn(
-                    'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-[12px] font-bold transition active:scale-[0.98]',
-                    buttonStyle === 'gradient' &&
-                      'bg-linear-to-r from-blue-600 to-sky-500 text-white shadow-lg shadow-blue-600/25 hover:brightness-110',
-                    buttonStyle === 'solid' && 'bg-blue-600 text-white shadow-md shadow-blue-600/20 hover:bg-blue-700',
-                    buttonStyle === 'outline' &&
-                      'bg-white text-blue-600 shadow-2xs ring-1 ring-slate-200 hover:bg-blue-50 hover:ring-blue-200'
-                  )}
+                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-linear-to-r from-blue-600 to-sky-500 px-4 text-[12px] font-bold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 active:scale-[0.98]"
                 >
                   <UploadCloud className="h-4 w-4" />
                   Upload

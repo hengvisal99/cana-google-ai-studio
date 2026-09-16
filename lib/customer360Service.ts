@@ -155,6 +155,26 @@ export const DEFAULT_TRANSACTIONS: IPOTransactionRecord[] = [
     tradingValue: 26000.00,
     currency: 'USD',
   },
+  {
+    id: 'TXN-IPO-109',
+    dateTime: '19 Sep 2025, 02:40 PM',
+    ipoName: 'PEPC - Pestech (Cambodia) Plc',
+    transactionType: 'Buy',
+    quantity: 6000,
+    price: 1.45,
+    tradingValue: 8700.00,
+    currency: 'USD',
+  },
+  {
+    id: 'TXN-IPO-110',
+    dateTime: '05 Aug 2025, 10:25 AM',
+    ipoName: 'DBDE - DBD Engineering Plc',
+    transactionType: 'IPO Subscription',
+    quantity: 7500,
+    price: 1.32,
+    tradingValue: 9900.00,
+    currency: 'USD',
+  },
 ];
 
 export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
@@ -190,7 +210,46 @@ export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
     processedBy: 'Ly Chanthy',
     role: 'CSO',
   },
+  // Original onboarding chain: how the customer came to have a customer type.
+  // No referenceId - the timeline falls back to showing the approver's role.
+  {
+    id: 'ACT-05',
+    dateTime: '10 Jul 2022, 12:00 AM',
+    activity: 'Registration Approved By Sok Dara',
+    processedBy: 'Sok Dara',
+    role: 'Manager',
+  },
+  {
+    id: 'ACT-06',
+    dateTime: '08 Jul 2022, 12:00 AM',
+    activity: 'Registration Checked By Chan Sophea',
+    processedBy: 'Chan Sophea',
+    role: 'Senior',
+  },
+  {
+    id: 'ACT-07',
+    dateTime: '06 Jul 2022, 12:00 AM',
+    activity: 'Registration Submitted By Ly Chanthy',
+    processedBy: 'Ly Chanthy',
+    role: 'CSO',
+  },
 ];
+
+/**
+ * Timeline dates arrive in two different shapes: '07 Feb 2026, 12:00 AM' from
+ * the seeded activities, and '2024-04-05 10:15 AM' from authorizationHistory.
+ * Some records carry a workflow placeholder instead of a date - a stage that
+ * has not been processed yet stores 'Queue' - which is not a date at all.
+ *
+ * Returns null for anything unparseable so the comparator can order those
+ * explicitly, rather than feeding NaN into it (a comparator that returns NaN
+ * breaks the sort contract and yields an arbitrary order).
+ */
+function parseActivityDate(dateTime: string | undefined | null): number | null {
+  if (!dateTime) return null;
+  const ts = Date.parse(dateTime);
+  return Number.isNaN(ts) ? null : ts;
+}
 
 /**
  * Calculates and provides complete Customer 360 data for an individual.
@@ -200,28 +259,21 @@ export function getCustomer360Details(individual: Individual): Customer360Data {
   const portfolioBase = individual.totalDeposits > 0 ? individual.totalDeposits : 125000;
   const portfolioFormatted = `$${portfolioBase.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 
-  // Merge authorization history into activity timeline if available
-  const authActivities: Customer360Activity[] = (individual.authorizationHistory || []).map((auth) => ({
-    id: auth.id,
-    dateTime: auth.dateTime,
-    activity: auth.reason 
-      ? `${auth.stage} — ${auth.status} (${auth.reason})`
-      : `${auth.stage} — ${auth.status} By ${auth.processedBy}`,
-    processedBy: auth.processedBy,
-    role: auth.role,
-    referenceId: individual.customerId || individual.id,
-  }));
-
-  // Combine default activities with customer-specific ones
+  // The timeline records how the customer came to have a customer type: the
+  // onboarding chain and the product registrations. Authorization workflow rows
+  // are deliberately not merged in.
   const combinedActivities = [...DEFAULT_ACTIVITIES];
-  if (authActivities.length > 0) {
-    // Prepend or merge recent authorization activities
-    authActivities.forEach((act) => {
-      if (!combinedActivities.some(a => a.activity === act.activity && a.dateTime === act.dateTime)) {
-        combinedActivities.unshift(act);
-      }
-    });
-  }
+
+  // Newest first. Anything with an unparseable date leads the timeline rather
+  // than feeding NaN into the comparator, which would break the sort contract.
+  combinedActivities.sort((a, b) => {
+    const ta = parseActivityDate(a.dateTime);
+    const tb = parseActivityDate(b.dateTime);
+    if (ta === null && tb === null) return 0;
+    if (ta === null) return -1;
+    if (tb === null) return 1;
+    return tb - ta;
+  });
 
   return {
     individual,

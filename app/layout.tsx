@@ -18,8 +18,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
+  // Browser extensions (LanguageTool, Grammarly, dark-mode add-ons) write attributes
+  // onto <html> and <body> before React hydrates. suppressHydrationWarning only covers
+  // the element it sits on, so both roots need it.
   return (
-    <html lang="en" className={geistSans.variable}>
+    <html lang="en" className={geistSans.variable} suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`} suppressHydrationWarning>
         {children}
       </body>
