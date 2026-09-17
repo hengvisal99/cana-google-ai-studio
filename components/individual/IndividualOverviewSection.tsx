@@ -263,7 +263,7 @@ export function IndividualOverviewSection({
              keeps all 13 fields inside four rows -- no scroll.
          ---------------------------------------------------------------- */}
       <section className="bg-white rounded-xl shadow-2xs p-5 space-y-5">
-        <FieldGroup title="Personal">
+        <FieldGroup title="Personal Information">
           <Field label="Full Name KH" value={fullNameKH} valueClassName="font-khmer" />
           <Field label="Date of Birth" value={individual.dateOfBirth} />
           <Field label="Gender" value={individual.gender} />
