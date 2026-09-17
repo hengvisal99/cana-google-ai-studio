@@ -11,7 +11,7 @@ sidebar :
     generate another version with :
      when collapes icon use section card ui , active main  menu and sub mneu use Editorial Minimal main menu ui , when active sub menu main menu active follow Cobalt Rail ui
 
-    for data please use canadia bank instead i see other data use aba bank or acelena bank please check all page with data use with bank name
 
 
-    
+
+customer 360 in customer main content each icon title should use the same color or keep the same

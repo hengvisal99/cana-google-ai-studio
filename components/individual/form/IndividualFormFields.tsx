@@ -134,7 +134,7 @@ export function createEmptyFormValues(): IndividualFormValues {
     lengthOfWork: '3 years',
     officeTelephone: '',
     organizationAddress: '',
-    bankName: 'ABA Bank Plc',
+    bankName: 'Canadia Bank Plc',
     accountOwner: '',
     savingAccount: 'Premier Savings Account',
     accountNumber: '',
@@ -210,7 +210,7 @@ export function formValuesFromIndividual(individual: Individual): IndividualForm
     lengthOfWork: individual.employment?.lengthOfWork || '3 years',
     officeTelephone: individual.employment?.officeTelephone || '',
     organizationAddress: individual.employment?.organizationAddress || '',
-    bankName: individual.banking?.bankName || 'ABA Bank Plc',
+    bankName: individual.banking?.bankName || 'Canadia Bank Plc',
     accountOwner: individual.banking?.accountOwner || '',
     savingAccount: individual.banking?.savingAccount || 'Premier Savings Account',
     accountNumber: individual.banking?.accountNumber || '',
@@ -1305,9 +1305,8 @@ export function IndividualFormFields({
                       onChange={(e) => setBankName(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                     >
-                      <option value="ABA Bank Plc">ABA Bank Plc</option>
                       <option value="Canadia Bank Plc">Canadia Bank Plc</option>
-                      <option value="ACLEDA Bank Plc">ACLEDA Bank Plc</option>
+                      <option value="Other Local Commercial Bank">Other Local Commercial Bank</option>
                       <option value="Foreign Commercial Bank">Foreign Commercial Bank</option>
                     </select>
                   </div>

@@ -128,7 +128,7 @@ export const DEFAULT_TRANSACTIONS: IPOTransactionRecord[] = [
   {
     id: 'TXN-IPO-106',
     dateTime: '28 Nov 2025, 08:50 AM',
-    ipoName: 'ABC - ACLEDA Bank Plc',
+    ipoName: 'CANA - Canadia Bank Plc',
     transactionType: 'Dividend',
     quantity: 8000,
     price: 2.40,

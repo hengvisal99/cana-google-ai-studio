@@ -552,9 +552,13 @@ export function IndividualListScreen({
       )}
 
       {/* ========================================================================= */}
-      {/* DIRECTORY HEADER & ACTION BAR                                              */}
+      {/* DIRECTORY CARD — identity, action bar, tabs, search and filters in one box */}
       {/* ========================================================================= */}
-      <div className="relative z-30 rounded-[20px] border border-slate-200/60 bg-white p-6 shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)]">
+      <div
+        id="individual-filter-section-reference"
+        className="relative z-30 space-y-5 rounded-[20px] border border-slate-200/60 bg-white p-5 shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)] sm:p-6"
+      >
+        {/* Row 1: identity + toolbar dock + primary action */}
         <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <div>
             <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Individual Directory</h1>
@@ -659,19 +663,12 @@ export function IndividualListScreen({
             </button>
           </div>
         </div>
-      </div>
 
-      {/* ========================================================================= */}
-      {/* FILTER SECTION                                                            */}
-      {/* ========================================================================= */}
-      <div
-        id="individual-filter-section-reference"
-        className="relative z-20 space-y-5 rounded-[20px] border border-slate-200/60 bg-white p-5 shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)] sm:p-6"
-      >
-        {/* Row 1: status tabs + search */}
-        <div className="flex flex-col items-stretch justify-between gap-3 lg:flex-row lg:items-center">
+        {/* Row 2: status tabs + search, on the same grid as the filter row so the
+            search box lands exactly above the last filter select at every width */}
+        <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4">
           {/* 34px tabs + 4px padding + 1px border = 44px, matching the search box and filter selects */}
-          <div className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl border border-slate-200/60 bg-slate-50 p-1">
+          <div className="inline-flex max-w-full flex-wrap items-center justify-self-start gap-1 rounded-xl border border-slate-200/60 bg-slate-50 p-1 sm:col-span-2 lg:col-span-3">
             {STATUS_TABS.map((tab) => {
               const isActive = statusTab === tab.id;
               const Icon = tab.icon;
@@ -716,9 +713,10 @@ export function IndividualListScreen({
             })}
           </div>
 
-          {/* Search with field picker; results filter as you type */}
-          <div className="w-full lg:max-w-lg">
-            <div className="flex h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-2 pr-1.5 transition focus-within:border-slate-400">
+          {/* Search with field picker; results filter as you type. Sits in the last
+              grid column, so it is exactly as wide as the select beneath it. */}
+          <div className="w-full sm:col-start-2 lg:col-start-4">
+            <div className="flex h-11 w-full items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-2 pr-1.5 transition focus-within:border-slate-400">
               <Popover
                 className="shrink-0"
                 trigger={({ open, toggle }) => (
@@ -771,20 +769,6 @@ export function IndividualListScreen({
                 enterKeyHint="search"
                 className="min-w-0 flex-1 bg-transparent px-1.5 text-xs font-semibold uppercase tracking-wide text-slate-800 placeholder:text-slate-400 focus:outline-none"
               />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchTerm('');
-                    searchInputRef.current?.focus();
-                  }}
-                  aria-label="Clear search"
-                  title="Clear search"
-                  className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => searchInputRef.current?.focus()}
@@ -798,22 +782,9 @@ export function IndividualListScreen({
           </div>
         </div>
 
-        {/* Row 2: reset link + four filter selects (toggled by the Filter button) */}
+        {/* Row 3: four filter selects (toggled by the Filter button), Reset closing the row */}
         {showFilterPanel && (
           <div className="space-y-3">
-            {(hasActiveFilters || searchTerm) && (
-              <div className="flex h-8 items-center justify-end">
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Reset filters
-                </button>
-              </div>
-            )}
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
               <FilterSelect
                 id="filter-gender"
@@ -844,6 +815,21 @@ export function IndividualListScreen({
                 onChange={setRequestTypeFilter}
               />
             </div>
+
+            {/* Borderless, and only once a select actually holds a value */}
+            {hasActiveFilters && (
+              <div className="flex justify-end">
+                <button
+                  id="btn-individual-reset-filters"
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset filters
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -119,8 +119,9 @@ export function CustomerTypeScreen({
         </div>
       )}
 
-      {/* Header */}
-      <div className={cn(CARD, 'p-6')}>
+      {/* Identity, tabs and search share one card */}
+      <div className={cn(CARD, 'space-y-5 p-5 sm:p-6')}>
+        {/* Row 1: identity + primary action */}
         <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <div>
             <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Customer Type</h1>
@@ -138,11 +139,8 @@ export function CustomerTypeScreen({
             <span>Add New</span>
           </button>
         </div>
-      </div>
 
-      {/* Type tabs + search */}
-      <div className={cn(CARD, 'p-5 sm:p-6')}>
-        {/* Tabs keep their full width; search fills what's left (capped) and wraps below when there's no room */}
+        {/* Row 2: tabs keep their full width; search fills what's left (capped) and wraps below when there's no room */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           {/* One row of tabs; scrolls sideways instead of wrapping when space runs out */}
           <div

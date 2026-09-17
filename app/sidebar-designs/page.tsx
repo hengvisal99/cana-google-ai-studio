@@ -12,6 +12,7 @@ import {
   SidebarSectionCards,
   type SidebarVariantProps,
 } from '@/components/shell/sidebar-variants/SidebarVariants';
+import { SidebarHybridConsole } from '@/components/shell/sidebar-variants/SidebarHybridConsole';
 import { cn } from '@/lib/utils';
 
 type Version = {
@@ -32,7 +33,7 @@ const VERSIONS: Version[] = [
     name: 'Cobalt Rail',
     blurb: 'Two columns — a 68px app rail beside the nav panel.',
     Sidebar: SidebarCobaltRail,
-    traits: ['App rail + nav panel', 'Solid blue active pill', 'Threaded sub-items', '⌘K search row'],
+    traits: ['App rail + nav panel', 'Soft blue active row + 2px bar', 'Threaded sub-items', '⌘K search row'],
     canvas: 'bg-[#f1f5f9]',
   },
   {
@@ -80,6 +81,20 @@ const VERSIONS: Version[] = [
     traits: ['Group cards on tinted canvas', '32px dense rows', '3px blue marker', 'PROD/UAT switcher'],
     canvas: 'bg-white',
   },
+  {
+    id: 'hybrid-console',
+    n: 7,
+    name: 'Hybrid Console',
+    blurb: 'Editorial rows, a cobalt pill on the parent holding the active child, section cards when collapsed.',
+    Sidebar: SidebarHybridConsole,
+    traits: [
+      'Editorial 2px active bar',
+      'Cobalt pill on active parent',
+      'Section cards + cobalt tile collapsed',
+      'Mono hints & badges',
+    ],
+    canvas: 'bg-[#f8fafc]',
+  },
 ];
 
 const LABELS = new Map<string, string>();
@@ -90,7 +105,7 @@ SIDEBAR_NAV.forEach((group) =>
   })
 );
 
-/** Scratch page: six sidebar designs, same menu, light mode, blue primary. */
+/** Scratch page: seven sidebar designs, same menu, light mode, blue primary. */
 export default function SidebarDesignsPage() {
   return (
     <main className="min-h-screen bg-[#eef2f7]">
@@ -101,7 +116,7 @@ export default function SidebarDesignsPage() {
               <PanelsTopLeft className="h-4 w-4" />
             </span>
             <div className="leading-none">
-              <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Sidebar — 6 designs</h1>
+              <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">Sidebar — 7 designs</h1>
               <p className="mt-1.5 text-[11.5px] text-slate-500">
                 Same menu and groups in every version; only the design changes. Click the rows, expand Customer,
                 collapse each one.

@@ -491,7 +491,7 @@ export function Customer360Screen({
           {/* Scrolling body: the profile above stays pinned, so only the
               sections below move. min-h-0 lets this flex child shrink
               below its content height and actually own the overflow. */}
-          <div className="space-y-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1.5 [scrollbar-gutter:stable] print:overflow-visible print:pr-0">
+          <div className="space-y-8 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1.5 [scrollbar-gutter:stable] print:overflow-visible print:pr-0">
 
             {/* =======================================================================
                 3. SUMMARY: 3-VERSION KPI CARDS WITH IN-CARD TOGGLE
@@ -604,7 +604,7 @@ export function Customer360Screen({
                       start at the same y even though only this one has a button. */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 xl:h-8 xl:shrink-0">
                     <div className="flex items-center gap-2">
-                      <History className="w-4 h-4 text-emerald-600" />
+                      <History className="w-4 h-4 text-blue-600" />
                       <h3 className="text-sm font-semibold text-slate-900">Transaction History</h3>
                     </div>
 
@@ -816,7 +816,7 @@ export function Customer360Screen({
               >
                 <div className="flex items-center justify-between gap-3 xl:h-8 xl:shrink-0">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <Clock className="w-4 h-4 text-blue-600" />
                     <h3 className="text-sm font-semibold text-slate-900">Activity Timeline</h3>
                   </div>
                 </div>

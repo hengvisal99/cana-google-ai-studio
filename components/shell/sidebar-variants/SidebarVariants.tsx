@@ -98,7 +98,7 @@ export interface SidebarVariantProps {
 const FLAT_ITEMS = SIDEBAR_NAV.flatMap((group) => group.items);
 
 /** A parent counts as active when it, or one of its children, is selected. */
-function useParentId(activeId: string) {
+export function useParentId(activeId: string) {
   return React.useMemo(() => {
     const parent = FLAT_ITEMS.find(
       (item) => item.id === activeId || item.children?.some((child) => child.id === activeId)
@@ -108,7 +108,7 @@ function useParentId(activeId: string) {
 }
 
 /** Keeps an expandable group open while one of its children is selected. */
-function useExpanded(item: SidebarItem, activeId: string) {
+export function useExpanded(item: SidebarItem, activeId: string) {
   const holdsActive = !!item.children?.some((child) => child.id === activeId);
   const [open, setOpen] = React.useState(holdsActive);
   const [wasHolding, setWasHolding] = React.useState(holdsActive);
@@ -176,7 +176,8 @@ function IconRail({
 
 /* ===========================================================================
    01 — Cobalt Rail
-   App rail + nav panel. Solid blue pill marks the active row.
+   App rail + nav panel. A soft blue row with a 2px blue bar marks the
+   active item.
    =========================================================================== */
 
 const RAIL_APPS: { id: string; label: string; icon: LucideIcon }[] = [
@@ -330,18 +331,19 @@ function CobaltRow({
         aria-expanded={item.children ? open : undefined}
         onClick={() => (item.children ? setOpen(!open) : onNavigate(item.id))}
         className={cn(
-          'flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 text-[12.5px] font-semibold transition',
+          'relative flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 text-[12.5px] font-semibold transition',
           isActive
-            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+            ? 'bg-blue-50/60 text-blue-700'
             : holdsActive
               ? 'text-blue-700 hover:bg-blue-50/70'
               : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
         )}
       >
+        {isActive && <span className="absolute -left-1 h-5 w-[2px] rounded-full bg-blue-600" />}
         <Icon
           className={cn(
             'h-4 w-4 shrink-0',
-            isActive ? 'text-white' : holdsActive ? 'text-blue-600' : 'text-slate-400'
+            isActive || holdsActive ? 'text-blue-600' : 'text-slate-400'
           )}
         />
         <span className="flex-1 truncate text-left">{item.label}</span>
@@ -349,7 +351,7 @@ function CobaltRow({
           <span
             className={cn(
               'rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums',
-              isActive ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700'
+              isActive ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'
             )}
           >
             {item.badge}

@@ -78,7 +78,7 @@ const BASE_INDIVIDUALS: Individual[] = [
       organizationAddress: 'Exchange Square, Level 14, St 106, Phnom Penh',
     },
     banking: {
-      bankName: 'ABA Bank Plc',
+      bankName: 'Canadia Bank Plc',
       accountOwner: 'ELEANOR VANCE',
       savingAccount: 'Premier High-Yield Savings',
       accountNumber: '001 982 441 902',
@@ -397,7 +397,7 @@ const BASE_INDIVIDUALS: Individual[] = [
       organizationAddress: '12 Marina Boulevard, Tower 3, Singapore',
     },
     banking: {
-      bankName: 'ABA Bank Plc',
+      bankName: 'Canadia Bank Plc',
       accountOwner: 'SOPHIA CHEN',
       savingAccount: 'Direct Equity Trading Deposit',
       accountNumber: '001 773 992 110',
@@ -734,7 +734,7 @@ const BASE_INDIVIDUALS: Individual[] = [
       organizationAddress: '28 Rue du Faubourg Saint-Honoré, Paris',
     },
     banking: {
-      bankName: 'ABA Bank Plc',
+      bankName: 'Canadia Bank Plc',
       accountOwner: 'CLARA MOREAU',
       savingAccount: 'Standard Individual Savings',
       accountNumber: '001 882 109 443',
@@ -870,7 +870,7 @@ const BASE_INDIVIDUALS: Individual[] = [
       organizationAddress: '1-5-1 Marunouchi, Chiyoda-ku, Tokyo',
     },
     banking: {
-      bankName: 'ABA Bank Plc',
+      bankName: 'Canadia Bank Plc',
       accountOwner: 'KENJI TAKAHASHI',
       savingAccount: 'Foreign Investor JPY Account',
       accountNumber: '001 992 001 382',
@@ -1167,7 +1167,7 @@ const BASE_INDIVIDUALS: Individual[] = [
       organizationAddress: '1200 Brickell Avenue, Suite 14, Miami',
     },
     banking: {
-      bankName: 'ABA Bank Plc',
+      bankName: 'Canadia Bank Plc',
       accountOwner: 'MATEO SILVA',
       savingAccount: 'Basic Retail Account',
       accountNumber: '001 440 910 882',

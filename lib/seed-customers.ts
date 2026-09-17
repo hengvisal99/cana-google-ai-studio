@@ -74,7 +74,7 @@ const AVATARS = [
 const KNOWLEDGE: SecuritiesKnowledge[] = ['Beginner', 'Intermediate', 'Advanced', 'Professional'];
 const EXPERIENCE: InvestmentExperience[] = ['< 1 year', '1 - 3 years', '3 - 5 years', '5+ years'];
 const EDUCATION: EducationBackground[] = ["Bachelor's", "Master's", 'Professional', 'Doctorate'];
-const BANKS = ['ABA Bank Plc', 'Canadia Bank Plc', 'ACLEDA Bank Plc', 'Wing Bank Plc'];
+const BANK_NAME = 'Canadia Bank Plc';
 
 /** High Net Worth clients are private banking, Institutional sits in wealth, and so on. */
 function categoryFor(type: CustomerType): IndividualCategory {
@@ -173,7 +173,7 @@ function buildCustomer(seed: CustomerSeed): Individual {
       organizationAddress: seed.organizationAddress,
     },
     banking: {
-      bankName: BANKS[seed.seq % BANKS.length],
+      bankName: BANK_NAME,
       accountOwner: fullNameEN,
       savingAccount: 'Savings (USD)',
       accountNumber: accountNumber(seed.seq),

@@ -14,6 +14,19 @@ import { HeaderActions } from '@/components/shared/HeaderActions';
 import { useScrollbarWidth } from '@/hooks/use-scrollbar-width';
 import { cn } from '@/lib/utils';
 
+/* Active-state styling lifted from sidebar version 01 (Cobalt Rail): a soft blue
+   row with a 3px blue bar when expanded, and blue text with no fill on a parent
+   whose sub item is the selected one. Collapsed is the exception: the active icon
+   becomes a square white tile with a blue glyph, separated from the bg-white/80
+   dock by a blue-100 outline and its drop shadow rather than by fill. */
+const ACTIVE_ROW = 'bg-blue-50 text-blue-700';
+const ACTIVE_TILE = 'bg-white text-blue-600 ring-1 ring-blue-100 shadow-lg shadow-slate-300/70';
+const ACTIVE_PARENT = 'text-blue-700 hover:bg-blue-50/70';
+const IDLE_ROW = 'text-slate-600 hover:text-slate-900 hover:bg-white/70';
+// Sits at left-0 rather than outside the row: <nav> scrolls on Y, so anything
+// past its left edge gets clipped.
+const ACTIVE_BAR = 'absolute left-0 h-5 w-[3px] rounded-full bg-blue-600';
+
 interface ShellProps {
   currentPage: NavigationPage;
   onNavigate: (page: NavigationPage) => void;
@@ -49,6 +62,10 @@ export function GlassmorphismShell({
     currentPage === 'individual-insert' ||
     currentPage === 'individual-update' ||
     currentPage === 'customer-type';
+  // Icons grow in the collapsed dock and carry the blue in both states.
+  const navIcon = (active: boolean) =>
+    cn('shrink-0', sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4', active && 'text-blue-600');
+
   const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
     {
       label: 'List',
@@ -79,7 +96,12 @@ export function GlassmorphismShell({
           )}
         >
           {/* Frosted Brand Capsule */}
-          <div className="flex items-center gap-3 pb-5 border-b border-slate-200/60 w-full shrink-0">
+          <div
+            className={cn(
+              'flex items-center gap-3 pb-5 border-b border-slate-200/60 w-full shrink-0',
+              sidebarCollapsed && 'justify-center'
+            )}
+          >
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 shrink-0">
               <Compass className="w-6 h-6" />
             </div>
@@ -110,14 +132,18 @@ export function GlassmorphismShell({
                   type="button"
                   onClick={() => onNavigate('dashboard')}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-semibold transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
                     currentPage === 'dashboard'
-                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+                      ? sidebarCollapsed
+                        ? ACTIVE_TILE
+                        : ACTIVE_ROW
+                      : IDLE_ROW
                   )}
                   title="Dashboard"
                 >
-                  <LayoutDashboard className="w-4 h-4 shrink-0" />
+                  {currentPage === 'dashboard' && !sidebarCollapsed && <span className={ACTIVE_BAR} />}
+                  <LayoutDashboard className={navIcon(currentPage === 'dashboard')} />
                   {!sidebarCollapsed && <span>Dashboard</span>}
                 </button>
 
@@ -127,14 +153,18 @@ export function GlassmorphismShell({
                   type="button"
                   onClick={() => onNavigate('customer-360')}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-semibold transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
                     currentPage === 'customer-360'
-                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+                      ? sidebarCollapsed
+                        ? ACTIVE_TILE
+                        : ACTIVE_ROW
+                      : IDLE_ROW
                   )}
                   title="Customer 360"
                 >
-                  <Users className="w-4 h-4 shrink-0" />
+                  {currentPage === 'customer-360' && !sidebarCollapsed && <span className={ACTIVE_BAR} />}
+                  <Users className={navIcon(currentPage === 'customer-360')} />
                   {!sidebarCollapsed && <span>Customer 360</span>}
                 </button>
 
@@ -147,16 +177,20 @@ export function GlassmorphismShell({
                   }
                   aria-expanded={!sidebarCollapsed && customerMenuOpen}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-semibold transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
                     isCustomerPage
-                      ? sidebarCollapsed || !customerMenuOpen
-                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                        : 'bg-blue-50 text-blue-700'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+                      ? sidebarCollapsed
+                        ? ACTIVE_TILE
+                        : customerMenuOpen
+                          ? ACTIVE_PARENT
+                          : ACTIVE_ROW
+                      : IDLE_ROW
                   )}
                   title="Customer"
                 >
-                  <User className="w-4 h-4 shrink-0" />
+                  {isCustomerPage && !sidebarCollapsed && !customerMenuOpen && <span className={ACTIVE_BAR} />}
+                  <User className={navIcon(isCustomerPage)} />
                   {!sidebarCollapsed && (
                     <>
                       <span className="flex-1 text-left">Customer</span>
@@ -176,12 +210,15 @@ export function GlassmorphismShell({
                         type="button"
                         onClick={() => onNavigate(item.page)}
                         className={cn(
-                          'w-full flex items-center px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          'relative w-full flex items-center px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
                           item.active
-                            ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
+                            ? 'bg-blue-50 text-blue-700'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
                         )}
                       >
+                        {item.active && (
+                          <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />
+                        )}
                         {item.label}
                       </button>
                     ))}
