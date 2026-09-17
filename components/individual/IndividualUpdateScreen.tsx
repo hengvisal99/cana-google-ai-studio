@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Individual, DesignTheme, SupportingDocument } from '@/types';
 import { User, ShieldCheck, Briefcase, Users, CreditCard } from 'lucide-react';
+import { formatAddressParts } from '@/components/ui/form';
 import { IndividualFormShell } from '@/components/individual/IndividualFormShell';
 import {
   IndividualFormFields,
@@ -142,16 +143,17 @@ export function IndividualUpdateScreen({
         lengthOfWork: values.lengthOfWork,
         officeTelephone: values.officeTelephone,
         // `organizationAddress` stays the composed one-line address the read-only views render.
-        organizationAddress: [
-          values.orgHomeNo,
-          values.orgStreetNo,
-          values.orgCommune,
-          values.orgDistrict,
-          values.orgCity,
-          values.orgCountry,
-        ]
-          .filter(Boolean)
-          .join(', ') || individual.employment?.organizationAddress || '',
+        organizationAddress:
+          formatAddressParts({
+            homeNo: values.orgHomeNo,
+            streetNo: values.orgStreetNo,
+            commune: values.orgCommune,
+            district: values.orgDistrict,
+            city: values.orgCity,
+            country: values.orgCountry,
+          }) ||
+          individual.employment?.organizationAddress ||
+          '',
         organizationCountry: values.orgCountry,
         organizationCity: values.orgCity,
         organizationDistrict: values.orgDistrict,
@@ -180,16 +182,17 @@ export function IndividualUpdateScreen({
         mobile: values.spouseMobile,
         officeTelephone: values.spouseOfficePhone,
         // `address` stays the composed one-line address the read-only views render.
-        address: [
-          values.spouseHomeNo,
-          values.spouseStreetNo,
-          values.spouseCommune,
-          values.spouseDistrict,
-          values.spouseCity,
-          values.spouseCountry,
-        ]
-          .filter(Boolean)
-          .join(', ') || individual.spouse?.address || '',
+        address:
+          formatAddressParts({
+            homeNo: values.spouseHomeNo,
+            streetNo: values.spouseStreetNo,
+            commune: values.spouseCommune,
+            district: values.spouseDistrict,
+            city: values.spouseCity,
+            country: values.spouseCountry,
+          }) ||
+          individual.spouse?.address ||
+          '',
         addressCountry: values.spouseCountry,
         addressCity: values.spouseCity,
         addressDistrict: values.spouseDistrict,
@@ -206,16 +209,17 @@ export function IndividualUpdateScreen({
         relationship: values.relRelationship,
         mobile: values.relMobile,
         // `address` stays the composed one-line address the read-only views render.
-        address: [
-          values.relHomeNo,
-          values.relStreetNo,
-          values.relCommune,
-          values.relDistrict,
-          values.relCity,
-          values.relCountry,
-        ]
-          .filter(Boolean)
-          .join(', ') || individual.relatedPerson?.address || '',
+        address:
+          formatAddressParts({
+            homeNo: values.relHomeNo,
+            streetNo: values.relStreetNo,
+            commune: values.relCommune,
+            district: values.relDistrict,
+            city: values.relCity,
+            country: values.relCountry,
+          }) ||
+          individual.relatedPerson?.address ||
+          '',
         addressCountry: values.relCountry,
         addressCity: values.relCity,
         addressDistrict: values.relDistrict,
@@ -253,7 +257,7 @@ export function IndividualUpdateScreen({
       address: {
         // `street` stays the composed one-line address the directory and 360 views read.
         street:
-          [values.homeNo, values.streetNo, values.commune].filter(Boolean).join(', ') ||
+          formatAddressParts({ homeNo: values.homeNo, streetNo: values.streetNo, commune: values.commune }) ||
           individual.address?.street ||
           '',
         city: values.city || individual.address?.city || '',

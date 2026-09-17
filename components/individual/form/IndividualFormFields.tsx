@@ -1080,7 +1080,7 @@ export function IndividualFormFields({
               </div>
 
               {/* Designated settlement bank account */}
-              <div className="pt-4 border-t border-slate-100">
+              <div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                   <FormSelect
                     label="Bank Name"

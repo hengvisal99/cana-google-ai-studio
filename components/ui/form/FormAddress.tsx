@@ -30,14 +30,41 @@ export const EMPTY_ADDRESS: AddressValue = {
 };
 
 /**
- * The one-line form an address is stored and displayed as, narrowest part first:
- * "42B, St 310, Boeung Keng Kang 1, Chamkarmon, Phnom Penh, Cambodia".
+ * A bare "1, 23, …" leaves the reader guessing which number is the house and
+ * which the street, so each number is labelled — unless what was typed already
+ * carries its own label ("St 271", "No. 42B", "#12").
  */
-export function formatAddress(value: AddressValue): string {
-  return [value.homeNo, value.streetNo, value.commune, value.district, value.city, value.country]
-    .map((part) => part.trim())
+const HOME_LABELLED = /^(no\.?|n°|#|house|home|villa|flat|unit)\b/i;
+const STREET_LABELLED = /^(st\.?|street|str\.?|road|rd\.?|blvd\.?|boulevard|avenue|ave\.?|lane|preah|national)\b/i;
+
+function labelled(raw: string | undefined, pattern: RegExp, prefix: string): string {
+  const part = (raw ?? '').trim();
+  if (!part) return '';
+  return pattern.test(part) ? part : `${prefix} ${part}`;
+}
+
+/**
+ * The one-line form an address is stored and displayed as, narrowest part first:
+ * "No. 42B, St 310, Boeung Keng Kang 1, Chamkar Mon, Phnom Penh, Cambodia".
+ * Takes whatever parts it is given, so a caller holding only the street-level
+ * ones gets just that much of the line.
+ */
+export function formatAddressParts(parts: Partial<AddressValue>): string {
+  return [
+    labelled(parts.homeNo, HOME_LABELLED, 'No.'),
+    labelled(parts.streetNo, STREET_LABELLED, 'St'),
+    parts.commune,
+    parts.district,
+    parts.city,
+    parts.country,
+  ]
+    .map((part) => (part ?? '').trim())
     .filter(Boolean)
     .join(', ');
+}
+
+export function formatAddress(value: AddressValue): string {
+  return formatAddressParts(value);
 }
 
 /**

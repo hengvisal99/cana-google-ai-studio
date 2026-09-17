@@ -150,16 +150,14 @@ export function IndividualInsertScreen({
         lengthOfWork: values.lengthOfWork,
         officeTelephone: values.officeTelephone,
         // `organizationAddress` stays the composed one-line address the read-only views render.
-        organizationAddress: [
-          values.orgHomeNo,
-          values.orgStreetNo,
-          values.orgCommune,
-          values.orgDistrict,
-          values.orgCity,
-          values.orgCountry,
-        ]
-          .filter(Boolean)
-          .join(', '),
+        organizationAddress: formatAddressParts({
+          homeNo: values.orgHomeNo,
+          streetNo: values.orgStreetNo,
+          commune: values.orgCommune,
+          district: values.orgDistrict,
+          city: values.orgCity,
+          country: values.orgCountry,
+        }),
         organizationCountry: values.orgCountry,
         organizationCity: values.orgCity,
         organizationDistrict: values.orgDistrict,
@@ -188,16 +186,14 @@ export function IndividualInsertScreen({
         mobile: values.spouseMobile,
         officeTelephone: values.spouseOfficePhone,
         // `address` stays the composed one-line address the read-only views render.
-        address: [
-          values.spouseHomeNo,
-          values.spouseStreetNo,
-          values.spouseCommune,
-          values.spouseDistrict,
-          values.spouseCity,
-          values.spouseCountry,
-        ]
-          .filter(Boolean)
-          .join(', '),
+        address: formatAddressParts({
+          homeNo: values.spouseHomeNo,
+          streetNo: values.spouseStreetNo,
+          commune: values.spouseCommune,
+          district: values.spouseDistrict,
+          city: values.spouseCity,
+          country: values.spouseCountry,
+        }),
         addressCountry: values.spouseCountry,
         addressCity: values.spouseCity,
         addressDistrict: values.spouseDistrict,
@@ -214,16 +210,14 @@ export function IndividualInsertScreen({
         relationship: values.relRelationship,
         mobile: values.relMobile,
         // `address` stays the composed one-line address the read-only views render.
-        address: [
-          values.relHomeNo,
-          values.relStreetNo,
-          values.relCommune,
-          values.relDistrict,
-          values.relCity,
-          values.relCountry,
-        ]
-          .filter(Boolean)
-          .join(', '),
+        address: formatAddressParts({
+          homeNo: values.relHomeNo,
+          streetNo: values.relStreetNo,
+          commune: values.relCommune,
+          district: values.relDistrict,
+          city: values.relCity,
+          country: values.relCountry,
+        }),
         addressCountry: values.relCountry,
         addressCity: values.relCity,
         addressDistrict: values.relDistrict,
@@ -285,7 +279,9 @@ export function IndividualInsertScreen({
       branch: 'Phnom Penh Central Financial (Branch 101)',
       address: {
         // `street` stays the composed one-line address the directory and 360 views read.
-        street: [values.homeNo, values.streetNo, values.commune].filter(Boolean).join(', ') || 'Street 214',
+        street:
+          formatAddressParts({ homeNo: values.homeNo, streetNo: values.streetNo, commune: values.commune }) ||
+          'Street 214',
         city: values.city || 'Phnom Penh',
         state: values.state || 'Daun Penh',
         postalCode: '',
