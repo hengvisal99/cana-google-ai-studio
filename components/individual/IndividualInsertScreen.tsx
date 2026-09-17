@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Individual, DesignTheme, SupportingDocument } from '@/types';
-import { User, ShieldCheck, MapPin, Briefcase, Users, CreditCard } from 'lucide-react';
+import { User, ShieldCheck, Briefcase, Users, CreditCard } from 'lucide-react';
 import { IndividualFormShell } from '@/components/individual/IndividualFormShell';
 import {
   IndividualFormFields,
@@ -16,7 +16,7 @@ interface IndividualInsertScreenProps {
   theme: DesignTheme;
 }
 
-type TabKey = 'personal' | 'identification' | 'contact' | 'employment' | 'family' | 'account';
+type TabKey = 'personal' | 'identification' | 'employment' | 'family' | 'account';
 
 export function IndividualInsertScreen({
   onCancel,
@@ -39,7 +39,7 @@ export function IndividualInsertScreen({
 
   // Tab 2: Supporting Documents Dropzone states & inputs
 
-  // Tab 3: Contact & Address
+  // Contact channels and residential address (tab 1)
 
   // Tab 4: Employment & Banking
 
@@ -67,7 +67,7 @@ export function IndividualInsertScreen({
       } else if (newErrors.idNumber) {
         setActiveTab('identification');
       } else if (newErrors.email) {
-        setActiveTab('contact');
+        setActiveTab('personal');
       }
       return;
     }
@@ -88,7 +88,9 @@ export function IndividualInsertScreen({
       values.spousePosition.trim() ||
       values.spouseBusiness.trim() ||
       values.spouseMobile.trim() ||
-      values.spouseAddress.trim()
+      values.spouseHomeNo.trim() ||
+      values.spouseStreetNo.trim() ||
+      values.spouseCity.trim()
     );
 
     // Check if related person has any entered data
@@ -97,7 +99,9 @@ export function IndividualInsertScreen({
       values.relLatin.trim() ||
       values.relEmail.trim() ||
       values.relMobile.trim() ||
-      values.relAddress.trim()
+      values.relHomeNo.trim() ||
+      values.relStreetNo.trim() ||
+      values.relCity.trim()
     );
 
     const newRecord: Individual = {
@@ -134,6 +138,7 @@ export function IndividualInsertScreen({
       issuedDate: values.issuedDate,
       expiredDate: values.expiredDate,
       taxpayerIdNumber: values.taxpayerIdNumber.trim() || `TIN-${values.idNumber.trim()}`,
+      note: values.note.trim(),
       supportingDocuments: documents,
 
       employment: {
@@ -144,7 +149,23 @@ export function IndividualInsertScreen({
         organizationName: values.organizationName.trim() || 'Independent Enterprise',
         lengthOfWork: values.lengthOfWork,
         officeTelephone: values.officeTelephone,
-        organizationAddress: values.organizationAddress,
+        // `organizationAddress` stays the composed one-line address the read-only views render.
+        organizationAddress: [
+          values.orgHomeNo,
+          values.orgStreetNo,
+          values.orgCommune,
+          values.orgDistrict,
+          values.orgCity,
+          values.orgCountry,
+        ]
+          .filter(Boolean)
+          .join(', '),
+        organizationCountry: values.orgCountry,
+        organizationCity: values.orgCity,
+        organizationDistrict: values.orgDistrict,
+        organizationCommune: values.orgCommune,
+        organizationHomeNo: values.orgHomeNo,
+        organizationStreetNo: values.orgStreetNo,
       },
 
       banking: {
@@ -157,6 +178,7 @@ export function IndividualInsertScreen({
       spouse: hasSpouseData ? {
         fullName: values.spouseName,
         latin: values.spouseLatin || values.spouseName,
+        gender: values.spouseGender,
         email: values.spouseEmail,
         yearOfEmployment: values.spouseYearWork,
         relationship: values.spouseRelationship,
@@ -165,7 +187,23 @@ export function IndividualInsertScreen({
         typeOfBusiness: values.spouseBusiness,
         mobile: values.spouseMobile,
         officeTelephone: values.spouseOfficePhone,
-        address: values.spouseAddress,
+        // `address` stays the composed one-line address the read-only views render.
+        address: [
+          values.spouseHomeNo,
+          values.spouseStreetNo,
+          values.spouseCommune,
+          values.spouseDistrict,
+          values.spouseCity,
+          values.spouseCountry,
+        ]
+          .filter(Boolean)
+          .join(', '),
+        addressCountry: values.spouseCountry,
+        addressCity: values.spouseCity,
+        addressDistrict: values.spouseDistrict,
+        addressCommune: values.spouseCommune,
+        addressHomeNo: values.spouseHomeNo,
+        addressStreetNo: values.spouseStreetNo,
       } : undefined,
 
       relatedPerson: hasRelatedPersonData ? {
@@ -175,7 +213,23 @@ export function IndividualInsertScreen({
         gender: values.relGender,
         relationship: values.relRelationship,
         mobile: values.relMobile,
-        address: values.relAddress,
+        // `address` stays the composed one-line address the read-only views render.
+        address: [
+          values.relHomeNo,
+          values.relStreetNo,
+          values.relCommune,
+          values.relDistrict,
+          values.relCity,
+          values.relCountry,
+        ]
+          .filter(Boolean)
+          .join(', '),
+        addressCountry: values.relCountry,
+        addressCity: values.relCity,
+        addressDistrict: values.relDistrict,
+        addressCommune: values.relCommune,
+        addressHomeNo: values.relHomeNo,
+        addressStreetNo: values.relStreetNo,
       } : undefined,
 
       investorIdInfo: {
@@ -184,8 +238,8 @@ export function IndividualInsertScreen({
         customerReceivedBy: values.customerReceivedBy,
         applicationDate: values.applicationDate,
         dateSentToSECC: values.dateSentToSECC,
-        dateReceivedFromSECC: 'Pending',
-        investorIdExpiredDate: '2036-09-09',
+        dateReceivedFromSECC: values.dateReceivedFromSECC || 'Pending',
+        investorIdExpiredDate: values.investorIdExpiredDate,
         customerStatus: values.investorStatus,
       },
 
@@ -230,11 +284,15 @@ export function IndividualInsertScreen({
       totalDeposits: 25000,
       branch: 'Phnom Penh Central Financial (Branch 101)',
       address: {
-        street: values.street || 'Street 214',
+        // `street` stays the composed one-line address the directory and 360 views read.
+        street: [values.homeNo, values.streetNo, values.commune].filter(Boolean).join(', ') || 'Street 214',
         city: values.city || 'Phnom Penh',
         state: values.state || 'Daun Penh',
-        postalCode: values.postalCode || '120201',
+        postalCode: '',
         country: values.country || 'Cambodia',
+        commune: values.commune,
+        homeNo: values.homeNo,
+        streetNo: values.streetNo,
       },
       tags: [values.nationality, values.customerType, 'CSO Registered'],
       createdAt: new Date().toISOString().slice(0, 10),
@@ -251,7 +309,6 @@ export function IndividualInsertScreen({
   const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'personal', label: 'Personal Information', icon: <User className="w-4 h-4" /> },
     { key: 'identification', label: 'Identification & Docs', icon: <ShieldCheck className="w-4 h-4" /> },
-    { key: 'contact', label: 'Contact & Address', icon: <MapPin className="w-4 h-4" /> },
     { key: 'employment', label: 'Employment & Banking', icon: <Briefcase className="w-4 h-4" /> },
     { key: 'family', label: 'Family & Related Persons', icon: <Users className="w-4 h-4" /> },
     { key: 'account', label: 'Account Information', icon: <CreditCard className="w-4 h-4" /> },
@@ -260,11 +317,11 @@ export function IndividualInsertScreen({
   const isTabComplete = (tabKey: TabKey): boolean => {
     switch (tabKey) {
       case 'personal':
-        return Boolean(values.givenNameEN.trim() && values.surnameEN.trim());
+        return Boolean(
+          values.givenNameEN.trim() && values.surnameEN.trim() && values.email.trim() && values.city.trim()
+        );
       case 'identification':
         return Boolean(values.idNumber.trim());
-      case 'contact':
-        return Boolean(values.email.trim() || values.mobile.trim());
       case 'employment':
         return Boolean(values.occupation.trim() || values.organizationName.trim() || values.accountNumber.trim());
       case 'family':

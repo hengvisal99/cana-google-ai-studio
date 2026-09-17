@@ -63,7 +63,6 @@ export const SIDEBAR_NAV: SidebarGroup[] = [
         hint: '⌘3',
         children: [
           { id: 'customer-list', label: 'List' },
-          { id: 'customer-create', label: 'Create' },
           { id: 'customer-type', label: 'Customer Type', badge: '5' },
         ],
       },

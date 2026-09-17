@@ -14,11 +14,21 @@ import {
   PositionLevel,
   RiskRating,
 } from '@/types';
-import { User, ShieldCheck, CreditCard, MapPin, Briefcase, Users, Upload, Building, Phone, Mail, Camera, X } from 'lucide-react';
+import { User, ShieldCheck, CreditCard, Briefcase, Users, Upload, Building, Phone, Mail, Camera, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  AddressFields,
+  FormAddress,
+  FormInput,
+  FormPhone,
+  FormSelect,
+  FormTextarea,
+  formatPhoneValue,
+  parsePhoneValue,
+} from '@/components/ui/form';
 import { DocumentSlotRow } from '@/components/shared/DocumentSlotRow';
 
-export type FormStepKey = 'personal' | 'identification' | 'contact' | 'employment' | 'family' | 'account';
+export type FormStepKey = 'personal' | 'identification' | 'employment' | 'family' | 'account';
 
 /** Every field both individual forms edit. */
 export type IndividualFormValues = {
@@ -43,14 +53,17 @@ export type IndividualFormValues = {
   issuedDate: string;
   expiredDate: string;
   taxpayerIdNumber: string;
+  note: string;
   email: string;
   mobile: string;
   telephone: string;
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
   country: string;
+  city: string;
+  /** District / Khan. */
+  state: string;
+  commune: string;
+  homeNo: string;
+  streetNo: string;
   occupation: string;
   position: string;
   typeOfBusiness: string;
@@ -58,13 +71,20 @@ export type IndividualFormValues = {
   organizationName: string;
   lengthOfWork: string;
   officeTelephone: string;
-  organizationAddress: string;
+  orgCountry: string;
+  orgCity: string;
+  /** District / Khan. */
+  orgDistrict: string;
+  orgCommune: string;
+  orgHomeNo: string;
+  orgStreetNo: string;
   bankName: string;
   accountOwner: string;
   savingAccount: string;
   accountNumber: string;
   spouseName: string;
   spouseLatin: string;
+  spouseGender: Gender;
   spouseEmail: string;
   spouseYearWork: string;
   spouseRelationship: string;
@@ -73,19 +93,33 @@ export type IndividualFormValues = {
   spouseBusiness: string;
   spouseMobile: string;
   spouseOfficePhone: string;
-  spouseAddress: string;
+  spouseCountry: string;
+  spouseCity: string;
+  /** District / Khan. */
+  spouseDistrict: string;
+  spouseCommune: string;
+  spouseHomeNo: string;
+  spouseStreetNo: string;
   relName: string;
   relLatin: string;
   relEmail: string;
   relGender: Gender;
   relRelationship: string;
   relMobile: string;
-  relAddress: string;
+  relCountry: string;
+  relCity: string;
+  /** District / Khan. */
+  relDistrict: string;
+  relCommune: string;
+  relHomeNo: string;
+  relStreetNo: string;
   investorIdNumber: string;
   securitiesFirm: string;
   customerReceivedBy: string;
   applicationDate: string;
   dateSentToSECC: string;
+  dateReceivedFromSECC: string;
+  investorIdExpiredDate: string;
   investorStatus: 'Normal' | 'VIP' | 'Restricted';
   tradingAccountNumber: string;
   accountDate: string;
@@ -118,14 +152,16 @@ export function createEmptyFormValues(): IndividualFormValues {
     issuedDate: '2022-01-10',
     expiredDate: '2032-01-10',
     taxpayerIdNumber: '',
+    note: '',
     email: '',
     mobile: '',
     telephone: '',
-    street: '',
+    country: 'Cambodia',
     city: 'Phnom Penh',
     state: 'Daun Penh',
-    postalCode: '120201',
-    country: 'Cambodia',
+    commune: '',
+    homeNo: '',
+    streetNo: '',
     occupation: '',
     position: '',
     typeOfBusiness: '',
@@ -133,13 +169,19 @@ export function createEmptyFormValues(): IndividualFormValues {
     organizationName: '',
     lengthOfWork: '3 years',
     officeTelephone: '',
-    organizationAddress: '',
+    orgCountry: 'Cambodia',
+    orgCity: '',
+    orgDistrict: '',
+    orgCommune: '',
+    orgHomeNo: '',
+    orgStreetNo: '',
     bankName: 'Canadia Bank Plc',
     accountOwner: '',
     savingAccount: 'Premier Savings Account',
     accountNumber: '',
     spouseName: '',
     spouseLatin: '',
+    spouseGender: 'Female',
     spouseEmail: '',
     spouseYearWork: '2020',
     spouseRelationship: 'Spouse',
@@ -148,19 +190,31 @@ export function createEmptyFormValues(): IndividualFormValues {
     spouseBusiness: '',
     spouseMobile: '',
     spouseOfficePhone: '',
-    spouseAddress: '',
+    spouseCountry: 'Cambodia',
+    spouseCity: '',
+    spouseDistrict: '',
+    spouseCommune: '',
+    spouseHomeNo: '',
+    spouseStreetNo: '',
     relName: '',
     relLatin: '',
     relEmail: '',
     relGender: 'Female',
     relRelationship: 'Sibling',
     relMobile: '',
-    relAddress: '',
+    relCountry: 'Cambodia',
+    relCity: '',
+    relDistrict: '',
+    relCommune: '',
+    relHomeNo: '',
+    relStreetNo: '',
     investorIdNumber: '',
     securitiesFirm: 'Nexus Securities Plc',
     customerReceivedBy: 'Sophea Keo (CSO)',
     applicationDate: '2026-09-09',
     dateSentToSECC: '2026-09-10',
+    dateReceivedFromSECC: '',
+    investorIdExpiredDate: '2036-09-09',
     investorStatus: 'Normal',
     tradingAccountNumber: '',
     accountDate: '2026-09-15',
@@ -194,14 +248,16 @@ export function formValuesFromIndividual(individual: Individual): IndividualForm
     issuedDate: individual.issuedDate || '2022-01-10',
     expiredDate: individual.expiredDate || individual.idExpiryDate || '2032-01-10',
     taxpayerIdNumber: individual.taxpayerIdNumber || '',
+    note: individual.note || '',
     email: individual.email || '',
     mobile: individual.mobile || individual.phone || '',
     telephone: individual.telephone || '',
-    street: individual.address?.street || '',
+    country: individual.address?.country || 'Cambodia',
     city: individual.address?.city || 'Phnom Penh',
     state: individual.address?.state || 'Daun Penh',
-    postalCode: individual.address?.postalCode || '120201',
-    country: individual.address?.country || 'Cambodia',
+    commune: individual.address?.commune || '',
+    homeNo: individual.address?.homeNo || '',
+    streetNo: individual.address?.streetNo || individual.address?.street || '',
     occupation: individual.employment?.occupation || individual.occupation || '',
     position: individual.employment?.position || '',
     typeOfBusiness: individual.employment?.typeOfBusiness || '',
@@ -209,13 +265,19 @@ export function formValuesFromIndividual(individual: Individual): IndividualForm
     organizationName: individual.employment?.organizationName || individual.employer || '',
     lengthOfWork: individual.employment?.lengthOfWork || '3 years',
     officeTelephone: individual.employment?.officeTelephone || '',
-    organizationAddress: individual.employment?.organizationAddress || '',
+    orgCountry: individual.employment?.organizationCountry || 'Cambodia',
+    orgCity: individual.employment?.organizationCity || '',
+    orgDistrict: individual.employment?.organizationDistrict || '',
+    orgCommune: individual.employment?.organizationCommune || '',
+    orgHomeNo: individual.employment?.organizationHomeNo || '',
+    orgStreetNo: individual.employment?.organizationStreetNo || individual.employment?.organizationAddress || '',
     bankName: individual.banking?.bankName || 'Canadia Bank Plc',
     accountOwner: individual.banking?.accountOwner || '',
     savingAccount: individual.banking?.savingAccount || 'Premier Savings Account',
     accountNumber: individual.banking?.accountNumber || '',
     spouseName: individual.spouse?.fullName || '',
     spouseLatin: individual.spouse?.latin || '',
+    spouseGender: individual.spouse?.gender || 'Female',
     spouseEmail: individual.spouse?.email || '',
     spouseYearWork: individual.spouse?.yearOfEmployment || '2020',
     spouseRelationship: individual.spouse?.relationship || 'Spouse',
@@ -224,19 +286,35 @@ export function formValuesFromIndividual(individual: Individual): IndividualForm
     spouseBusiness: individual.spouse?.typeOfBusiness || '',
     spouseMobile: individual.spouse?.mobile || '',
     spouseOfficePhone: individual.spouse?.officeTelephone || '',
-    spouseAddress: individual.spouse?.address || '',
+    spouseCountry: individual.spouse?.addressCountry || 'Cambodia',
+    spouseCity: individual.spouse?.addressCity || '',
+    spouseDistrict: individual.spouse?.addressDistrict || '',
+    spouseCommune: individual.spouse?.addressCommune || '',
+    spouseHomeNo: individual.spouse?.addressHomeNo || '',
+    spouseStreetNo: individual.spouse?.addressStreetNo || individual.spouse?.address || '',
     relName: individual.relatedPerson?.fullName || '',
     relLatin: individual.relatedPerson?.latin || '',
     relEmail: individual.relatedPerson?.email || '',
     relGender: individual.relatedPerson?.gender || 'Female',
     relRelationship: individual.relatedPerson?.relationship || 'Sibling',
     relMobile: individual.relatedPerson?.mobile || '',
-    relAddress: individual.relatedPerson?.address || '',
+    relCountry: individual.relatedPerson?.addressCountry || 'Cambodia',
+    relCity: individual.relatedPerson?.addressCity || '',
+    relDistrict: individual.relatedPerson?.addressDistrict || '',
+    relCommune: individual.relatedPerson?.addressCommune || '',
+    relHomeNo: individual.relatedPerson?.addressHomeNo || '',
+    relStreetNo: individual.relatedPerson?.addressStreetNo || individual.relatedPerson?.address || '',
     investorIdNumber: individual.investorIdInfo?.investorIdNumber || '',
     securitiesFirm: individual.investorIdInfo?.securitiesFirm || 'Nexus Securities Plc',
     customerReceivedBy: individual.investorIdInfo?.customerReceivedBy || 'Sophea Keo (CSO)',
     applicationDate: individual.investorIdInfo?.applicationDate || '2026-09-09',
     dateSentToSECC: individual.investorIdInfo?.dateSentToSECC || '2026-09-10',
+    // Records created before this field existed store the literal 'Pending'; a date input cannot show it.
+    dateReceivedFromSECC:
+      individual.investorIdInfo?.dateReceivedFromSECC === 'Pending'
+        ? ''
+        : individual.investorIdInfo?.dateReceivedFromSECC || '',
+    investorIdExpiredDate: individual.investorIdInfo?.investorIdExpiredDate || '2036-09-09',
     investorStatus: individual.investorIdInfo?.customerStatus || 'Normal',
     tradingAccountNumber: individual.tradingAccountInfo?.tradingAccountNumber || '',
     accountDate: individual.tradingAccountInfo?.accountDate || '2026-09-15',
@@ -288,14 +366,16 @@ export function IndividualFormFields({
     issuedDate,
     expiredDate,
     taxpayerIdNumber,
+    note,
     email,
     mobile,
     telephone,
-    street,
+    country,
     city,
     state,
-    postalCode,
-    country,
+    commune,
+    homeNo,
+    streetNo,
     occupation,
     position,
     typeOfBusiness,
@@ -303,13 +383,19 @@ export function IndividualFormFields({
     organizationName,
     lengthOfWork,
     officeTelephone,
-    organizationAddress,
+    orgCountry,
+    orgCity,
+    orgDistrict,
+    orgCommune,
+    orgHomeNo,
+    orgStreetNo,
     bankName,
     accountOwner,
     savingAccount,
     accountNumber,
     spouseName,
     spouseLatin,
+    spouseGender,
     spouseEmail,
     spouseYearWork,
     spouseRelationship,
@@ -318,19 +404,31 @@ export function IndividualFormFields({
     spouseBusiness,
     spouseMobile,
     spouseOfficePhone,
-    spouseAddress,
+    spouseCountry,
+    spouseCity,
+    spouseDistrict,
+    spouseCommune,
+    spouseHomeNo,
+    spouseStreetNo,
     relName,
     relLatin,
     relEmail,
     relGender,
     relRelationship,
     relMobile,
-    relAddress,
+    relCountry,
+    relCity,
+    relDistrict,
+    relCommune,
+    relHomeNo,
+    relStreetNo,
     investorIdNumber,
     securitiesFirm,
     customerReceivedBy,
     applicationDate,
     dateSentToSECC,
+    dateReceivedFromSECC,
+    investorIdExpiredDate,
     investorStatus,
     tradingAccountNumber,
     accountDate,
@@ -360,14 +458,16 @@ export function IndividualFormFields({
   const setIssuedDate = (value: IndividualFormValues['issuedDate']) => setValue('issuedDate', value);
   const setExpiredDate = (value: IndividualFormValues['expiredDate']) => setValue('expiredDate', value);
   const setTaxpayerIdNumber = (value: IndividualFormValues['taxpayerIdNumber']) => setValue('taxpayerIdNumber', value);
+  const setNote = (value: IndividualFormValues['note']) => setValue('note', value);
   const setEmail = (value: IndividualFormValues['email']) => setValue('email', value);
   const setMobile = (value: IndividualFormValues['mobile']) => setValue('mobile', value);
   const setTelephone = (value: IndividualFormValues['telephone']) => setValue('telephone', value);
-  const setStreet = (value: IndividualFormValues['street']) => setValue('street', value);
+  const setCountry = (value: IndividualFormValues['country']) => setValue('country', value);
   const setCity = (value: IndividualFormValues['city']) => setValue('city', value);
   const setState = (value: IndividualFormValues['state']) => setValue('state', value);
-  const setPostalCode = (value: IndividualFormValues['postalCode']) => setValue('postalCode', value);
-  const setCountry = (value: IndividualFormValues['country']) => setValue('country', value);
+  const setCommune = (value: IndividualFormValues['commune']) => setValue('commune', value);
+  const setHomeNo = (value: IndividualFormValues['homeNo']) => setValue('homeNo', value);
+  const setStreetNo = (value: IndividualFormValues['streetNo']) => setValue('streetNo', value);
   const setOccupation = (value: IndividualFormValues['occupation']) => setValue('occupation', value);
   const setPosition = (value: IndividualFormValues['position']) => setValue('position', value);
   const setTypeOfBusiness = (value: IndividualFormValues['typeOfBusiness']) => setValue('typeOfBusiness', value);
@@ -375,7 +475,12 @@ export function IndividualFormFields({
   const setOrganizationName = (value: IndividualFormValues['organizationName']) => setValue('organizationName', value);
   const setLengthOfWork = (value: IndividualFormValues['lengthOfWork']) => setValue('lengthOfWork', value);
   const setOfficeTelephone = (value: IndividualFormValues['officeTelephone']) => setValue('officeTelephone', value);
-  const setOrganizationAddress = (value: IndividualFormValues['organizationAddress']) => setValue('organizationAddress', value);
+  const setOrgCountry = (value: IndividualFormValues['orgCountry']) => setValue('orgCountry', value);
+  const setOrgCity = (value: IndividualFormValues['orgCity']) => setValue('orgCity', value);
+  const setOrgDistrict = (value: IndividualFormValues['orgDistrict']) => setValue('orgDistrict', value);
+  const setOrgCommune = (value: IndividualFormValues['orgCommune']) => setValue('orgCommune', value);
+  const setOrgHomeNo = (value: IndividualFormValues['orgHomeNo']) => setValue('orgHomeNo', value);
+  const setOrgStreetNo = (value: IndividualFormValues['orgStreetNo']) => setValue('orgStreetNo', value);
   const setBankName = (value: IndividualFormValues['bankName']) => setValue('bankName', value);
   const setAccountOwner = (value: IndividualFormValues['accountOwner']) => setValue('accountOwner', value);
   const setSavingAccount = (value: IndividualFormValues['savingAccount']) => setValue('savingAccount', value);
@@ -390,19 +495,32 @@ export function IndividualFormFields({
   const setSpouseBusiness = (value: IndividualFormValues['spouseBusiness']) => setValue('spouseBusiness', value);
   const setSpouseMobile = (value: IndividualFormValues['spouseMobile']) => setValue('spouseMobile', value);
   const setSpouseOfficePhone = (value: IndividualFormValues['spouseOfficePhone']) => setValue('spouseOfficePhone', value);
-  const setSpouseAddress = (value: IndividualFormValues['spouseAddress']) => setValue('spouseAddress', value);
+  const setSpouseGender = (value: IndividualFormValues['spouseGender']) => setValue('spouseGender', value);
+  const setSpouseCountry = (value: IndividualFormValues['spouseCountry']) => setValue('spouseCountry', value);
+  const setSpouseCity = (value: IndividualFormValues['spouseCity']) => setValue('spouseCity', value);
+  const setSpouseDistrict = (value: IndividualFormValues['spouseDistrict']) => setValue('spouseDistrict', value);
+  const setSpouseCommune = (value: IndividualFormValues['spouseCommune']) => setValue('spouseCommune', value);
+  const setSpouseHomeNo = (value: IndividualFormValues['spouseHomeNo']) => setValue('spouseHomeNo', value);
+  const setSpouseStreetNo = (value: IndividualFormValues['spouseStreetNo']) => setValue('spouseStreetNo', value);
   const setRelName = (value: IndividualFormValues['relName']) => setValue('relName', value);
   const setRelLatin = (value: IndividualFormValues['relLatin']) => setValue('relLatin', value);
   const setRelEmail = (value: IndividualFormValues['relEmail']) => setValue('relEmail', value);
   const setRelGender = (value: IndividualFormValues['relGender']) => setValue('relGender', value);
   const setRelRelationship = (value: IndividualFormValues['relRelationship']) => setValue('relRelationship', value);
   const setRelMobile = (value: IndividualFormValues['relMobile']) => setValue('relMobile', value);
-  const setRelAddress = (value: IndividualFormValues['relAddress']) => setValue('relAddress', value);
+  const setRelCountry = (value: IndividualFormValues['relCountry']) => setValue('relCountry', value);
+  const setRelCity = (value: IndividualFormValues['relCity']) => setValue('relCity', value);
+  const setRelDistrict = (value: IndividualFormValues['relDistrict']) => setValue('relDistrict', value);
+  const setRelCommune = (value: IndividualFormValues['relCommune']) => setValue('relCommune', value);
+  const setRelHomeNo = (value: IndividualFormValues['relHomeNo']) => setValue('relHomeNo', value);
+  const setRelStreetNo = (value: IndividualFormValues['relStreetNo']) => setValue('relStreetNo', value);
   const setInvestorIdNumber = (value: IndividualFormValues['investorIdNumber']) => setValue('investorIdNumber', value);
   const setSecuritiesFirm = (value: IndividualFormValues['securitiesFirm']) => setValue('securitiesFirm', value);
   const setCustomerReceivedBy = (value: IndividualFormValues['customerReceivedBy']) => setValue('customerReceivedBy', value);
   const setApplicationDate = (value: IndividualFormValues['applicationDate']) => setValue('applicationDate', value);
   const setDateSentToSECC = (value: IndividualFormValues['dateSentToSECC']) => setValue('dateSentToSECC', value);
+  const setDateReceivedFromSECC = (value: IndividualFormValues['dateReceivedFromSECC']) => setValue('dateReceivedFromSECC', value);
+  const setInvestorIdExpiredDate = (value: IndividualFormValues['investorIdExpiredDate']) => setValue('investorIdExpiredDate', value);
   const setInvestorStatus = (value: IndividualFormValues['investorStatus']) => setValue('investorStatus', value);
   const setTradingAccountNumber = (value: IndividualFormValues['tradingAccountNumber']) => setValue('tradingAccountNumber', value);
   const setAccountDate = (value: IndividualFormValues['accountDate']) => setValue('accountDate', value);
@@ -560,278 +678,125 @@ export function IndividualFormFields({
                     )}
                   </div>
 
-                  {/* Right Side Fields: Customer Type, Investor Status, Risk Rating & Mobile */}
-                  <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Customer Type *
-                      </label>
-                      <select
-                        value={customerType}
-                        onChange={(e) => setCustomerType(e.target.value as CustomerType)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="Retail">Retail Investor</option>
-                        <option value="Corporate">Corporate Investor</option>
-                        <option value="Institutional">Institutional Investor</option>
-                        <option value="HNW">High Net Worth (HNW)</option>
-                      </select>
-                    </div>
+                  {/* Right Side Fields: Identity & Demographics */}
+                  <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+                    <FormInput
+                      label="Surname (English)"
+                      required
+                      value={surnameEN}
+                      onChange={(e) => setSurnameEN(e.target.value)}
+                      placeholder="e.g. Vance"
+                      error={errors.surnameEN}
+                    />
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Investor Status *
-                      </label>
-                      <select
-                        value={investorStatus}
-                        onChange={(e) => setInvestorStatus(e.target.value as any)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="Normal">Normal Status</option>
-                        <option value="VIP">VIP Investor</option>
-                        <option value="Restricted">Restricted</option>
-                      </select>
-                    </div>
+                    <FormInput
+                      label="Given Name (English)"
+                      required
+                      value={givenNameEN}
+                      onChange={(e) => setGivenNameEN(e.target.value)}
+                      placeholder="e.g. Eleanor"
+                      error={errors.givenNameEN}
+                    />
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Risk Rating Category *
-                      </label>
-                      <select
-                        value={riskCategory}
-                        onChange={(e) => setRiskCategory(e.target.value as RiskRating)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="conservative">Conservative</option>
-                        <option value="moderate">Moderate</option>
-                        <option value="aggressive">Aggressive</option>
-                      </select>
-                    </div>
+                    <FormInput
+                      label="Surname (Khmer)"
+                      value={surnameKH}
+                      onChange={(e) => setSurnameKH(e.target.value)}
+                      placeholder="ត្រកូលជាភាសាខ្មែរ"
+                      className="font-khmer"
+                    />
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Mobile Phone Number *
-                      </label>
-                      <input
-                        type="text"
-                        value={mobile}
-                        onChange={(e) => setMobile(e.target.value)}
-                        placeholder="e.g. +855 12 345 678"
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
+                    <FormInput
+                      label="Given Name (Khmer)"
+                      value={givenNameKH}
+                      onChange={(e) => setGivenNameKH(e.target.value)}
+                      placeholder="នាមជាភាសាខ្មែរ"
+                      className="font-khmer"
+                    />
+
+                    <FormInput
+                      label="Date of Birth"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                    />
+
+                    <FormSelect
+                      label="Gender"
+                      value={gender}
+                      onChange={(next) => setGender(next as Gender)}
+                      options={['Male', 'Female', 'Other']}
+                    />
+
+                    <FormSelect
+                      label="Marital Status"
+                      value={maritalStatus}
+                      onChange={(next) => setMaritalStatus(next as MaritalStatus)}
+                      options={['Single', 'Married', 'Divorced', 'Widowed']}
+                    />
+
+                    <FormInput
+                      label="Nationality"
+                      value={nationality}
+                      onChange={(e) => setNationality(e.target.value)}
+                      placeholder="e.g. Cambodian, British..."
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Name Fields (EN & KH) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Surname (English) *
-                  </label>
-                  <input
-                    type="text"
-                    value={surnameEN}
-                    onChange={(e) => setSurnameEN(e.target.value)}
-                    placeholder="e.g. Vance"
-                    className={cn(
-                      'w-full px-3 py-2 bg-slate-50 border rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500',
-                      errors.surnameEN ? 'border-rose-300 bg-rose-50' : 'border-slate-200'
-                    )}
+              {/* Contact channels: the field labels name them, so the group needs no heading */}
+              <div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <FormInput
+                    label="Email Address"
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="client@domain.com"
+                    icon={Mail}
+                    error={errors.email}
                   />
-                  {errors.surnameEN && <p className="text-[10px] text-rose-600 mt-1">{errors.surnameEN}</p>}
-                </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Given Name (English) *
-                  </label>
-                  <input
-                    type="text"
-                    value={givenNameEN}
-                    onChange={(e) => setGivenNameEN(e.target.value)}
-                    placeholder="e.g. Eleanor"
-                    className={cn(
-                      'w-full px-3 py-2 bg-slate-50 border rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500',
-                      errors.givenNameEN ? 'border-rose-300 bg-rose-50' : 'border-slate-200'
-                    )}
+                  <FormPhone
+                    label="Mobile Phone"
+                    value={parsePhoneValue(mobile)}
+                    onChange={(next) => setMobile(formatPhoneValue(next))}
                   />
-                  {errors.givenNameEN && <p className="text-[10px] text-rose-600 mt-1">{errors.givenNameEN}</p>}
-                </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Surname (Khmer)
-                  </label>
-                  <input
-                    type="text"
-                    value={surnameKH}
-                    onChange={(e) => setSurnameKH(e.target.value)}
-                    placeholder="ត្រកូលជាភាសាខ្មែរ"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-khmer"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Given Name (Khmer)
-                  </label>
-                  <input
-                    type="text"
-                    value={givenNameKH}
-                    onChange={(e) => setGivenNameKH(e.target.value)}
-                    placeholder="នាមជាភាសាខ្មែរ"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 font-khmer"
+                  <FormPhone
+                    label="Telephone (Fixed Line)"
+                    value={parsePhoneValue(telephone)}
+                    onChange={(next) => setTelephone(formatPhoneValue(next))}
                   />
                 </div>
               </div>
 
-              {/* Demographics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-2">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Gender
-                  </label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value as Gender)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Marital Status
-                  </label>
-                  <select
-                    value={maritalStatus}
-                    onChange={(e) => setMaritalStatus(e.target.value as MaritalStatus)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                    <option value="Widowed">Widowed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Nationality
-                  </label>
-                  <input
-                    type="text"
-                    value={nationality}
-                    onChange={(e) => setNationality(e.target.value)}
-                    placeholder="e.g. Cambodian, British..."
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Investor Profile & Categorization */}
+              {/* Residential Address */}
               <div className="pt-2 border-t border-slate-100">
                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
-                  Investor Profile & Appropriateness
+                  Residential Address
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Customer Type
-                    </label>
-                    <select
-                      value={customerType}
-                      onChange={(e) => setCustomerType(e.target.value as CustomerType)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="Retail">Retail Investor</option>
-                      <option value="Corporate Officer">Corporate Officer</option>
-                      <option value="High Net Worth">High Net Worth (HNW)</option>
-                      <option value="Institutional">Institutional</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Education Background
-                    </label>
-                    <select
-                      value={educationBackground}
-                      onChange={(e) => setEducationBackground(e.target.value as EducationBackground)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="High School">High School</option>
-                      <option value="Bachelor's">Bachelor&apos;s Degree</option>
-                      <option value="Master's">Master&apos;s Degree</option>
-                      <option value="Doctorate">Doctorate / Ph.D.</option>
-                      <option value="Other">Other Professional</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Securities Knowledge
-                    </label>
-                    <select
-                      value={securitiesKnowledge}
-                      onChange={(e) => setSecuritiesKnowledge(e.target.value as SecuritiesKnowledge)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="None">None</option>
-                      <option value="Beginner">Beginner</option>
-                      <option value="Intermediate">Intermediate</option>
-                      <option value="Advanced">Advanced</option>
-                      <option value="Professional">Professional</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Risk Category
-                    </label>
-                    <select
-                      value={riskCategory}
-                      onChange={(e) => setRiskCategory(e.target.value as RiskRating)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="low">Low Risk (Capital Preservation)</option>
-                      <option value="moderate">Moderate Risk (Balanced Growth)</option>
-                      <option value="high">High Risk (Aggressive Capital Appreciation)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Investment Experience
-                    </label>
-                    <select
-                      value={investmentExperience}
-                      onChange={(e) => setInvestmentExperience(e.target.value as InvestmentExperience)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="< 1 year">&lt; 1 year</option>
-                      <option value="1 - 3 years">1 - 3 years</option>
-                      <option value="3 - 5 years">3 - 5 years</option>
-                      <option value="5+ years">5+ years</option>
-                    </select>
-                  </div>
+                  <AddressFields
+                    value={{
+                      country,
+                      city,
+                      district: state,
+                      commune,
+                      homeNo,
+                      streetNo,
+                    }}
+                    onChange={(next) => {
+                      setCountry(next.country);
+                      setCity(next.city);
+                      setState(next.district);
+                      setCommune(next.commune);
+                      setHomeNo(next.homeNo);
+                      setStreetNo(next.streetNo);
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -848,102 +813,74 @@ export function IndividualFormFields({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Residency *
-                  </label>
-                  <select
-                    value={residency}
-                    onChange={(e) => setResidency(e.target.value as ResidencyStatus)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="Resident">Resident</option>
-                    <option value="Non-Resident">Non-Resident</option>
-                  </select>
-                </div>
+                <FormSelect
+                  label="Residency"
+                  required
+                  value={residency}
+                  onChange={(next) => setResidency(next as ResidencyStatus)}
+                  options={['Resident', 'Non-Resident']}
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    ID Type *
-                  </label>
-                  <select
-                    value={idType}
-                    onChange={(e) => setIdType(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="National ID">National ID Card</option>
-                    <option value="Passport">International Passport</option>
-                    <option value="Driver License">Driver License</option>
-                    <option value="Government ID">Government ID</option>
-                    <option value="Tax ID">Tax ID Document</option>
-                  </select>
-                </div>
+                <FormSelect
+                  label="ID Type"
+                  required
+                  value={idType}
+                  onChange={(next) => setIdType(next as any)}
+                  options={[
+                    { value: 'National ID', label: 'National ID Card' },
+                    { value: 'Passport', label: 'International Passport' },
+                    { value: 'Driver License', label: 'Driver License' },
+                    { value: 'Government ID', label: 'Government ID' },
+                    { value: 'Tax ID', label: 'Tax ID Document' },
+                  ]}
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    ID Number *
-                  </label>
-                  <input
-                    type="text"
-                    value={idNumber}
-                    onChange={(e) => setIdNumber(e.target.value)}
-                    placeholder="e.g. KHM-019829381"
-                    className={cn(
-                      'w-full px-3 py-2 bg-slate-50 border rounded-lg text-slate-800 font-mono',
-                      errors.idNumber ? 'border-rose-300 bg-rose-50' : 'border-slate-200'
-                    )}
-                  />
-                  {errors.idNumber && <p className="text-[10px] text-rose-600 mt-1">{errors.idNumber}</p>}
-                </div>
+                <FormInput
+                  label="ID Number"
+                  required
+                  value={idNumber}
+                  onChange={(e) => setIdNumber(e.target.value)}
+                  placeholder="e.g. KHM-019829381"
+                  error={errors.idNumber}
+                  className="font-mono"
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Issued By
-                  </label>
-                  <input
-                    type="text"
-                    value={issuedBy}
-                    onChange={(e) => setIssuedBy(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Issued By"
+                  value={issuedBy}
+                  onChange={(e) => setIssuedBy(e.target.value)}
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Issued Date
-                  </label>
-                  <input
-                    type="date"
-                    value={issuedDate}
-                    onChange={(e) => setIssuedDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Issued Date"
+                  type="date"
+                  value={issuedDate}
+                  onChange={(e) => setIssuedDate(e.target.value)}
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Expired Date
-                  </label>
-                  <input
-                    type="date"
-                    value={expiredDate}
-                    onChange={(e) => setExpiredDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Expired Date"
+                  type="date"
+                  value={expiredDate}
+                  onChange={(e) => setExpiredDate(e.target.value)}
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Taxpayer ID Number (TIN)
-                  </label>
-                  <input
-                    type="text"
-                    value={taxpayerIdNumber}
-                    onChange={(e) => setTaxpayerIdNumber(e.target.value)}
-                    placeholder="e.g. TIN-889102941"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono"
-                  />
-                </div>
+                <FormInput
+                  label="Taxpayer ID Number (TIN)"
+                  value={taxpayerIdNumber}
+                  onChange={(e) => setTaxpayerIdNumber(e.target.value)}
+                  placeholder="e.g. TIN-889102941"
+                  className="font-mono"
+                />
+
+                <FormTextarea
+                  label="Note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Any remark about the identification documents (optional)"
+                  rows={3}
+                  containerClassName="sm:col-span-2 md:col-span-4"
+                />
               </div>
 
               {/* Supporting Documents Section with Integrated Card Upload UI */}
@@ -1056,138 +993,6 @@ export function IndividualFormFields({
             </div>
           )}
 
-          {/* TAB 3: CONTACT & ADDRESS */}
-          {activeTab === 'contact' && (
-            <div className="space-y-5 animate-in fade-in">
-              <div className="border-b border-slate-100 pb-3">
-                <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  <span>Contact Information & Residential Address</span>
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Email Address *
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="client@domain.com"
-                      className={cn(
-                        'w-full pl-9 pr-3 py-2 bg-slate-50 border rounded-lg text-slate-800 focus:bg-white',
-                        errors.email ? 'border-rose-300 bg-rose-50' : 'border-slate-200'
-                      )}
-                    />
-                  </div>
-                  {errors.email && <p className="text-[10px] text-rose-600 mt-1">{errors.email}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Mobile Phone
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      placeholder="+855 12 000 000"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Telephone (Fixed Line)
-                  </label>
-                  <input
-                    type="text"
-                    value={telephone}
-                    onChange={(e) => setTelephone(e.target.value)}
-                    placeholder="+855 23 000 000"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* Address details */}
-              <div className="pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
-                  Residential Address
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                  <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Street Address
-                    </label>
-                    <input
-                      type="text"
-                      value={street}
-                      onChange={(e) => setStreet(e.target.value)}
-                      placeholder="e.g. No. 450, Preah Monivong Blvd, Sangkat Boeung Keng Kang"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      State / Khan / Province
-                    </label>
-                    <input
-                      type="text"
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Postal Code
-                    </label>
-                    <input
-                      type="text"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* TAB 4: EMPLOYMENT & BANKING */}
           {activeTab === 'employment' && (
             <div className="space-y-5 animate-in fade-in">
@@ -1200,149 +1005,111 @@ export function IndividualFormFields({
 
               {/* Employment */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Occupation</label>
-                  <input
-                    type="text"
-                    value={occupation}
-                    onChange={(e) => setOccupation(e.target.value)}
-                    placeholder="e.g. Managing Director"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Occupation"
+                  value={occupation}
+                  onChange={(e) => setOccupation(e.target.value)}
+                  placeholder="e.g. Managing Director"
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Position / Title</label>
-                  <input
-                    type="text"
-                    value={position}
-                    onChange={(e) => setPosition(e.target.value)}
-                    placeholder="e.g. Founder & CEO"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Position / Title"
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  placeholder="e.g. Founder & CEO"
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Type of Business</label>
-                  <input
-                    type="text"
-                    value={typeOfBusiness}
-                    onChange={(e) => setTypeOfBusiness(e.target.value)}
-                    placeholder="e.g. Technology & Logistics"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Type of Business"
+                  value={typeOfBusiness}
+                  onChange={(e) => setTypeOfBusiness(e.target.value)}
+                  placeholder="e.g. Technology & Logistics"
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Level of Position</label>
-                  <select
-                    value={levelOfPosition}
-                    onChange={(e) => setLevelOfPosition(e.target.value as PositionLevel)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  >
-                    <option value="Staff">Staff / Associate</option>
-                    <option value="Senior">Senior Specialist</option>
-                    <option value="Manager">Manager / Dept Head</option>
-                    <option value="Executive / C-Level">Executive / C-Level / Director</option>
-                  </select>
-                </div>
+                <FormSelect
+                  label="Level of Position"
+                  value={levelOfPosition}
+                  onChange={(next) => setLevelOfPosition(next as PositionLevel)}
+                  options={[
+                    { value: 'Staff', label: 'Staff / Associate' },
+                    { value: 'Senior', label: 'Senior Specialist' },
+                    { value: 'Manager', label: 'Manager / Dept Head' },
+                    { value: 'Executive / C-Level', label: 'Executive / C-Level / Director' },
+                  ]}
+                />
 
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Organization / Employer Name</label>
-                  <input
-                    type="text"
-                    value={organizationName}
-                    onChange={(e) => setOrganizationName(e.target.value)}
-                    placeholder="e.g. Vance Robotics Corp Ltd"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Organization / Employer Name"
+                  value={organizationName}
+                  onChange={(e) => setOrganizationName(e.target.value)}
+                  placeholder="e.g. Vance Robotics Corp Ltd"
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Length of Work</label>
-                  <input
-                    type="text"
-                    value={lengthOfWork}
-                    onChange={(e) => setLengthOfWork(e.target.value)}
-                    placeholder="e.g. 5 years"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormInput
+                  label="Length of Work"
+                  value={lengthOfWork}
+                  onChange={(e) => setLengthOfWork(e.target.value)}
+                  placeholder="e.g. 5 years"
+                />
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Office Telephone</label>
-                  <input
-                    type="text"
-                    value={officeTelephone}
-                    onChange={(e) => setOfficeTelephone(e.target.value)}
-                    placeholder="+855 23 881 990"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormPhone
+                  label="Office Telephone"
+                  value={parsePhoneValue(officeTelephone)}
+                  onChange={(next) => setOfficeTelephone(formatPhoneValue(next))}
+                />
 
-                <div className="sm:col-span-4">
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Organization Address</label>
-                  <input
-                    type="text"
-                    value={organizationAddress}
-                    onChange={(e) => setOrganizationAddress(e.target.value)}
-                    placeholder="e.g. Exchange Square, Level 14, St 106, Phnom Penh"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormAddress
+                  label="Organization Address"
+                  value={{
+                    country: orgCountry,
+                    city: orgCity,
+                    district: orgDistrict,
+                    commune: orgCommune,
+                    homeNo: orgHomeNo,
+                    streetNo: orgStreetNo,
+                  }}
+                  onChange={(next) => {
+                    setOrgCountry(next.country);
+                    setOrgCity(next.city);
+                    setOrgDistrict(next.district);
+                    setOrgCommune(next.commune);
+                    setOrgHomeNo(next.homeNo);
+                    setOrgStreetNo(next.streetNo);
+                  }}
+                />
               </div>
 
-              {/* Designated Bank Account */}
+              {/* Designated settlement bank account */}
               <div className="pt-4 border-t border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
-                  Designated Settlement Bank Account
-                </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Bank Name</label>
-                    <select
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                    >
-                      <option value="Canadia Bank Plc">Canadia Bank Plc</option>
-                      <option value="Other Local Commercial Bank">Other Local Commercial Bank</option>
-                      <option value="Foreign Commercial Bank">Foreign Commercial Bank</option>
-                    </select>
-                  </div>
+                  <FormSelect
+                    label="Bank Name"
+                    value={bankName}
+                    onChange={(next) => setBankName(next)}
+                    options={['Canadia Bank Plc', 'Other Local Commercial Bank', 'Foreign Commercial Bank']}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Account Owner Name</label>
-                    <input
-                      type="text"
-                      value={accountOwner}
-                      onChange={(e) => setAccountOwner(e.target.value)}
-                      placeholder="ELEANOR VANCE"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 uppercase"
-                    />
-                  </div>
+                  <FormInput
+                    label="Account Owner Name"
+                    value={accountOwner}
+                    onChange={(e) => setAccountOwner(e.target.value)}
+                    placeholder="ELEANOR VANCE"
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Saving / Account Type</label>
-                    <input
-                      type="text"
-                      value={savingAccount}
-                      onChange={(e) => setSavingAccount(e.target.value)}
-                      placeholder="Premier Savings"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormInput
+                    label="Saving / Account Type"
+                    value={savingAccount}
+                    onChange={(e) => setSavingAccount(e.target.value)}
+                    placeholder="Premier Savings"
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Bank Account Number</label>
-                    <input
-                      type="text"
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="001 982 441 902"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-mono"
-                    />
-                  </div>
+                  <FormInput
+                    label="Bank Account Number"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="001 982 441 902"
+                    className="font-mono"
+                  />
                 </div>
               </div>
             </div>
@@ -1359,7 +1126,7 @@ export function IndividualFormFields({
               </div>
 
               {/* Spouse Section - Always visible */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
+              <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
@@ -1373,111 +1140,96 @@ export function IndividualFormFields({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Full Name (English / Khmer)</label>
-                    <input
-                      type="text"
-                      value={spouseName}
-                      onChange={(e) => setSpouseName(e.target.value)}
-                      placeholder="e.g. Julian Vance"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Latin Name</label>
-                    <input
-                      type="text"
-                      value={spouseLatin}
-                      onChange={(e) => setSpouseLatin(e.target.value)}
-                      placeholder="e.g. Julian Vance"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Relationship</label>
-                    <input
-                      type="text"
-                      value={spouseRelationship}
-                      onChange={(e) => setSpouseRelationship(e.target.value)}
-                      placeholder="Spouse / Partner"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={spouseEmail}
-                      onChange={(e) => setSpouseEmail(e.target.value)}
-                      placeholder="spouse@techinvest.kh"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Mobile Phone</label>
-                    <input
-                      type="text"
-                      value={spouseMobile}
-                      onChange={(e) => setSpouseMobile(e.target.value)}
-                      placeholder="+855 12 887 651"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Office Telephone</label>
-                    <input
-                      type="text"
-                      value={spouseOfficePhone}
-                      onChange={(e) => setSpouseOfficePhone(e.target.value)}
-                      placeholder="+855 23 881 992"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Occupation</label>
-                    <input
-                      type="text"
-                      value={spouseOccupation}
-                      onChange={(e) => setSpouseOccupation(e.target.value)}
-                      placeholder="e.g. Architect"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Position / Title</label>
-                    <input
-                      type="text"
-                      value={spousePosition}
-                      onChange={(e) => setSpousePosition(e.target.value)}
-                      placeholder="e.g. Partner"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Type of Business</label>
-                    <input
-                      type="text"
-                      value={spouseBusiness}
-                      onChange={(e) => setSpouseBusiness(e.target.value)}
-                      placeholder="e.g. Architecture & Design"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="sm:col-span-2 md:col-span-3">
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Residential / Working Address</label>
-                    <input
-                      type="text"
-                      value={spouseAddress}
-                      onChange={(e) => setSpouseAddress(e.target.value)}
-                      placeholder="e.g. No. 42B, Street 310, Boeung Keng Kang 1, Phnom Penh"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
+                  <FormInput
+                    label="Full Name (English / Khmer)"
+                    value={spouseName}
+                    onChange={(e) => setSpouseName(e.target.value)}
+                    placeholder="e.g. Julian Vance"
+                  />
+                  <FormInput
+                    label="Latin Name"
+                    value={spouseLatin}
+                    onChange={(e) => setSpouseLatin(e.target.value)}
+                    placeholder="e.g. Julian Vance"
+                  />
+                  <FormSelect
+                    label="Gender"
+                    value={spouseGender}
+                    onChange={(next) => setSpouseGender(next as Gender)}
+                    options={['Female', 'Male', 'Other']}
+                  />
+                  <FormInput
+                    label="Relationship"
+                    value={spouseRelationship}
+                    onChange={(e) => setSpouseRelationship(e.target.value)}
+                    placeholder="Spouse / Partner"
+                  />
+                  <FormInput
+                    label="Email"
+                    type="email"
+                    value={spouseEmail}
+                    onChange={(e) => setSpouseEmail(e.target.value)}
+                    placeholder="spouse@techinvest.kh"
+                  />
+                  <FormPhone
+                    label="Mobile Phone"
+                    value={parsePhoneValue(spouseMobile)}
+                    onChange={(next) => setSpouseMobile(formatPhoneValue(next))}
+                  />
+                  <FormPhone
+                    label="Office Telephone"
+                    value={parsePhoneValue(spouseOfficePhone)}
+                    onChange={(next) => setSpouseOfficePhone(formatPhoneValue(next))}
+                  />
+                  <FormInput
+                    label="Occupation"
+                    value={spouseOccupation}
+                    onChange={(e) => setSpouseOccupation(e.target.value)}
+                    placeholder="e.g. Architect"
+                  />
+                  <FormInput
+                    label="Position / Title"
+                    value={spousePosition}
+                    onChange={(e) => setSpousePosition(e.target.value)}
+                    placeholder="e.g. Partner"
+                  />
+                  <FormInput
+                    label="Type of Business"
+                    value={spouseBusiness}
+                    onChange={(e) => setSpouseBusiness(e.target.value)}
+                    placeholder="e.g. Architecture & Design"
+                  />
+                  <FormInput
+                    label="Year of Employment"
+                    value={spouseYearWork}
+                    onChange={(e) => setSpouseYearWork(e.target.value)}
+                    placeholder="e.g. 2020"
+                    className="font-mono"
+                  />
+                  <FormAddress
+                    label="Residential / Working Address"
+                    value={{
+                      country: spouseCountry,
+                      city: spouseCity,
+                      district: spouseDistrict,
+                      commune: spouseCommune,
+                      homeNo: spouseHomeNo,
+                      streetNo: spouseStreetNo,
+                    }}
+                    onChange={(next) => {
+                      setSpouseCountry(next.country);
+                      setSpouseCity(next.city);
+                      setSpouseDistrict(next.district);
+                      setSpouseCommune(next.commune);
+                      setSpouseHomeNo(next.homeNo);
+                      setSpouseStreetNo(next.streetNo);
+                    }}
+                  />
                 </div>
               </div>
 
               {/* Related Person Section - Always visible */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
+              <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-emerald-600" />
@@ -1491,78 +1243,61 @@ export function IndividualFormFields({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={relName}
-                      onChange={(e) => setRelName(e.target.value)}
-                      placeholder="e.g. Sokha Vance"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Latin Name</label>
-                    <input
-                      type="text"
-                      value={relLatin}
-                      onChange={(e) => setRelLatin(e.target.value)}
-                      placeholder="e.g. Sokha Vance"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Gender</label>
-                    <select
-                      value={relGender}
-                      onChange={(e) => setRelGender(e.target.value as any)}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="Female">Female</option>
-                      <option value="Male">Male</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Relationship</label>
-                    <input
-                      type="text"
-                      value={relRelationship}
-                      onChange={(e) => setRelRelationship(e.target.value)}
-                      placeholder="e.g. Sibling / Business Partner / Parent"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Mobile Phone</label>
-                    <input
-                      type="text"
-                      value={relMobile}
-                      onChange={(e) => setRelMobile(e.target.value)}
-                      placeholder="+855 17 992 001"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={relEmail}
-                      onChange={(e) => setRelEmail(e.target.value)}
-                      placeholder="sokha.vance@gmail.com"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="sm:col-span-2 md:col-span-3">
-                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Residential Address</label>
-                    <input
-                      type="text"
-                      value={relAddress}
-                      onChange={(e) => setRelAddress(e.target.value)}
-                      placeholder="e.g. Building 12, Street 200, Daun Penh, Phnom Penh"
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
+                  <FormInput
+                    label="Full Name"
+                    value={relName}
+                    onChange={(e) => setRelName(e.target.value)}
+                    placeholder="e.g. Sokha Vance"
+                  />
+                  <FormInput
+                    label="Latin Name"
+                    value={relLatin}
+                    onChange={(e) => setRelLatin(e.target.value)}
+                    placeholder="e.g. Sokha Vance"
+                  />
+                  <FormSelect
+                    label="Gender"
+                    value={relGender}
+                    onChange={(next) => setRelGender(next as any)}
+                    options={['Female', 'Male', 'Other']}
+                  />
+                  <FormInput
+                    label="Relationship"
+                    value={relRelationship}
+                    onChange={(e) => setRelRelationship(e.target.value)}
+                    placeholder="e.g. Sibling / Business Partner / Parent"
+                  />
+                  <FormPhone
+                    label="Mobile Phone"
+                    value={parsePhoneValue(relMobile)}
+                    onChange={(next) => setRelMobile(formatPhoneValue(next))}
+                  />
+                  <FormInput
+                    label="Email"
+                    type="email"
+                    value={relEmail}
+                    onChange={(e) => setRelEmail(e.target.value)}
+                    placeholder="sokha.vance@gmail.com"
+                  />
+                  <FormAddress
+                    label="Residential Address"
+                    value={{
+                      country: relCountry,
+                      city: relCity,
+                      district: relDistrict,
+                      commune: relCommune,
+                      homeNo: relHomeNo,
+                      streetNo: relStreetNo,
+                    }}
+                    onChange={(next) => {
+                      setRelCountry(next.country);
+                      setRelCity(next.city);
+                      setRelDistrict(next.district);
+                      setRelCommune(next.commune);
+                      setRelHomeNo(next.homeNo);
+                      setRelStreetNo(next.streetNo);
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -1578,114 +1313,153 @@ export function IndividualFormFields({
                 </h2>
               </div>
 
-              {/* Investor ID info */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
+              {/* Investor ID + trading account: one registration lifecycle */}
+              <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
                 <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
-                  Investor ID Information
+                  Investor ID & Trading Account
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Investor ID Number</label>
-                    <input
-                      type="text"
-                      value={investorIdNumber}
-                      onChange={(e) => setInvestorIdNumber(e.target.value)}
-                      placeholder="INV-882910 (Auto-generated if blank)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono text-slate-800"
-                    />
-                  </div>
+                  <FormInput
+                    label="Investor ID Number"
+                    value={investorIdNumber}
+                    onChange={(e) => setInvestorIdNumber(e.target.value)}
+                    placeholder="INV-882910 (Auto-generated if blank)"
+                    className="font-mono"
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Securities Firm</label>
-                    <input
-                      type="text"
-                      value={securitiesFirm}
-                      onChange={(e) => setSecuritiesFirm(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormInput
+                    label="Securities Firm"
+                    value={securitiesFirm}
+                    onChange={(e) => setSecuritiesFirm(e.target.value)}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Customer Received By (CSO)</label>
-                    <input
-                      type="text"
-                      value={customerReceivedBy}
-                      onChange={(e) => setCustomerReceivedBy(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormInput
+                    label="Customer Received By (CSO)"
+                    value={customerReceivedBy}
+                    onChange={(e) => setCustomerReceivedBy(e.target.value)}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Customer Status</label>
-                    <select
-                      value={investorStatus}
-                      onChange={(e) => setInvestorStatus(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    >
-                      <option value="Normal">Normal</option>
-                      <option value="VIP">VIP</option>
-                      <option value="Restricted">Restricted</option>
-                    </select>
-                  </div>
+                  <FormSelect
+                    label="Customer Status"
+                    value={investorStatus}
+                    onChange={(next) => setInvestorStatus(next as any)}
+                    options={['Normal', 'VIP', 'Restricted']}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Application Date</label>
-                    <input
-                      type="date"
-                      value={applicationDate}
-                      onChange={(e) => setApplicationDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormInput
+                    label="Application Date"
+                    type="date"
+                    value={applicationDate}
+                    onChange={(e) => setApplicationDate(e.target.value)}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Date Sent to SECC</label>
-                    <input
-                      type="date"
-                      value={dateSentToSECC}
-                      onChange={(e) => setDateSentToSECC(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormInput
+                    label="Date Sent to SECC"
+                    type="date"
+                    value={dateSentToSECC}
+                    onChange={(e) => setDateSentToSECC(e.target.value)}
+                  />
+
+                  <FormInput
+                    label="Date Received from SECC"
+                    type="date"
+                    value={dateReceivedFromSECC}
+                    onChange={(e) => setDateReceivedFromSECC(e.target.value)}
+                  />
+
+                  <FormInput
+                    label="Investor ID Expired Date"
+                    type="date"
+                    value={investorIdExpiredDate}
+                    onChange={(e) => setInvestorIdExpiredDate(e.target.value)}
+                  />
+
+                  <FormInput
+                    label="Trading Account Number"
+                    value={tradingAccountNumber}
+                    onChange={(e) => setTradingAccountNumber(e.target.value)}
+                    placeholder="TRD-770192 (Auto-assigned)"
+                    className="font-mono"
+                  />
+
+                  <FormInput
+                    label="Account Opening Date"
+                    type="date"
+                    value={accountDate}
+                    onChange={(e) => setAccountDate(e.target.value)}
+                  />
+
+                  <FormInput
+                    label="Assigned SR"
+                    value={currentAssignedSR}
+                    onChange={(e) => setCurrentAssignedSR(e.target.value)}
+                  />
+
+                  <FormInput
+                    label="Account Approved By"
+                    value={accountApprovedBy}
+                    onChange={(e) => setAccountApprovedBy(e.target.value)}
+                    placeholder="e.g. Vannak Lim (Manager)"
+                  />
                 </div>
               </div>
 
-              {/* Trading Account info */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-3">
+              {/* Investor Profile & Appropriateness */}
+              <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
                 <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
-                  Trading Account Information
+                  Investor Profile & Appropriateness
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Trading Account Number</label>
-                    <input
-                      type="text"
-                      value={tradingAccountNumber}
-                      onChange={(e) => setTradingAccountNumber(e.target.value)}
-                      placeholder="TRD-770192 (Auto-assigned)"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg font-mono text-slate-800"
-                    />
-                  </div>
+                  <FormSelect
+                    label="Customer Type"
+                    required
+                    value={customerType}
+                    onChange={(next) => setCustomerType(next as CustomerType)}
+                    options={[
+                      { value: 'Retail', label: 'Retail Investor' },
+                      { value: 'Corporate Officer', label: 'Corporate Officer' },
+                      { value: 'High Net Worth', label: 'High Net Worth (HNW)' },
+                      { value: 'Institutional', label: 'Institutional' },
+                    ]}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Account Opening Date</label>
-                    <input
-                      type="date"
-                      value={accountDate}
-                      onChange={(e) => setAccountDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormSelect
+                    label="Education Background"
+                    value={educationBackground}
+                    onChange={(next) => setEducationBackground(next as EducationBackground)}
+                    options={[
+                      { value: 'High School', label: 'High School' },
+                      { value: 'Bachelor\'s', label: 'Bachelor\'s Degree' },
+                      { value: 'Master\'s', label: 'Master\'s Degree' },
+                      { value: 'Doctorate', label: 'Doctorate / Ph.D.' },
+                      { value: 'Other', label: 'Other Professional' },
+                    ]}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Assigned SR</label>
-                    <input
-                      type="text"
-                      value={currentAssignedSR}
-                      onChange={(e) => setCurrentAssignedSR(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
-                    />
-                  </div>
+                  <FormSelect
+                    label="Securities Knowledge"
+                    value={securitiesKnowledge}
+                    onChange={(next) => setSecuritiesKnowledge(next as SecuritiesKnowledge)}
+                    options={['None', 'Beginner', 'Intermediate', 'Advanced', 'Professional']}
+                  />
+
+                  <FormSelect
+                    label="Risk Category"
+                    value={riskCategory}
+                    onChange={(next) => setRiskCategory(next as RiskRating)}
+                    options={[
+                      { value: 'low', label: 'Low Risk (Capital Preservation)' },
+                      { value: 'moderate', label: 'Moderate Risk (Balanced Growth)' },
+                      { value: 'high', label: 'High Risk (Aggressive Capital Appreciation)' },
+                    ]}
+                  />
+
+                  <FormSelect
+                    label="Investment Experience"
+                    value={investmentExperience}
+                    onChange={(next) => setInvestmentExperience(next as InvestmentExperience)}
+                    options={['< 1 year', '1 - 3 years', '3 - 5 years', '5+ years']}
+                  />
                 </div>
               </div>
             </div>

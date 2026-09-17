@@ -24,6 +24,7 @@ import { IndividualListScreen } from '@/components/individual/IndividualListScre
 import { IndividualInsertScreen } from '@/components/individual/IndividualInsertScreen';
 import { IndividualUpdateScreen } from '@/components/individual/IndividualUpdateScreen';
 import { CustomerTypeScreen } from '@/components/customer/CustomerTypeScreen';
+import { FormFieldsScreen } from '@/components/form-fields/FormFieldsScreen';
 
 // Dialog Modal
 import { ViewIndividualDialog } from '@/components/shared/ViewIndividualDialog';
@@ -352,6 +353,9 @@ export default function Home() {
             onDeleteRecord={handleDeleteCustomerTypeRecord}
           />
         );
+
+      case 'form-fields':
+        return <FormFieldsScreen />;
     }
   };
 

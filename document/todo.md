@@ -15,3 +15,7 @@ sidebar :
 
 
 customer 360 in customer main content each icon title should use the same color or keep the same
+
+
+account number or trading account number follow this format
+001-0000347677

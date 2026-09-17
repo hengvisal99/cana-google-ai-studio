@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { NavigationPage, DesignTheme, SupportedLanguage, EnterpriseApp } from '@/types';
 import {
   LayoutDashboard,
+  LayoutList,
   Users,
   User,
   Menu,
@@ -70,9 +71,11 @@ export function GlassmorphismShell({
     {
       label: 'List',
       page: 'individual-list',
-      active: currentPage === 'individual-list' || currentPage === 'individual-update',
-    },
-    { label: 'Create', page: 'individual-insert', active: currentPage === 'individual-insert' },
+      active:
+        currentPage === 'individual-list' ||
+        currentPage === 'individual-update' ||
+        currentPage === 'individual-insert',
+    },
     { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
   ];
 
@@ -107,11 +110,11 @@ export function GlassmorphismShell({
             </div>
             {!sidebarCollapsed && (
               <div className="min-w-0">
-                <h1 className="text-xs font-semibold text-slate-900 tracking-tight">
-                  GLASS 360
+                <h1 className="text-sm font-semibold text-slate-900 tracking-wide uppercase leading-tight truncate">
+                  Cana Securities
                 </h1>
-                <span className="text-[10px] text-blue-600 font-semibold block">
-                  Floating Island System
+                <span className="text-xs text-blue-600 font-semibold block leading-tight truncate">
+                  Customer Operations
                 </span>
               </div>
             )}
@@ -120,11 +123,6 @@ export function GlassmorphismShell({
           {/* Nav Items */}
           <nav className="flex-1 min-h-0 py-5 space-y-6 overflow-y-auto w-full text-xs">
             <div>
-              {!sidebarCollapsed && (
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
-                  Island Modules
-                </span>
-              )}
               <div className="space-y-1.5">
                 {/* Dashboard */}
                 <button
@@ -226,15 +224,36 @@ export function GlassmorphismShell({
                 )}
               </div>
             </div>
+
+            <div>
+              {!sidebarCollapsed && (
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
+                  Design System
+                </span>
+              )}
+              <button
+                id="glass-nav-form-fields"
+                type="button"
+                onClick={() => onNavigate('form-fields')}
+                className={cn(
+                  'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                  sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
+                  currentPage === 'form-fields'
+                    ? sidebarCollapsed
+                      ? ACTIVE_TILE
+                      : ACTIVE_ROW
+                    : IDLE_ROW
+                )}
+                title="Form Fields"
+              >
+                {currentPage === 'form-fields' && !sidebarCollapsed && <span className={ACTIVE_BAR} />}
+                <LayoutList className={navIcon(currentPage === 'form-fields')} />
+                {!sidebarCollapsed && <span>Form Fields</span>}
+              </button>
+            </div>
           </nav>
 
-          {/* Frosted Bottom Island Pill */}
-          {!sidebarCollapsed && (
-            <div className="shrink-0 p-3 bg-white/60 rounded-2xl border border-white/80 text-[11px] text-slate-500">
-              <span className="font-semibold text-slate-800 block">Frosted Island Active</span>
-              <span>Ultra-low blur overhead</span>
-            </div>
-          )}
+
         </aside>
 
         {/* Content Island Deck — only this column scrolls */}

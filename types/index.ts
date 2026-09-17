@@ -6,7 +6,8 @@ export type NavigationPage =
   | 'individual-list'
   | 'individual-insert'
   | 'individual-update'
-  | 'customer-type';
+  | 'customer-type'
+  | 'form-fields';
 
 export type KYCStatus = 'verified' | 'pending' | 'under_review' | 'rejected';
 export type RiskRating = 'low' | 'moderate' | 'high';
@@ -61,7 +62,15 @@ export interface EmploymentInfo {
   organizationName: string;
   lengthOfWork: string;
   officeTelephone: string;
+  /** Composed one-line address; the structured parts below are what the forms edit. */
   organizationAddress: string;
+  organizationCountry?: string;
+  organizationCity?: string;
+  /** District / Khan. */
+  organizationDistrict?: string;
+  organizationCommune?: string;
+  organizationHomeNo?: string;
+  organizationStreetNo?: string;
 }
 
 export interface BankingInfo {
@@ -74,6 +83,7 @@ export interface BankingInfo {
 export interface SpouseInfo {
   fullName: string;
   latin: string;
+  gender?: Gender;
   email: string;
   yearOfEmployment: string;
   relationship: string;
@@ -82,7 +92,15 @@ export interface SpouseInfo {
   typeOfBusiness: string;
   mobile: string;
   officeTelephone: string;
+  /** Composed one-line address; the structured parts below are what the forms edit. */
   address: string;
+  addressCountry?: string;
+  addressCity?: string;
+  /** District / Khan. */
+  addressDistrict?: string;
+  addressCommune?: string;
+  addressHomeNo?: string;
+  addressStreetNo?: string;
 }
 
 export interface RelatedPersonInfo {
@@ -92,7 +110,15 @@ export interface RelatedPersonInfo {
   gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
   relationship: string;
   mobile: string;
+  /** Composed one-line address; the structured parts below are what the forms edit. */
   address: string;
+  addressCountry?: string;
+  addressCity?: string;
+  /** District / Khan. */
+  addressDistrict?: string;
+  addressCommune?: string;
+  addressHomeNo?: string;
+  addressStreetNo?: string;
 }
 
 export interface InvestorIdInfo {
@@ -170,6 +196,8 @@ export interface Individual {
   issuedDate: string;
   expiredDate: string;
   taxpayerIdNumber: string;
+  /** Free-text remark captured with the identification documents. */
+  note?: string;
   supportingDocuments: SupportingDocument[];
 
   // Employment & Banking
@@ -208,9 +236,14 @@ export interface Individual {
   address: {
     street: string;
     city: string;
+    /** District / Khan. */
     state: string;
     postalCode: string;
     country: string;
+    /** Cambodian address parts the individual forms capture; `street` keeps the composed line. */
+    commune?: string;
+    homeNo?: string;
+    streetNo?: string;
   };
   tags: string[];
   createdAt: string;

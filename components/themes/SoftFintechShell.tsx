@@ -5,6 +5,7 @@ import { NavigationPage, DesignTheme, SupportedLanguage, EnterpriseApp } from '@
 import {
   Building2,
   LayoutDashboard,
+  LayoutList,
   Users,
   Menu,
   ChevronDown,
@@ -54,9 +55,11 @@ export function SoftFintechShell({
     {
       label: 'List',
       page: 'individual-list',
-      active: currentPage === 'individual-list' || currentPage === 'individual-update',
-    },
-    { label: 'Create', page: 'individual-insert', active: currentPage === 'individual-insert' },
+      active:
+        currentPage === 'individual-list' ||
+        currentPage === 'individual-update' ||
+        currentPage === 'individual-insert',
+    },
     { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
   ];
 
@@ -194,6 +197,30 @@ export function SoftFintechShell({
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Group 2: Design System */}
+            <div>
+              {!sidebarCollapsed && (
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
+                  Design System
+                </span>
+              )}
+              <button
+                id="nav-btn-form-fields"
+                type="button"
+                onClick={() => onNavigate('form-fields')}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
+                  currentPage === 'form-fields'
+                    ? 'bg-blue-50 text-blue-700 font-semibold border-l-3 border-blue-500'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                )}
+                title="Form Fields"
+              >
+                <LayoutList className="w-4 h-4 shrink-0 text-blue-600" />
+                {!sidebarCollapsed && <span className="truncate">Form Fields</span>}
+              </button>
             </div>
           </nav>
 

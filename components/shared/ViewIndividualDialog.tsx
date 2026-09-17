@@ -15,7 +15,7 @@ import {
   Clock,
   Briefcase,
   CheckCircle2,
-  UserCheck,
+  LayoutDashboard,
   Users,
   Lock,
   RotateCcw,
@@ -25,7 +25,7 @@ import {
   User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { IndividualPersonalViewSection } from '@/components/individual/IndividualPersonalViewSection';
+import { IndividualOverviewSection } from '@/components/individual/IndividualOverviewSection';
 import { DossierCard, Field } from '@/components/shared/DossierCard';
 import { SupportingDocumentsSection } from '@/components/shared/SupportingDocumentsSection';
 import { ApproveDialogAuroraGlass } from '@/components/shared/ApproveDialogVariants';
@@ -152,7 +152,7 @@ interface ViewIndividualDialogProps {
   theme: DesignTheme;
 }
 
-type DialogTab = 'personal' | 'identification' | 'employment' | 'family' | 'account' | 'authorization';
+type DialogTab = 'overview' | 'identification' | 'employment' | 'family' | 'account' | 'authorization';
 
 export function ViewIndividualDialog({
   individual,
@@ -164,7 +164,7 @@ export function ViewIndividualDialog({
   onCloseAccountIndividual,
   theme,
 }: ViewIndividualDialogProps) {
-  const [activeTab, setActiveTab] = useState<DialogTab>('personal');
+  const [activeTab, setActiveTab] = useState<DialogTab>('overview');
 
   // Dedicated Authorization Decision Dialog State
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -358,7 +358,7 @@ export function ViewIndividualDialog({
         {/* Navigation Tabs */}
         <div className="px-6 border-b border-slate-200 flex items-center gap-4 lg:gap-5 xl:gap-6 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-white shrink-0 text-sm">
           {[
-            { id: 'personal', label: 'Personal Information', icon: UserCheck },
+            { id: 'overview', label: 'Overview', icon: LayoutDashboard },
             { id: 'identification', label: 'Identification', icon: IdCard },
             { id: 'employment', label: 'Employment & Banking', icon: Briefcase },
             { id: 'family', label: 'Family & Related Persons', icon: Users },
@@ -402,9 +402,9 @@ export function ViewIndividualDialog({
             </div>
           )}
 
-          {/* TAB 1: PERSONAL INFORMATION - STRUCTURED DOSSIER */}
-          {activeTab === 'personal' && (
-            <IndividualPersonalViewSection 
+          {/* TAB 1: OVERVIEW — status and contact first, full record below */}
+          {activeTab === 'overview' && (
+            <IndividualOverviewSection 
               individual={individual} 
               theme={theme} 
             />
@@ -468,7 +468,7 @@ export function ViewIndividualDialog({
                 <Field
                   label="Organization Address"
                   value={individual.employment?.organizationAddress}
-                  className="sm:col-span-2"
+                  valueClassName="line-clamp-3"
                 />
               </DossierCard>
 
@@ -513,7 +513,7 @@ export function ViewIndividualDialog({
                   <Field
                     label="Address"
                     value={individual.spouse.address}
-                    className="sm:col-span-2"
+                    valueClassName="line-clamp-3"
                   />
                 </DossierCard>
               ) : (
@@ -536,7 +536,7 @@ export function ViewIndividualDialog({
                   <Field
                     label="Address"
                     value={individual.relatedPerson.address}
-                    className="sm:col-span-2"
+                    valueClassName="line-clamp-3"
                   />
                 </DossierCard>
               ) : (

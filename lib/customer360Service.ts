@@ -14,6 +14,13 @@ export interface Customer360SummaryKPI {
     formatted: string;
     dateRange: string;
   };
+  topIpoSubscription: {
+    ipoName: string;
+    amount: number;
+    currency: string;
+    formatted: string;
+    date: string;
+  };
   totalTrading: {
     count: number;
     formatted: string;
@@ -275,6 +282,20 @@ export function getCustomer360Details(individual: Individual): Customer360Data {
     return tb - ta;
   });
 
+  // The "Top IPO Subscription" card describes one subscription -- its name,
+  // value and date -- rather than any buy or sell, so the reduce filters on
+  // transaction type before picking the largest.
+  const topIpoSubscription = DEFAULT_TRANSACTIONS
+    .filter((tx) => tx.transactionType === 'IPO Subscription')
+    .reduce<IPOTransactionRecord | null>(
+      (top, tx) => (top === null || tx.tradingValue > top.tradingValue ? tx : top),
+      null
+    );
+
+  // Transaction timestamps read "18 Jan 2026, 09:45 AM"; the card wants the day
+  // without the clock time.
+  const topIpoSubscriptionDate = topIpoSubscription?.dateTime.split(',')[0].trim() ?? '—';
+
   return {
     individual,
     kpis: {
@@ -292,6 +313,15 @@ export function getCustomer360Details(individual: Individual): Customer360Data {
         currency: 'USD',
         formatted: '$44,287',
         dateRange: 'Jan–Sep 2026',
+      },
+      topIpoSubscription: {
+        ipoName: topIpoSubscription?.ipoName ?? '—',
+        amount: topIpoSubscription?.tradingValue ?? 0,
+        currency: topIpoSubscription?.currency ?? 'USD',
+        formatted: topIpoSubscription
+          ? `$${topIpoSubscription.tradingValue.toLocaleString('en-US')}`
+          : '—',
+        date: topIpoSubscriptionDate,
       },
       totalTrading: {
         count: 4,

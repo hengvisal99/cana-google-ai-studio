@@ -12,7 +12,6 @@ import {
   CornerDownLeft,
   CreditCard,
   Loader2,
-  MapPin,
   Save,
   Send,
   ShieldCheck,
@@ -25,7 +24,6 @@ import { cn } from '@/lib/utils';
 export const ONBOARDING_STEPS = [
   { key: 'personal', label: 'Personal Information', icon: User },
   { key: 'identification', label: 'Identification & Docs', icon: ShieldCheck },
-  { key: 'contact', label: 'Contact & Address', icon: MapPin },
   { key: 'employment', label: 'Employment & Banking', icon: Briefcase },
   { key: 'family', label: 'Family & Related Persons', icon: Users },
   { key: 'account', label: 'Account Information', icon: CreditCard },

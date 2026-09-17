@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Individual, DesignTheme, SupportingDocument } from '@/types';
-import { User, ShieldCheck, MapPin, Briefcase, Users, CreditCard } from 'lucide-react';
+import { User, ShieldCheck, Briefcase, Users, CreditCard } from 'lucide-react';
 import { IndividualFormShell } from '@/components/individual/IndividualFormShell';
 import {
   IndividualFormFields,
@@ -17,7 +17,7 @@ interface IndividualUpdateScreenProps {
   theme: DesignTheme;
 }
 
-type TabKey = 'personal' | 'identification' | 'contact' | 'employment' | 'family' | 'account';
+type TabKey = 'personal' | 'identification' | 'employment' | 'family' | 'account';
 
 export function IndividualUpdateScreen({
   individual,
@@ -39,7 +39,7 @@ export function IndividualUpdateScreen({
   // Tab 2: Identification & Residency
   const [documents, setDocuments] = useState<SupportingDocument[]>(individual.supportingDocuments || []);
 
-  // Tab 3: Contact & Address
+  // Contact channels and residential address (tab 1)
 
   // Tab 4: Employment & Banking
 
@@ -63,7 +63,7 @@ export function IndividualUpdateScreen({
       setErrors(newErrors);
       if (newErrors.givenNameEN || newErrors.surnameEN) setActiveTab('personal');
       else if (newErrors.idNumber) setActiveTab('identification');
-      else if (newErrors.email) setActiveTab('contact');
+      else if (newErrors.email) setActiveTab('personal');
       return;
     }
 
@@ -81,7 +81,9 @@ export function IndividualUpdateScreen({
       values.spousePosition.trim() ||
       values.spouseBusiness.trim() ||
       values.spouseMobile.trim() ||
-      values.spouseAddress.trim()
+      values.spouseHomeNo.trim() ||
+      values.spouseStreetNo.trim() ||
+      values.spouseCity.trim()
     );
 
     const hasRelatedPersonData = !!(
@@ -89,7 +91,9 @@ export function IndividualUpdateScreen({
       values.relLatin.trim() ||
       values.relEmail.trim() ||
       values.relMobile.trim() ||
-      values.relAddress.trim()
+      values.relHomeNo.trim() ||
+      values.relStreetNo.trim() ||
+      values.relCity.trim()
     );
 
     const updated: Individual = {
@@ -126,6 +130,7 @@ export function IndividualUpdateScreen({
       expiredDate: values.expiredDate,
       idExpiryDate: values.expiredDate,
       taxpayerIdNumber: values.taxpayerIdNumber.trim() || individual.taxpayerIdNumber,
+      note: values.note.trim(),
       supportingDocuments: documents,
 
       employment: {
@@ -136,7 +141,23 @@ export function IndividualUpdateScreen({
         organizationName: values.organizationName.trim() || individual.employment?.organizationName || 'Company',
         lengthOfWork: values.lengthOfWork,
         officeTelephone: values.officeTelephone,
-        organizationAddress: values.organizationAddress,
+        // `organizationAddress` stays the composed one-line address the read-only views render.
+        organizationAddress: [
+          values.orgHomeNo,
+          values.orgStreetNo,
+          values.orgCommune,
+          values.orgDistrict,
+          values.orgCity,
+          values.orgCountry,
+        ]
+          .filter(Boolean)
+          .join(', ') || individual.employment?.organizationAddress || '',
+        organizationCountry: values.orgCountry,
+        organizationCity: values.orgCity,
+        organizationDistrict: values.orgDistrict,
+        organizationCommune: values.orgCommune,
+        organizationHomeNo: values.orgHomeNo,
+        organizationStreetNo: values.orgStreetNo,
       },
 
       banking: {
@@ -149,6 +170,7 @@ export function IndividualUpdateScreen({
       spouse: hasSpouseData ? {
         fullName: values.spouseName,
         latin: values.spouseLatin || values.spouseName,
+        gender: values.spouseGender,
         email: values.spouseEmail,
         yearOfEmployment: values.spouseYearWork,
         relationship: values.spouseRelationship,
@@ -157,7 +179,23 @@ export function IndividualUpdateScreen({
         typeOfBusiness: values.spouseBusiness,
         mobile: values.spouseMobile,
         officeTelephone: values.spouseOfficePhone,
-        address: values.spouseAddress,
+        // `address` stays the composed one-line address the read-only views render.
+        address: [
+          values.spouseHomeNo,
+          values.spouseStreetNo,
+          values.spouseCommune,
+          values.spouseDistrict,
+          values.spouseCity,
+          values.spouseCountry,
+        ]
+          .filter(Boolean)
+          .join(', ') || individual.spouse?.address || '',
+        addressCountry: values.spouseCountry,
+        addressCity: values.spouseCity,
+        addressDistrict: values.spouseDistrict,
+        addressCommune: values.spouseCommune,
+        addressHomeNo: values.spouseHomeNo,
+        addressStreetNo: values.spouseStreetNo,
       } : undefined,
 
       relatedPerson: hasRelatedPersonData ? {
@@ -167,7 +205,23 @@ export function IndividualUpdateScreen({
         gender: values.relGender,
         relationship: values.relRelationship,
         mobile: values.relMobile,
-        address: values.relAddress,
+        // `address` stays the composed one-line address the read-only views render.
+        address: [
+          values.relHomeNo,
+          values.relStreetNo,
+          values.relCommune,
+          values.relDistrict,
+          values.relCity,
+          values.relCountry,
+        ]
+          .filter(Boolean)
+          .join(', ') || individual.relatedPerson?.address || '',
+        addressCountry: values.relCountry,
+        addressCity: values.relCity,
+        addressDistrict: values.relDistrict,
+        addressCommune: values.relCommune,
+        addressHomeNo: values.relHomeNo,
+        addressStreetNo: values.relStreetNo,
       } : undefined,
 
       investorIdInfo: {
@@ -176,8 +230,10 @@ export function IndividualUpdateScreen({
         customerReceivedBy: values.customerReceivedBy,
         applicationDate: values.applicationDate,
         dateSentToSECC: values.dateSentToSECC,
-        dateReceivedFromSECC: individual.investorIdInfo?.dateReceivedFromSECC || 'Pending',
-        investorIdExpiredDate: individual.investorIdInfo?.investorIdExpiredDate || '2036-09-09',
+        dateReceivedFromSECC:
+          values.dateReceivedFromSECC || individual.investorIdInfo?.dateReceivedFromSECC || 'Pending',
+        investorIdExpiredDate:
+          values.investorIdExpiredDate || individual.investorIdInfo?.investorIdExpiredDate || '2036-09-09',
         customerStatus: values.investorStatus,
       },
 
@@ -195,11 +251,18 @@ export function IndividualUpdateScreen({
       occupation: values.occupation.trim() || individual.occupation,
       employer: values.organizationName.trim() || individual.employer,
       address: {
-        street: values.street || individual.address?.street || '',
+        // `street` stays the composed one-line address the directory and 360 views read.
+        street:
+          [values.homeNo, values.streetNo, values.commune].filter(Boolean).join(', ') ||
+          individual.address?.street ||
+          '',
         city: values.city || individual.address?.city || '',
         state: values.state || individual.address?.state || '',
-        postalCode: values.postalCode || individual.address?.postalCode || '',
+        postalCode: individual.address?.postalCode || '',
         country: values.country || individual.address?.country || '',
+        commune: values.commune,
+        homeNo: values.homeNo,
+        streetNo: values.streetNo,
       },
     };
 
@@ -212,7 +275,6 @@ export function IndividualUpdateScreen({
   const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'personal', label: 'Personal Information', icon: <User className="w-4 h-4" /> },
     { key: 'identification', label: 'Identification & Docs', icon: <ShieldCheck className="w-4 h-4" /> },
-    { key: 'contact', label: 'Contact & Address', icon: <MapPin className="w-4 h-4" /> },
     { key: 'employment', label: 'Employment & Banking', icon: <Briefcase className="w-4 h-4" /> },
     { key: 'family', label: 'Family & Related Persons', icon: <Users className="w-4 h-4" /> },
     { key: 'account', label: 'Account Information', icon: <CreditCard className="w-4 h-4" /> },

@@ -24,10 +24,11 @@ export function Customer360SummarySection({
 }: Customer360SummarySectionProps) {
   // Exact data from user's image with dynamic fallback
   const portfolioValue = kpis?.portfolioValue?.formatted || '$1,404,807';
-  const tradingValue = kpis?.tradingValue?.formatted || '$44,287';
   const totalTradesCount = kpis?.totalTrading?.count ?? 4;
   const iposHeldCount = kpis?.iposHeld?.count ?? 4;
   const dateRange = kpis?.tradingValue?.dateRange || 'Jan–Sep 2026';
+  const topIpoName = kpis?.topIpoSubscription?.ipoName || 'MJQE - Mengly J. Quach Education';
+  const topIpoAmount = kpis?.topIpoSubscription?.formatted || '$10,500';
   const subscriptions = kpis?.iposHeld?.subscriptionFormatted || '120 subscriptions';
 
   return (
@@ -49,11 +50,11 @@ export function Customer360SummarySection({
         id="summary-cards-ultra-glass-view" 
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
       >
-        {/* Glass Card 1: Portfolio Value */}
+        {/* Glass Card 1: Total IPO */}
         <div className="relative p-4 rounded-2xl bg-white/90 backdrop-blur-xl border border-blue-100/80 shadow-md shadow-blue-950/5 flex flex-col gap-1.5 hover:border-blue-300 hover:shadow-lg transition-all overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/10 rounded-full blur-xl pointer-events-none group-hover:bg-blue-400/20 transition-all" />
           <div className="relative z-10 flex items-start justify-between">
-            <span className="text-sm font-medium text-slate-500">Portfolio Value</span>
+            <span className="text-sm font-medium text-slate-500">Total IPO</span>
             <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200/60 text-blue-600 flex items-center justify-center shrink-0">
               <Wallet className="w-4 h-4" />
             </div>
@@ -70,22 +71,25 @@ export function Customer360SummarySection({
           </div>
         </div>
 
-        {/* Glass Card 2: Amount */}
+        {/* Glass Card 2: Top IPO Subscription */}
         <div className="relative p-4 rounded-2xl bg-white/90 backdrop-blur-xl border border-emerald-100/80 shadow-md shadow-emerald-950/5 flex flex-col gap-1.5 hover:border-emerald-300 hover:shadow-lg transition-all overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/10 rounded-full blur-xl pointer-events-none group-hover:bg-emerald-400/20 transition-all" />
           <div className="relative z-10 flex items-start justify-between">
-            <span className="text-sm font-medium text-slate-500">Amount</span>
+            <span className="text-sm font-medium text-slate-500">Top IPO Subscription</span>
             <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200/60 text-emerald-600 flex items-center justify-center shrink-0">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="relative z-10">
             <div className="text-[22px] sm:text-2xl font-semibold text-slate-900 tracking-tight">
-              {tradingValue}
+              {topIpoAmount}
             </div>
           </div>
-          <div className="relative z-10 text-sm text-slate-500 font-normal">
-            {dateRange}
+          {/* One subscription, not an aggregate, so there is no period to
+              qualify -- the name gets the full width instead of splitting it
+              with a date the transactions table already carries. */}
+          <div className="relative z-10 text-sm text-slate-500 font-normal truncate" title={topIpoName}>
+            {topIpoName}
           </div>
         </div>
 

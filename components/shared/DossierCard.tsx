@@ -25,7 +25,12 @@ export function Field({
       <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
         {label}
       </span>
-      <div className={cn('mt-1 text-sm text-slate-900 break-words', valueClassName)}>
+      {/* A clamped value still has to be recoverable, so string values carry
+          their full text in the tooltip. */}
+      <div
+        className={cn('mt-1 text-sm text-slate-900 break-words', valueClassName)}
+        title={typeof value === 'string' ? value : undefined}
+      >
         {isEmpty ? <span className="text-slate-400">-</span> : value}
       </div>
     </div>

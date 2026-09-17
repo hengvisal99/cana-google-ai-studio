@@ -56,7 +56,7 @@ export function IndividualFormShell<K extends string>({
   return (
     <div id={screenId} className="space-y-5 pb-12 animate-in fade-in duration-200">
       {/* Header + stepper card */}
-      <div className="rounded-[22px] bg-white/90 ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="rounded-[22px] bg-white ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.14)]">
         <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-2">
             <button
@@ -119,12 +119,12 @@ export function IndividualFormShell<K extends string>({
         </nav>
       </div>
 
-      {/* Glass Form Card */}
-      <div className="p-5 sm:p-7 bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-sm rounded-2xl">
+      {/* Form card */}
+      <div className="p-5 sm:p-7 bg-white border border-slate-200/90 shadow-sm rounded-2xl">
         {children}
 
         {/* Footer navigation: sticks to the viewport bottom so Next / Submit stay reachable on long steps */}
-        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-8 flex items-center justify-between gap-4 rounded-b-2xl border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7">
+        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-8 flex items-center justify-between gap-4 rounded-b-2xl border-t border-slate-100 bg-white px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7">
           <button
             type="button"
             onClick={() => {

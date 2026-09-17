@@ -436,7 +436,7 @@ export function Customer360Screen({
                           </span>
                         </div>
 
-                        <p lang="km" className="text-[13px] leading-relaxed text-slate-600 truncate mt-0.5 font-khmer">
+                        <p lang="km" className="text-[12px] leading-relaxed text-slate-600 truncate mt-0.5 font-khmer">
                           {ind.fullNameKH || `${ind.surnameKH || ''} ${ind.givenNameKH || ''}`}
                         </p>
                       </div>
@@ -448,7 +448,7 @@ export function Customer360Screen({
                         {ind.customerId || ind.id}
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className="text-slate-500 text-[11px] font-medium">Port:</span>
+                        <span className="text-slate-500 text-[11px] font-medium">Total IPO:</span>
                         <span className="font-mono text-xs font-semibold text-slate-800">
                           ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>

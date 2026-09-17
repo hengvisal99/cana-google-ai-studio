@@ -282,8 +282,11 @@ export function Customer360ProfileHeader({
           </div>
 
           <div className="space-y-1.5">
-            {/* Line 1: both names, separated by a dot */}
-            <div className="flex flex-wrap items-center gap-2.5">
+            {/* Line 1: both names, separated by a dot. Khmer carries taller
+                ascent/descent metrics than Latin to fit its stacked diacritics,
+                so centring the two boxes visibly drops the Khmer off the Latin
+                baseline -- the scripts are aligned on that baseline instead. */}
+            <div className="flex flex-wrap items-baseline gap-2.5">
               <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{nameEN}</h1>
               <span className="text-slate-300">•</span>
               {khmerName}

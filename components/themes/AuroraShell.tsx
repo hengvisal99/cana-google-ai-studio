@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { NavigationPage, DesignTheme, SupportedLanguage, EnterpriseApp } from '@/types';
 import {
   LayoutDashboard,
+  LayoutList,
   Users,
   User,
   Menu,
@@ -52,9 +53,11 @@ export function AuroraShell({
     {
       label: 'List',
       page: 'individual-list',
-      active: currentPage === 'individual-list' || currentPage === 'individual-update',
-    },
-    { label: 'Create', page: 'individual-insert', active: currentPage === 'individual-insert' },
+      active:
+        currentPage === 'individual-list' ||
+        currentPage === 'individual-update' ||
+        currentPage === 'individual-insert',
+    },
     { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
   ];
 
@@ -202,6 +205,29 @@ export function AuroraShell({
                   </div>
                 )}
               </div>
+            </div>
+
+            <div>
+              {!sidebarCollapsed && (
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
+                  Design System
+                </span>
+              )}
+              <button
+                id="aurora-nav-form-fields"
+                type="button"
+                onClick={() => onNavigate('form-fields')}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all duration-150',
+                  currentPage === 'form-fields'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                )}
+                title="Form Fields"
+              >
+                <LayoutList className="w-4 h-4 shrink-0" />
+                {!sidebarCollapsed && <span>Form Fields</span>}
+              </button>
             </div>
           </nav>
 
