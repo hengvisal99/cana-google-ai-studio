@@ -1,7 +1,7 @@
 export { FormField, fieldControlClass, normalizeOption } from './FormField';
 export type { FormFieldProps, FieldOption, FieldSize } from './FormField';
 export { FormInput } from './FormInput';
-export { FormAddress, AddressFields, formatAddress, EMPTY_ADDRESS } from './FormAddress';
+export { FormAddress, AddressFields, formatAddress, formatAddressParts, EMPTY_ADDRESS } from './FormAddress';
 export {
   COUNTRY_OPTIONS,
   CAMBODIA_PROVINCES,

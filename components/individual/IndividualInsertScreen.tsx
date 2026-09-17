@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Individual, DesignTheme, SupportingDocument } from '@/types';
 import { User, ShieldCheck, Briefcase, Users, CreditCard } from 'lucide-react';
+import { formatAddressParts } from '@/components/ui/form';
 import { IndividualFormShell } from '@/components/individual/IndividualFormShell';
 import {
   IndividualFormFields,
