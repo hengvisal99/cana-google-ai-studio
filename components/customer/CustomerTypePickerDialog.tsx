@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  AlertCircle,
   ArrowLeftRight,
   Check,
   ChevronDown,
@@ -112,15 +111,8 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
                       >
                         {type.label}
                       </span>
-                      {(invalid || complete) && (
-                        <span
-                          className={cn(
-                            'block truncate text-[10.5px] font-medium',
-                            invalid ? 'text-rose-600' : 'text-emerald-600'
-                          )}
-                        >
-                          {invalid ? 'Missing fields' : 'Ready'}
-                        </span>
+                      {complete && !invalid && (
+                        <span className="block truncate text-[10.5px] font-medium text-emerald-600">Ready</span>
                       )}
                     </span>
                   </button>
@@ -147,19 +139,6 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
         </nav>
 
         <section className="flex min-w-0 flex-1 flex-col">
-          {(ctx.invalidTypes.length > 0 || ctx.customerError) && (
-            <div className="mb-3 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
-              {[
-                ctx.customerError && 'Choose a customer.',
-                ctx.invalidTypes.length > 0 &&
-                  `Complete the required fields in ${ctx.invalidTypes.map((id) => getCustomerType(id).label).join(', ')}.`,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            </div>
-          )}
-
           {activeType && ctx.activeId ? (
             <>
               <h4 className="mb-3 truncate text-sm font-semibold text-slate-900">{activeType.label}</h4>

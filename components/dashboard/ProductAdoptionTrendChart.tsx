@@ -174,34 +174,8 @@ export function ProductAdoptionTrendChart({
           : 'rounded-xl shadow-xs'
       )}
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="pb-3 border-b border-slate-100">
         <h2 className="text-sm font-semibold text-slate-900 whitespace-nowrap">Product Performance</h2>
-        {trend?.hasHoldings && (
-          <ul
-            className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs font-medium"
-            onMouseLeave={() => setFocusedIndex(null)}
-          >
-            {CUSTOMER_TYPES.map((type, i) => (
-              <li key={type.id}>
-                <button
-                  type="button"
-                  onMouseEnter={() => setFocusedIndex(i)}
-                  onFocus={() => setFocusedIndex(i)}
-                  onBlur={() => setFocusedIndex(null)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-1.5 py-0.5 rounded-md transition-colors cursor-default',
-                    focusedIndex === i ? 'bg-slate-100' : 'hover:bg-slate-50'
-                  )}
-                >
-                  <span className="w-4 h-0.5 rounded-full inline-block shrink-0" style={{ backgroundColor: colorFor(i) }} />
-                  <span className={i === trend.topIndex ? 'text-slate-900 font-semibold' : 'text-slate-600'}>
-                    {type.label}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       {!trend || !trend.hasHoldings ? (
@@ -258,6 +232,31 @@ export function ProductAdoptionTrendChart({
               <div className="h-full flex items-center justify-center text-xs text-slate-400">Loading chart...</div>
             )}
           </div>
+
+          <ul
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-3 mt-1 border-t border-slate-100 text-xs font-medium"
+            onMouseLeave={() => setFocusedIndex(null)}
+          >
+            {CUSTOMER_TYPES.map((type, i) => (
+              <li key={type.id}>
+                <button
+                  type="button"
+                  onMouseEnter={() => setFocusedIndex(i)}
+                  onFocus={() => setFocusedIndex(i)}
+                  onBlur={() => setFocusedIndex(null)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-1.5 py-0.5 rounded-md transition-colors cursor-default',
+                    focusedIndex === i ? 'bg-slate-100' : 'hover:bg-slate-50'
+                  )}
+                >
+                  <span className="w-4 h-0.5 rounded-full inline-block shrink-0" style={{ backgroundColor: colorFor(i) }} />
+                  <span className={i === trend.topIndex ? 'text-slate-900 font-semibold' : 'text-slate-600'}>
+                    {type.label}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
 
           <table className="sr-only">
             <caption>{`Customers holding each product at month end, ${trend.trendRange}`}</caption>

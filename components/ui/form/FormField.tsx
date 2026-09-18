@@ -95,9 +95,9 @@ export function FormField({
   children,
 }: FormFieldProps) {
   return (
-    <div className={cn('flex min-w-0 flex-col gap-1', className)}>
+    <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={htmlFor} className="text-[11px] font-medium text-slate-500">
+        <label htmlFor={htmlFor} className="text-xs font-medium text-slate-500">
           {label}
           {required && <span className="ml-0.5 text-rose-500">*</span>}
         </label>
@@ -106,7 +106,7 @@ export function FormField({
       {(error || hint || aside) && (
         <div className="flex items-start justify-between gap-2">
           {error ? (
-            <p id={describedById} role="alert" className="text-[10px] font-medium text-rose-600">
+            <p id={describedById} role="alert" className="text-xs font-medium text-rose-600">
               {error}
             </p>
           ) : hint ? (
