@@ -2,7 +2,7 @@
 
 import React, { useEffect, useId, useState } from 'react';
 import Image from 'next/image';
-import { AlertTriangle, CheckCircle2, ChevronRight, ClipboardList, RotateCcw, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, RotateCcw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STAGE_AUTHORIZER, reviewerRole, type ApprovalAction } from '@/lib/customer-type-approval';
 import { WorkflowTimelineRow } from '@/components/shared/ViewIndividualDialog';
@@ -13,6 +13,7 @@ import {
   type CustomerTypeDefinition,
   type CustomerTypeField,
 } from '@/lib/customer-types';
+import { sampleCustomerTypeRecord } from '@/lib/customer-type-records';
 import type { AuthorizationTimelineItem, CustomerTypeRecord } from '@/types';
 import {
   ViewFrame,
@@ -293,7 +294,10 @@ const HEAD_CELL = 'px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.1
  */
 export function CustomerTypeViewDialog(props: CustomerTypeViewProps) {
   const titleId = useId();
-  const { customer, name, activeType, activeTypeId, setActiveTypeId, typeRecords } = useCustomerView(props);
+  const { customer, name, activeType, activeTypeId, setActiveTypeId, typeRecords: storedRecords } = useCustomerView(props);
+  // Tabs without a record show static sample data rather than an empty state
+  const typeRecords =
+    storedRecords.length > 0 ? storedRecords : [sampleCustomerTypeRecord(activeTypeId, props.record.customerId)];
   const [openRecordId, setOpenRecordId] = useState<string | null>(null);
 
   const listFields = getListFields(activeType).slice(0, 5);
@@ -373,14 +377,7 @@ export function CustomerTypeViewDialog(props: CustomerTypeViewProps) {
 
       {/* Body: one record shows its tiles; several show a table, with details in a pop-up */}
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-2 sm:px-6">
-        {typeRecords.length === 0 ? (
-          <div className="mt-3 flex flex-col items-center gap-3 rounded-2xl bg-slate-50/80 px-6 py-12 text-center ring-1 ring-slate-100">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-slate-400 shadow-sm ring-1 ring-slate-200">
-              <ClipboardList className="h-5 w-5" />
-            </span>
-            <p className="text-sm font-medium text-slate-700">No {activeType.label} record</p>
-          </div>
-        ) : typeRecords.length === 1 ? (
+        {typeRecords.length === 1 ? (
           <section className="mt-4">
             {activeType.requiresApproval ? (
               <WorkflowHistory item={typeRecords[0]} />

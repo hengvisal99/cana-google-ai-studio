@@ -299,3 +299,24 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
   personalRep(1, 'IND-9024', '2026-08-04', true),
   personalRep(2, 'IND-9029', '2026-09-10', false),
 ];
+
+/**
+ * Static placeholder shown in the customer view when a customer has no record of a type,
+ * so every tab has data to show. Never stored.
+ */
+export function sampleCustomerTypeRecord(typeId: CustomerTypeRecord['typeId'], customerId: string): CustomerTypeRecord {
+  switch (typeId) {
+    case 'csx-screen':
+      return csx(0, customerId, '2026-01-12');
+    case 'client-card':
+      return card(0, customerId, '2026-02-01');
+    case 'employee-trading':
+      return registration('employee-trading', 'EMP-000000', customerId, '2026-03-02', 'Staff trading account approved by compliance.');
+    case 'vip-customer':
+      return registration('vip-customer', 'VIP-000000', customerId, '2026-04-15', 'Portfolio value above the VIP threshold.');
+    case 'ipo-customer':
+      return ipo(0, customerId, 'IPO-2026-001', 1000, 2.5, '2026-04-20');
+    case 'personal-representative':
+      return personalRep(0, customerId, '2026-08-04', true);
+  }
+}
