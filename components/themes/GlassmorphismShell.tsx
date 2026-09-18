@@ -75,7 +75,8 @@ export function GlassmorphismShell({
         currentPage === 'individual-list' ||
         currentPage === 'individual-update' ||
         currentPage === 'individual-insert',
-    },
+    },
+
     { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
   ];
 
@@ -94,7 +95,7 @@ export function GlassmorphismShell({
           id="glassmorphism-sidebar"
           aria-label="Glassmorphism Navigation Dock"
           className={cn(
-            'bg-white/80 backdrop-blur-2xl border border-white/90 shadow-xl shadow-slate-300/40 rounded-3xl flex flex-col shrink-0 h-full min-h-0 transition-all duration-300 z-30',
+            'bg-white/80 backdrop-blur-2xl border border-white/90 shadow-xl shadow-slate-300/40 rounded-3xl flex flex-col shrink-0 h-full min-h-0 transition-[width,padding] duration-300 ease-out z-30',
             sidebarCollapsed ? 'w-20 p-3 items-center' : 'w-64 p-5'
           )}
         >

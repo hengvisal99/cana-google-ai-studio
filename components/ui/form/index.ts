@@ -18,15 +18,9 @@ export { FormSelect } from './FormSelect';
 export type { FormSelectProps } from './FormSelect';
 export { FormMultiSelect } from './FormMultiSelect';
 export type { FormMultiSelectProps } from './FormMultiSelect';
-export { FormPhone } from './FormPhone';
+export { FormDatePicker } from './FormDatePicker';
+export type { FormDatePickerProps } from './FormDatePicker';
+export { FormPhone, PHONE_INPUT_COUNTRIES, PREFERRED_PHONE_COUNTRIES } from './FormPhone';
 export type { FormPhoneProps } from './FormPhone';
-export {
-  PHONE_COUNTRIES,
-  DEFAULT_PHONE_COUNTRY,
-  findPhoneCountry,
-  formatNationalNumber,
-  formatPhoneValue,
-  parsePhoneValue,
-  phoneGroups,
-} from './phoneCountries';
-export type { PhoneCountry, PhoneValue } from './phoneCountries';
+export { PHONE_COUNTRIES } from './phoneCountries';
+export type { PhoneCountry } from './phoneCountries';

@@ -2,7 +2,7 @@
 
 import React, { useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
-import { Individual, DesignTheme } from '@/types';
+import { Individual, DesignTheme, CustomerType, CustomerTypeRecord } from '@/types';
 import {
   Users,
   DollarSign,
@@ -12,6 +12,7 @@ import {
   FileText,
   Calendar,
   ArrowUpRight,
+  ArrowDownRight,
   Shield,
   Layers,
   ExternalLink,
@@ -31,9 +32,10 @@ import {
   Wallet,
   Percent,
   ArrowUp,
+  ArrowDown,
   Target,
   Zap,
-  BarChart3
+  BarChart3,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -51,7 +53,18 @@ import {
   ComposedChart,
   Line
 } from 'recharts';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { FormDatePicker } from '@/components/ui/form';
+import { ProductAdoptionTrendChart } from './ProductAdoptionTrendChart';
+import { CHART_RESIZE_DEBOUNCE_MS, RowTooltip, TooltipCard } from './ChartTooltip';
+import {
+  ipoTotals,
+  segmentSummary,
+  toIpoSubscriptions,
+  topIpoCustomers,
+  topIpos,
+} from '@/lib/product-holdings';
 
 interface DashboardScreenProps {
   individuals: Individual[];
@@ -61,6 +74,7 @@ interface DashboardScreenProps {
   onViewIndividual: (individual: Individual) => void;
   onNavigateToUpdate: (individual: Individual) => void;
   theme: DesignTheme;
+  customerTypeRecords: CustomerTypeRecord[];
 }
 
 // 1. Data Definitions from specification
@@ -75,6 +89,9 @@ const CUSTOMER_GROWTH_DATA = [
   { month: 'Aug 2026', totalCustomers: 51, newCustomers: 8 },
 ];
 
+/** Room kept beside the longest Age Profile bar for its percentage label. */
+const AGE_LABEL_ROOM = '3rem';
+
 const AGE_PROFILE_DATA = [
   { group: '18–24', customers: 12, percentage: 24 },
   { group: '25–34', customers: 18, percentage: 36 },
@@ -82,6 +99,8 @@ const AGE_PROFILE_DATA = [
   { group: '45–54', customers: 6, percentage: 12 },
   { group: '55+', customers: 3, percentage: 4 },
 ];
+
+const AGE_PROFILE_MAX = Math.max(...AGE_PROFILE_DATA.map((d) => d.percentage));
 
 const RISK_PROFILE_DATA = [
   { category: 'Low', customers: 12, percentage: 34.3, color: '#10B981' },
@@ -165,10 +184,7 @@ function AccountStatusDonut() {
             strokeDasharray={`${dash} ${circumference - dash}`}
             strokeDashoffset={-offset}
             transform="rotate(-90 90 90)"
-            className="transition-opacity duration-200 hover:opacity-80 cursor-pointer"
-          >
-            <title>{`${item.status}: ${item.customers} (${item.percentage}%)`}</title>
-          </circle>
+          />
         );
       })}
     </svg>
@@ -202,78 +218,78 @@ const INVESTMENT_EXPERIENCE_DATA = [
   { product: 'Nothing', count: 7, percentage: 14, color: '#64748B' },
 ];
 
-const TOP_CUSTOMERS_DATA = [
-  {
-    name: 'Sok Dara',
-    type: 'VIP',
-    typeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    portfolioValue: '$2,850,000',
-    tenure: '8.4 Years',
-    momChange: '+12.5%',
-    cid: 'CID-000001',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Chan Sophea',
-    type: 'Corporate',
-    typeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    portfolioValue: '$1,920,000',
-    tenure: '6.7 Years',
-    momChange: '+8.2%',
-    cid: 'CID-000002',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Ly Chanthy',
-    type: 'Premium',
-    typeColor: 'bg-purple-50 text-purple-700 border-purple-200',
-    portfolioValue: '$1,580,000',
-    tenure: '5.3 Years',
-    momChange: '+15.7%',
-    cid: 'CID-000003',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Kim Sopheak',
-    type: 'Individual',
-    typeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-    portfolioValue: '$1,240,000',
-    tenure: '4.8 Years',
-    momChange: '+6.4%',
-    cid: 'CID-000004',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Heng Visal',
-    type: 'Individual',
-    typeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-    portfolioValue: '$980,000',
-    tenure: '3.9 Years',
-    momChange: '+10.1%',
-    cid: 'CID-000005',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  },
-];
+const SEGMENT_BADGE: Record<CustomerType, string> = {
+  Retail: 'bg-blue-50 text-blue-700 border-blue-200',
+  'High Net Worth': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  Institutional: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Corporate Officer': 'bg-purple-50 text-purple-700 border-purple-200',
+};
 
-const CUSTOMER_SEGMENT_DATA = [
-  { type: 'Individual', customers: 28, activeAccounts: 24, portfolioValue: '$4.35M' },
-  { type: 'Premium', customers: 10, activeAccounts: 9, portfolioValue: '$2.48M' },
-  { type: 'VIP', customers: 7, activeAccounts: 7, portfolioValue: '$3.92M' },
-  { type: 'Corporate', customers: 6, activeAccounts: 4, portfolioValue: '$2.10M' },
-];
+const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+/**
+ * "$18K", "$1.2M". Built by hand rather than with Intl's compact notation: Node and the
+ * browser ship different ICU data ("$18.0K" vs "$18K"), which broke hydration.
+ */
+function usdCompact(value: number) {
+  const units: [number, string][] = [
+    [1e9, 'B'],
+    [1e6, 'M'],
+    [1e3, 'K'],
+  ];
+  for (const [size, suffix] of units) {
+    if (Math.abs(value) >= size) return `$${(value / size).toFixed(1).replace(/\.0$/, '')}${suffix}`;
+  }
+  return usd.format(value);
+}
 
-const PRODUCT_PERFORMANCE_DATA = [
-  { product: 'CSX Screen', customers: 32, active: 29, portfolioValue: '$6.25M' },
-  { product: 'Client Card', customers: 27, active: 24, portfolioValue: '$4.18M' },
-  { product: 'Employee Trading', customers: 14, active: 12, portfolioValue: '$1.72M' },
-  { product: 'VIP Customer', customers: 7, active: 7, portfolioValue: '$3.92M' },
-];
+const tenureText = (years: number | null) => (years === null ? '—' : `${years.toFixed(1)} Years`);
 
-const SUMMARY_CARDS = [
+/** "+12.5%" style change; "New" when there was nothing last month to compare against. */
+const momText = (change: number | null) =>
+  change === null ? 'New' : `${change > 0 ? '+' : change < 0 ? '−' : ''}${Math.abs(change).toFixed(1)}%`;
+
+/** Month-over-month chip: green up, red down, grey flat, blue for a first subscription this month. */
+function MomChip({ change }: { change: number | null }) {
+  const Icon = change === null || change === 0 ? null : change > 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-0.5 font-semibold font-mono px-1.5 py-0.5 rounded text-[11px]',
+        change === null
+          ? 'text-blue-700 bg-blue-50'
+          : change > 0
+            ? 'text-emerald-600 bg-emerald-50'
+            : change < 0
+              ? 'text-red-600 bg-red-50'
+              : 'text-slate-500 bg-slate-100'
+      )}
+      title={change === null ? 'First IPO subscription this month' : 'IPO subscribed vs the end of last month'}
+    >
+      {Icon && <Icon className="w-3 h-3" />}
+      {momText(change)}
+    </span>
+  );
+}
+
+/** "↑ 4.2% vs last month" for the report; null means there was nothing to compare against. */
+function changeText(change: number | null) {
+  if (change === null) return 'No prior month';
+  if (change === 0) return 'No change vs last month';
+  return `${change > 0 ? '↑' : '↓'} ${Math.abs(change).toFixed(1)}% vs last month`;
+}
+
+const SUMMARY_CARDS: {
+  label: string;
+  value: string;
+  change: number | null;
+  icon: typeof Users;
+  outline: string;
+  iconStyle: string;
+}[] = [
   {
     label: 'Total Customers',
     value: '51',
-    change: '18.6%',
+    change: 18.6,
     icon: Users,
     outline: 'border-blue-200/90 hover:border-blue-400 hover:shadow-blue-500/10',
     iconStyle: 'bg-blue-50 text-blue-600',
@@ -281,7 +297,7 @@ const SUMMARY_CARDS = [
   {
     label: 'Active Accounts',
     value: '44',
-    change: '22.2%',
+    change: 22.2,
     icon: UserCheck,
     outline: 'border-sky-200/90 hover:border-sky-400 hover:shadow-sky-500/10',
     iconStyle: 'bg-sky-50 text-sky-600',
@@ -289,28 +305,37 @@ const SUMMARY_CARDS = [
   {
     label: 'New Customers',
     value: '8',
-    change: '33.3%',
+    change: 33.3,
     icon: UserPlus,
     outline: 'border-cyan-200/90 hover:border-cyan-400 hover:shadow-cyan-500/10',
     iconStyle: 'bg-cyan-50 text-cyan-600',
   },
-  {
-    label: 'Total Portfolio Value',
-    value: '$12.85M',
-    change: '14.8%',
-    icon: DollarSign,
-    outline: 'border-blue-300/80 hover:border-blue-500 hover:shadow-blue-500/10',
-    iconStyle: 'bg-blue-100 text-blue-800',
-  },
 ];
+
+type ChartSlot = 'growth' | 'age' | 'risk' | 'account' | 'investment' | 'product';
+
+/**
+ * Chart grid: 4 columns and 2 rows on xl, with the trend charts stacked on the left and the
+ * breakdown cards on the right; 2 columns below xl, one column on small screens.
+ * Top row: who the customers are. Bottom row: what they hold.
+ * min-w-0 lets a card shrink below its chart's rendered width, so charts resize instead of overflowing.
+ */
+const CHART_SLOTS: Record<ChartSlot, string> = {
+  growth: 'min-w-0 order-1 lg:col-span-2',
+  age: 'min-w-0 order-2',
+  risk: 'min-w-0 order-3',
+  product: 'min-w-0 order-4 lg:col-span-2',
+  account: 'min-w-0 order-5',
+  investment: 'min-w-0 order-6',
+};
 
 const subscribeNoop = () => () => {};
 
 export function DashboardScreen({
   individuals,
   onNavigateToList,
-  onNavigateToCustomer360,
   theme,
+  customerTypeRecords,
 }: DashboardScreenProps) {
   const isMounted = useSyncExternalStore(
     subscribeNoop,
@@ -323,6 +348,40 @@ export function DashboardScreen({
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('2026-08-01');
   const [customEndDate, setCustomEndDate] = useState('2026-08-31');
+  const slot = (card: ChartSlot) => CHART_SLOTS[card];
+
+  // IPO subscriptions are the only money in the customer records, so they stand in for portfolio value.
+  const ipo = React.useMemo(() => {
+    const subs = toIpoSubscriptions(customerTypeRecords);
+    const segments = segmentSummary(individuals, subs);
+    const topCustomers = topIpoCustomers(subs, individuals);
+    return {
+      totals: ipoTotals(subs),
+      topCustomers,
+      topCustomersTotal: topCustomers.reduce((sum, c) => sum + c.amount, 0),
+      segments,
+      segmentsTotal: segments.reduce(
+        (t, r) => ({ customers: t.customers + r.customers, active: t.active + r.active, ipoAmount: t.ipoAmount + r.ipoAmount }),
+        { customers: 0, active: 0, ipoAmount: 0 }
+      ),
+      ipos: topIpos(subs),
+    };
+  }, [customerTypeRecords, individuals]);
+
+  const summaryCards = [
+    ...SUMMARY_CARDS,
+    {
+      label: 'Total IPO Subscribed',
+      value: usdCompact(ipo.totals.total),
+      change: ipo.totals.changePercent,
+      icon: DollarSign,
+      outline: 'border-blue-300/80 hover:border-blue-500 hover:shadow-blue-500/10',
+      iconStyle: 'bg-blue-100 text-blue-800',
+    },
+  ];
+
+  const customerName = (c: (typeof ipo.topCustomers)[number]) =>
+    c.individual ? c.individual.fullNameEN ?? `${c.individual.firstName} ${c.individual.lastName}` : c.customerId;
 
   const handlePrint = () => {
     window.print();
@@ -410,24 +469,22 @@ export function DashboardScreen({
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Custom Date Range</span>
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-slate-500 font-medium block mb-1">From</label>
-                  <input
-                    type="date"
-                    value={customStartDate}
-                    onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="w-full text-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 font-medium block mb-1">To</label>
-                  <input
-                    type="date"
-                    value={customEndDate}
-                    onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="w-full text-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+                <FormDatePicker
+                  label="From"
+                  size="sm"
+                  value={customStartDate}
+                  onChange={setCustomStartDate}
+                  max={customEndDate || undefined}
+                  displayFormat="dd MMM yy"
+                />
+                <FormDatePicker
+                  label="To"
+                  size="sm"
+                  value={customEndDate}
+                  onChange={setCustomEndDate}
+                  min={customStartDate || undefined}
+                  displayFormat="dd MMM yy"
+                />
               </div>
             </div>
           )}
@@ -469,7 +526,7 @@ export function DashboardScreen({
                 Dashboard
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
-                Executive overview of customers, risk, portfolio and products.
+                Executive overview of customers, risk, IPO subscriptions and products.
               </p>
             </div>
           </div>
@@ -520,8 +577,8 @@ export function DashboardScreen({
       {/* =========================================================================
           SUMMARY CARDS
          ========================================================================= */}
-      <div id="dashboard-summary-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {SUMMARY_CARDS.map(({ label, value, change, icon: Icon, outline, iconStyle }) => (
+      <div id="dashboard-summary-cards" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {summaryCards.map(({ label, value, change, icon: Icon, outline, iconStyle }) => (
           <div
             key={label}
             className={cn(
@@ -539,26 +596,38 @@ export function DashboardScreen({
               </div>
             </div>
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs">
-              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-mono font-semibold">
-                <ArrowUp className="w-3 h-3" />
-                {change}
-              </span>
-              <span className="text-slate-400">vs last month</span>
+              {change === null ? (
+                <span className="text-slate-400">No prior month to compare</span>
+              ) : (
+                <>
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-0.5 font-mono font-semibold',
+                      change > 0 ? 'text-emerald-600' : change < 0 ? 'text-red-600' : 'text-slate-500'
+                    )}
+                  >
+                    {change > 0 && <ArrowUp className="w-3 h-3" />}
+                    {change < 0 && <ArrowDown className="w-3 h-3" />}
+                    {Math.abs(change).toFixed(1)}%
+                  </span>
+                  <span className="text-slate-400">vs last month</span>
+                </>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* 3. ANALYTICS CHARTS */}
-      {/* Chart Row 1: Customer Growth (2 Cols) + Age Profile (1 Col) in 3-col grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* 3. ANALYTICS CHARTS: one grid; CHART_SLOTS sets each card's span and order */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-5">
         {/* Customer Growth: 2 cols x 1 row */}
         <div
           id="chart-customer-growth"
           className={cn(
-            'lg:col-span-2 p-5 bg-white border border-slate-200 flex flex-col',
+            slot('growth'),
+            'p-5 bg-white border border-slate-200 flex flex-col',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
           )}
         >
@@ -578,9 +647,9 @@ export function DashboardScreen({
             </div>
           </div>
 
-          <div className="h-[280px] w-full pt-4">
+          <div className="h-[280px] w-full pt-4 overflow-hidden">
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" debounce={CHART_RESIZE_DEBOUNCE_MS}>
                 <AreaChart data={CUSTOMER_GROWTH_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="totalGrowthGradient" x1="0" y1="0" x2="0" y2="1">
@@ -595,6 +664,8 @@ export function DashboardScreen({
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                   <XAxis
                     dataKey="month"
+                    // "Jan 2026" → "Jan": every point is in the same year, like Product Performance's axis
+                    tickFormatter={(month: string) => month.split(' ')[0]}
                     tick={{ fill: '#64748B', fontSize: 11 }}
                     axisLine={{ stroke: '#CBD5E1' }}
                     tickLine={false}
@@ -606,14 +677,19 @@ export function DashboardScreen({
                     domain={[0, 60]}
                   />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1E293B',
-                      borderRadius: '8px',
-                      color: '#F8FAFC',
-                      border: 'none',
-                      fontSize: '12px',
-                    }}
-                    itemStyle={{ color: '#F8FAFC' }}
+                    cursor={{ stroke: '#CBD5E1', strokeWidth: 1 }}
+                    content={({ active, payload, label }) =>
+                      active && payload?.length ? (
+                        <TooltipCard
+                          title={String(label).split(' ')[0]}
+                          rows={payload.map((entry) => ({
+                            label: String(entry.name),
+                            value: Number(entry.value),
+                            color: entry.color,
+                          }))}
+                        />
+                      ) : null
+                    }
                   />
                   <Area
                     type="monotone"
@@ -645,9 +721,10 @@ export function DashboardScreen({
         <div
           id="chart-age-profile"
           className={cn(
-            'lg:col-span-1 p-5 bg-white border border-slate-200 flex flex-col justify-between',
+            slot('age'),
+            'p-5 bg-white border border-slate-200 flex flex-col justify-between',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
           )}
         >
@@ -661,22 +738,27 @@ export function DashboardScreen({
           <div className="pt-4 pb-2 flex-1 flex flex-col justify-center space-y-2.5">
             {AGE_PROFILE_DATA.map((item) => {
               const isHovered = hoveredAgeGroup === item.group;
-              const barWidthPercent = Math.max((item.percentage / 45) * 80, 8);
+              // Longest bar fills the track, less room for its label; every bar keeps a visible minimum
+              const barWidth = `max(0.75rem, calc((100% - ${AGE_LABEL_ROOM}) * ${item.percentage / AGE_PROFILE_MAX}))`;
 
               return (
                 <div
                   key={item.group}
+                  tabIndex={0}
                   onMouseEnter={() => setHoveredAgeGroup(item.group)}
-                  className={cn(
-                    'group/row flex items-center gap-2.5 py-1 px-1.5 rounded-lg transition-colors cursor-pointer select-none',
-                    isHovered ? 'bg-blue-50/70 shadow-2xs' : 'hover:bg-slate-50'
-                  )}
-                  title={`${item.group}: ${item.customers} Customers (${item.percentage}%)`}
+                  onFocus={() => setHoveredAgeGroup(item.group)}
+                  className="group/row group/tip relative flex items-center gap-2.5 py-1 cursor-pointer select-none outline-none"
                 >
+                  <RowTooltip
+                    title={`Age ${item.group}`}
+                    rows={[
+                      { label: 'Customers', value: item.customers, color: '#3B82F6' },
+                    ]}
+                  />
                   {/* Category Label */}
                   <span
                     className={cn(
-                      'w-12 text-right text-xs font-mono tracking-tight shrink-0 transition-colors',
+                      'w-11 text-left text-xs font-mono tracking-tight shrink-0 transition-colors',
                       isHovered ? 'font-semibold text-blue-950' : 'font-semibold text-slate-600'
                     )}
                   >
@@ -694,7 +776,7 @@ export function DashboardScreen({
                         isHovered ? 'bg-blue-600 shadow-xs scale-y-105' : 'hover:bg-blue-500/90'
                       )}
                       style={{
-                        width: `${barWidthPercent}%`,
+                        width: barWidth,
                       }}
                     />
 
@@ -713,17 +795,15 @@ export function DashboardScreen({
             })}
           </div>
         </div>
-      </div>
 
-      {/* Chart Row 2: Customer Risk Profile, Account Status, and Investment Experience Overview (All in the same row) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Card 1: Customer Risk Profile (Semi-Circle Gauge Arc UI) */}
         <div
           id="chart-risk-profile"
           className={cn(
+            slot('risk'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
           )}
         >
@@ -735,9 +815,9 @@ export function DashboardScreen({
 
           {/* Semi-Circle Gauge Arc UI matching reference */}
           <div className="pt-2 pb-2 flex-1 flex flex-col items-center justify-center min-h-[200px]">
-            <div className="w-full h-[180px] relative flex items-center justify-center">
+            <div className="w-full h-[180px] relative flex items-center justify-center overflow-hidden">
               {isMounted ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={CHART_RESIZE_DEBOUNCE_MS}>
                   <PieChart>
                     <Pie
                       data={RISK_PROFILE_DATA}
@@ -755,35 +835,20 @@ export function DashboardScreen({
                         <Cell key={`cell-risk-${entry.category}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1E293B',
-                        borderRadius: '8px',
-                        color: '#F8FAFC',
-                        border: 'none',
-                        fontSize: '12px',
-                      }}
-                      formatter={(val: any, name: any, item: any) => [
-                        `${val} Accounts (${item.payload.percentage}%)`,
-                        item.payload.category,
-                      ]}
-                    />
                   </PieChart>
                 </ResponsiveContainer>
               ) : null}
 
               {/* Centered Stat under Arc */}
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-3 pointer-events-none">
+              {/* Extra bottom padding keeps the number where it sat when a caption was below it */}
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-7 pointer-events-none">
                 <span className="text-3xl font-semibold text-slate-900 font-mono tracking-tight">35</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">
-                  INDIVIDUAL ACCOUNTS
-                </span>
               </div>
             </div>
           </div>
 
           {/* Bottom 3-Column Legend Footer */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs px-1">
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs px-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] shrink-0" />
               <span className="text-slate-600 font-medium text-xs">Low</span>
@@ -806,9 +871,10 @@ export function DashboardScreen({
         <div
           id="chart-account-status"
           className={cn(
+            slot('account'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
           )}
         >
@@ -835,9 +901,10 @@ export function DashboardScreen({
         <div
           id="chart-investment-experience"
           className={cn(
+            slot('investment'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-sm'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
               : 'rounded-xl shadow-xs'
           )}
         >
@@ -873,123 +940,146 @@ export function DashboardScreen({
             ))}
           </div>
         </div>
+
+        {/* Product Performance: follows the header date range */}
+        <div className={slot('product')}>
+          <ProductAdoptionTrendChart
+            customerTypeRecords={customerTypeRecords}
+            datePreset={selectedDatePreset}
+            customStartDate={customStartDate}
+            customEndDate={customEndDate}
+            periodLabel={formattedDateRange}
+            isMounted={isMounted}
+            theme={theme}
+          />
+        </div>
       </div>
 
-      {/* 4. PERFORMANCE TABLES (4-Column Grid, Ratio 2 : 1 : 1 — one row, equal heights) */}
+      {/* 4. PERFORMANCE TABLES (4-Column Grid, Ratio 2 : 1 : 1 — one row, equal heights; all from real records) */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
-        {/* Table 1: Top Customers by Portfolio Value (2 Columns) */}
+        {/* Table 1: Top Customers by IPO Subscription (2 Columns) */}
         <div
           id="table-top-customers"
           className={cn(
             'xl:col-span-2 bg-white border border-slate-200 overflow-hidden flex flex-col',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-md'
               : 'rounded-xl shadow-xs'
           )}
         >
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Top Customers by Portfolio Value</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Top Customers by IPO Subscription</h2>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-semibold tracking-wider">
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-3">Customer Type</th>
-                  <th className="py-3 px-3 text-right">Portfolio Value</th>
-                  <th className="py-3 px-3 text-right">Customer Tenure</th>
-                  <th className="py-3 px-4 text-right">MoM Change</th>
+                  <th className="py-2.5 px-4">Customer</th>
+                  <th className="py-2.5 px-3">Customer Type</th>
+                  <th className="py-2.5 px-3 text-right">IPO Subscribed</th>
+                  <th className="py-2.5 px-3 text-right">Customer Tenure</th>
+                  <th className="py-2.5 px-4 text-right">MoM Change</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {TOP_CUSTOMERS_DATA.map((c) => (
-                  <tr
-                    key={c.name}
-                    className="hover:bg-slate-50/90 transition group cursor-pointer"
-                    onClick={() => {
-                      const matched = individuals.find(
-                        (i) =>
-                          `${i.firstName} ${i.lastName}` === c.name ||
-                          i.lastName === c.name ||
-                          i.firstName === c.name
-                      );
-                      if (matched) {
-                        onNavigateToCustomer360(matched);
-                      } else {
-                        onNavigateToCustomer360();
-                      }
-                    }}
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
-                          <Image
-                            src={c.avatar}
-                            alt={c.name}
-                            fill
-                            sizes="32px"
-                            className="object-cover"
-                            referrerPolicy="no-referrer"
-                            unoptimized
-                          />
-                        </div>
-                        <div>
-                          <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition block">
-                            {c.name}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono">{c.cid}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <span className={cn('px-2 py-0.5 rounded text-[10px] font-semibold border', c.typeColor)}>
-                        {c.type}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900">
-                      {c.portfolioValue}
-                    </td>
-
-                    <td className="py-3 px-3 text-right text-slate-600 font-medium font-mono">
-                      {c.tenure}
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <span className="inline-flex items-center gap-0.5 font-semibold font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-[11px]">
-                        <ArrowUpRight className="w-3 h-3" />
-                        {c.momChange}
-                      </span>
+                {ipo.topCustomers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-slate-400">
+                      No IPO subscriptions yet.
                     </td>
                   </tr>
-                ))}
+                )}
+                {ipo.topCustomers.map((c) => {
+                  const name = customerName(c);
+                  return (
+                    <tr key={c.customerId} className="hover:bg-slate-50/90 transition">
+                      <td className="py-2.5 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0 bg-slate-100 flex items-center justify-center text-[11px] font-semibold text-slate-500">
+                            {c.individual?.avatarUrl ? (
+                              <Image
+                                src={c.individual.avatarUrl}
+                                alt={name}
+                                fill
+                                sizes="32px"
+                                className="object-cover"
+                                referrerPolicy="no-referrer"
+                                unoptimized
+                              />
+                            ) : (
+                              name.charAt(0)
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-slate-900 block">
+                              {name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {c.individual?.customerId ?? c.customerId}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-2.5 px-3">
+                        {c.individual ? (
+                          <span
+                            className={cn(
+                              'px-2 py-0.5 rounded text-[10px] font-semibold border',
+                              SEGMENT_BADGE[c.individual.customerType]
+                            )}
+                          >
+                            {c.individual.customerType}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+
+                      <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
+                        {usd.format(c.amount)}
+                      </td>
+
+                      <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-700">
+                        {tenureText(c.tenureYears)}
+                      </td>
+
+                      <td className="py-2.5 px-4 text-right">
+                        <MomChip change={c.changePercent} />
+                      </td>
+                    </tr>
+                  );
+                })}
+                {/* Absorbs leftover card height so the Total row sits at the bottom */}
+                <tr aria-hidden="true" className="h-full">
+                  <td colSpan={5} className="p-0" />
+                </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-semibold text-slate-900">
-                  <td className="py-3 px-4 font-semibold">Total</td>
-                  <td className="py-3 px-3 text-slate-400 font-normal">—</td>
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-blue-700 text-sm">
-                    $8,570,000
+                  <td className="py-2.5 px-4 font-semibold">Total</td>
+                  <td className="py-2.5 px-3 text-slate-400 font-normal">—</td>
+                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-blue-700">
+                    {usd.format(ipo.topCustomersTotal)}
                   </td>
-                  <td className="py-3 px-3 text-slate-400 text-right">—</td>
-                  <td className="py-3 px-4 text-slate-400 text-right">—</td>
+                  <td className="py-2.5 px-3 text-slate-400 font-normal text-right">—</td>
+                  <td className="py-2.5 px-4 text-slate-400 font-normal text-right">—</td>
                 </tr>
               </tfoot>
             </table>
           </div>
         </div>
 
-        {/* Table 2: Customer Segment (1 Column) */}
+        {/* Table 2: Customer Segment (1 Column) — by the customer's Customer Type */}
         <div
           id="table-customer-segment"
           className={cn(
             'xl:col-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-md'
               : 'rounded-xl shadow-xs'
           )}
         >
@@ -1003,26 +1093,25 @@ export function DashboardScreen({
             <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-semibold tracking-wider">
-                  <th className="py-2.5 px-3">Customer Type</th>
+                  <th className="py-2.5 px-4">Customer Type</th>
                   <th className="py-2.5 px-2 text-right">Customers</th>
                   <th className="py-2.5 px-2 text-right">Active</th>
-                  <th className="py-2.5 px-3 text-right">Portfolio</th>
+                  <th className="py-2.5 px-4 text-right">IPO</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {CUSTOMER_SEGMENT_DATA.map((s) => (
-                  <tr key={s.type} className="hover:bg-slate-50/70 transition">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">
-                      {s.type}
-                    </td>
-                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">
-                      {s.customers}
-                    </td>
-                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">
-                      {s.activeAccounts}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
-                      {s.portfolioValue}
+                {ipo.segments.map((s) => (
+                  <tr key={s.segment} className="hover:bg-slate-50/70 transition">
+                    <td className="py-2.5 px-4 font-semibold text-slate-900">{s.segment}</td>
+                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">{s.customers}</td>
+                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">{s.active}</td>
+                    <td
+                      className={cn(
+                        'py-2.5 px-4 text-right font-mono',
+                        s.ipoAmount > 0 ? 'font-semibold text-slate-900' : 'font-normal text-slate-400'
+                      )}
+                    >
+                      {usd.format(s.ipoAmount)}
                     </td>
                   </tr>
                 ))}
@@ -1033,15 +1122,15 @@ export function DashboardScreen({
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-semibold text-slate-900">
-                  <td className="py-2.5 px-3 font-semibold">Total</td>
+                  <td className="py-2.5 px-4 font-semibold">Total</td>
                   <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
-                    51
+                    {ipo.segmentsTotal.customers}
                   </td>
                   <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
-                    44
+                    {ipo.segmentsTotal.active}
                   </td>
-                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-blue-700">
-                    $12.85M
+                  <td className="py-2.5 px-4 text-right font-mono font-semibold text-blue-700">
+                    {usd.format(ipo.segmentsTotal.ipoAmount)}
                   </td>
                 </tr>
               </tfoot>
@@ -1049,19 +1138,19 @@ export function DashboardScreen({
           </div>
         </div>
 
-        {/* Table 3: Product Performance (1 Column) */}
+        {/* Table 3: Top IPOs by Subscription (1 Column) */}
         <div
-          id="table-product-performance"
+          id="table-top-ipos"
           className={cn(
             'xl:col-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
             theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-md border-white/80 shadow-md'
+              ? 'rounded-2xl bg-white/85 border-white/80 shadow-md'
               : 'rounded-xl shadow-xs'
           )}
         >
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Product Performance</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Top IPOs by Subscription</h2>
             </div>
           </div>
 
@@ -1069,45 +1158,46 @@ export function DashboardScreen({
             <table className="w-full h-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 uppercase text-[10px] font-semibold tracking-wider">
-                  <th className="py-2.5 px-3">Product</th>
-                  <th className="py-2.5 px-2 text-right">Customers</th>
-                  <th className="py-2.5 px-2 text-right">Active</th>
-                  <th className="py-2.5 px-3 text-right">Portfolio</th>
+                  <th className="py-2.5 px-4">IPO</th>
+                  <th className="py-2.5 px-2 text-right">Subscribers</th>
+                  <th className="py-2.5 px-4 text-right">Subscribed</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {PRODUCT_PERFORMANCE_DATA.map((p) => (
-                  <tr key={p.product} className="hover:bg-slate-50/70 transition">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">
-                      {p.product}
+                {ipo.ipos.rows.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-slate-400">
+                      No IPO subscriptions yet.
                     </td>
-                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">
-                      {p.customers}
+                  </tr>
+                )}
+                {ipo.ipos.rows.map((row) => (
+                  <tr key={row.ipoNameId} className="hover:bg-slate-50/70 transition">
+                    <td className="py-2.5 px-4 font-semibold text-slate-900" title={row.ipoNameId}>
+                      {row.name}
                     </td>
-                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">
-                      {p.active}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
-                      {p.portfolioValue}
+                    <td className="py-2.5 px-2 text-right font-mono font-medium text-slate-700">{row.subscribers}</td>
+                    <td className="py-2.5 px-4 text-right font-mono font-semibold text-slate-900">
+                      {usd.format(row.subscribed)}
                     </td>
                   </tr>
                 ))}
                 {/* Absorbs leftover card height so the Total row sits at the bottom */}
                 <tr aria-hidden="true" className="h-full">
-                  <td colSpan={4} className="p-0" />
+                  <td colSpan={3} className="p-0" />
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/90 font-semibold text-slate-900">
-                  <td className="py-2.5 px-3 font-semibold">Total</td>
-                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
-                    80
+                  <td className="py-2.5 px-4 font-semibold">Total</td>
+                  <td
+                    className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900"
+                    title="Distinct customers — one customer can subscribe to several IPOs"
+                  >
+                    {ipo.ipos.total.subscribers}
                   </td>
-                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-slate-900">
-                    72
-                  </td>
-                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-blue-700">
-                    $16.07M
+                  <td className="py-2.5 px-4 text-right font-mono font-semibold text-blue-700">
+                    {usd.format(ipo.ipos.total.subscribed)}
                   </td>
                 </tr>
               </tfoot>
@@ -1188,41 +1278,52 @@ export function DashboardScreen({
                   <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 33.3% vs last month</div>
                 </div>
                 <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50">
-                  <div className="text-[11px] text-slate-500 font-medium uppercase">Total Portfolio</div>
-                  <div className="text-xl font-semibold font-mono text-blue-700 mt-1">$12.85M</div>
-                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">↑ 14.8% vs last month</div>
+                  <div className="text-[11px] text-slate-500 font-medium uppercase">Total IPO Subscribed</div>
+                  <div className="text-xl font-semibold font-mono text-blue-700 mt-1">{usdCompact(ipo.totals.total)}</div>
+                  <div
+                    className={cn(
+                      'text-[10px] font-semibold mt-0.5',
+                      (ipo.totals.changePercent ?? 0) > 0
+                        ? 'text-emerald-600'
+                        : (ipo.totals.changePercent ?? 0) < 0
+                          ? 'text-red-600'
+                          : 'text-slate-500'
+                    )}
+                  >
+                    {changeText(ipo.totals.changePercent)}
+                  </div>
                 </div>
               </div>
 
               {/* Top Customers Section in Report */}
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                  1. Top Customers by Portfolio Value
+                  1. Top Customers by IPO Subscription
                 </h3>
                 <table className="w-full text-xs border border-slate-200">
                   <thead className="bg-slate-100 text-slate-600">
                     <tr>
                       <th className="p-2 text-left">Customer</th>
                       <th className="p-2 text-left">Customer Type</th>
-                      <th className="p-2 text-right">Portfolio Value</th>
+                      <th className="p-2 text-right">IPO Subscribed</th>
                       <th className="p-2 text-right">Customer Tenure</th>
                       <th className="p-2 text-right">MoM Change</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {TOP_CUSTOMERS_DATA.map((c) => (
-                      <tr key={c.name}>
-                        <td className="p-2 font-semibold text-slate-900">{c.name}</td>
-                        <td className="p-2 text-slate-600">{c.type}</td>
-                        <td className="p-2 text-right font-mono font-semibold">{c.portfolioValue}</td>
-                        <td className="p-2 text-right font-mono text-slate-600">{c.tenure}</td>
-                        <td className="p-2 text-right font-mono text-emerald-600 font-semibold">{c.momChange}</td>
+                    {ipo.topCustomers.map((c) => (
+                      <tr key={c.customerId}>
+                        <td className="p-2 font-semibold text-slate-900">{customerName(c)}</td>
+                        <td className="p-2 text-slate-600">{c.individual?.customerType ?? '—'}</td>
+                        <td className="p-2 text-right font-mono font-semibold">{usd.format(c.amount)}</td>
+                        <td className="p-2 text-right font-mono text-slate-600">{tenureText(c.tenureYears)}</td>
+                        <td className="p-2 text-right font-mono text-slate-600">{momText(c.changePercent)}</td>
                       </tr>
                     ))}
                     <tr className="bg-slate-50 font-semibold">
-                      <td className="p-2">Total (Top 5)</td>
+                      <td className="p-2">Total (Top {ipo.topCustomers.length})</td>
                       <td className="p-2">—</td>
-                      <td className="p-2 text-right font-mono text-blue-700">$8,570,000</td>
+                      <td className="p-2 text-right font-mono text-blue-700">{usd.format(ipo.topCustomersTotal)}</td>
                       <td className="p-2 text-right">—</td>
                       <td className="p-2 text-right">—</td>
                     </tr>
@@ -1239,26 +1340,26 @@ export function DashboardScreen({
                   <table className="w-full text-xs border border-slate-200">
                     <thead className="bg-slate-100 text-slate-600">
                       <tr>
-                        <th className="p-2 text-left">Segment</th>
+                        <th className="p-2 text-left">Customer Type</th>
                         <th className="p-2 text-right">Customers</th>
                         <th className="p-2 text-right">Active</th>
-                        <th className="p-2 text-right">Portfolio</th>
+                        <th className="p-2 text-right">IPO</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {CUSTOMER_SEGMENT_DATA.map((s) => (
-                        <tr key={s.type}>
-                          <td className="p-2 font-medium">{s.type}</td>
+                      {ipo.segments.map((s) => (
+                        <tr key={s.segment}>
+                          <td className="p-2 font-medium">{s.segment}</td>
                           <td className="p-2 text-right font-mono">{s.customers}</td>
-                          <td className="p-2 text-right font-mono">{s.activeAccounts}</td>
-                          <td className="p-2 text-right font-mono font-semibold">{s.portfolioValue}</td>
+                          <td className="p-2 text-right font-mono">{s.active}</td>
+                          <td className="p-2 text-right font-mono font-semibold">{usd.format(s.ipoAmount)}</td>
                         </tr>
                       ))}
                       <tr className="bg-slate-50 font-semibold">
                         <td className="p-2">Total</td>
-                        <td className="p-2 text-right font-mono">51</td>
-                        <td className="p-2 text-right font-mono">44</td>
-                        <td className="p-2 text-right font-mono text-blue-700">$12.85M</td>
+                        <td className="p-2 text-right font-mono">{ipo.segmentsTotal.customers}</td>
+                        <td className="p-2 text-right font-mono">{ipo.segmentsTotal.active}</td>
+                        <td className="p-2 text-right font-mono text-blue-700">{usd.format(ipo.segmentsTotal.ipoAmount)}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1266,31 +1367,28 @@ export function DashboardScreen({
 
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                    3. Product Performance
+                    3. Top IPOs by Subscription
                   </h3>
                   <table className="w-full text-xs border border-slate-200">
                     <thead className="bg-slate-100 text-slate-600">
                       <tr>
-                        <th className="p-2 text-left">Product</th>
-                        <th className="p-2 text-right">Customers</th>
-                        <th className="p-2 text-right">Active</th>
-                        <th className="p-2 text-right">Portfolio</th>
+                        <th className="p-2 text-left">IPO</th>
+                        <th className="p-2 text-right">Subscribers</th>
+                        <th className="p-2 text-right">Subscribed</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      {PRODUCT_PERFORMANCE_DATA.map((p) => (
-                        <tr key={p.product}>
-                          <td className="p-2 font-medium">{p.product}</td>
-                          <td className="p-2 text-right font-mono">{p.customers}</td>
-                          <td className="p-2 text-right font-mono">{p.active}</td>
-                          <td className="p-2 text-right font-mono font-semibold">{p.portfolioValue}</td>
+                      {ipo.ipos.rows.map((row) => (
+                        <tr key={row.ipoNameId}>
+                          <td className="p-2 font-medium">{row.name}</td>
+                          <td className="p-2 text-right font-mono">{row.subscribers}</td>
+                          <td className="p-2 text-right font-mono font-semibold">{usd.format(row.subscribed)}</td>
                         </tr>
                       ))}
                       <tr className="bg-slate-50 font-semibold">
                         <td className="p-2">Total</td>
-                        <td className="p-2 text-right font-mono">80</td>
-                        <td className="p-2 text-right font-mono">72</td>
-                        <td className="p-2 text-right font-mono text-blue-700">$16.07M</td>
+                        <td className="p-2 text-right font-mono">{ipo.ipos.total.subscribers}</td>
+                        <td className="p-2 text-right font-mono text-blue-700">{usd.format(ipo.ipos.total.subscribed)}</td>
                       </tr>
                     </tbody>
                   </table>

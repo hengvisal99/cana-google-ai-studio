@@ -7,15 +7,7 @@ one customer can have many customer type such as csx screen , client card , empl
 <!--  -->
 
 
-sidebar :
-    generate another version with :
-     when collapes icon use section card ui , active main  menu and sub mneu use Editorial Minimal main menu ui , when active sub menu main menu active follow Cobalt Rail ui
-
-
-
-
-customer 360 in customer main content each icon title should use the same color or keep the same
-
-
 account number or trading account number follow this format
 001-0000347677
+
+

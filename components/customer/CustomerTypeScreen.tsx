@@ -4,11 +4,34 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { format } from 'date-fns';
 import { motion } from 'motion/react';
-import { AlertTriangle, CheckCircle2, ChevronDown, Edit3, Eye, MoreVertical, Plus, Search, Trash2, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CalendarX2,
+  CheckCircle2,
+  ChevronDown,
+  Edit3,
+  Eye,
+  MoreVertical,
+  Plus,
+  Search,
+  Trash2,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CheckBadge, LIFTED_ACTIVE, MENU_SURFACE, Popover } from '@/components/individual/DirectoryControls';
 import { CUSTOMER_TYPES, formatFieldValue, getCustomerType, getListFields } from '@/lib/customer-types';
-import type { CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
+import {
+  canRequestClose,
+  decide,
+  nextStageLabel,
+  requestClose,
+  type ApprovalAction,
+} from '@/lib/customer-type-approval';
+import type { CustomerTypeApproval, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
+import { ApproveDialogAuroraGlass } from '@/components/shared/ApproveDialogVariants';
+import { DecisionDialogMatchedMark } from '@/components/shared/DecisionDialogVariants';
+import { ApprovalStatus, CloseAccountDialog } from './CustomerTypeApproval';
 import { FieldValue, customerName } from './CustomerTypeForm';
 import { CustomerTypePickerDialog } from './CustomerTypePickerDialog';
 import { CustomerTypeRecordDialog } from './CustomerTypeRecordDialog';
@@ -52,6 +75,9 @@ export function CustomerTypeScreen({
   const [deletingRecord, setDeletingRecord] = useState<CustomerTypeRecord | null>(null);
   const [picking, setPicking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // Approval workflow (types with requiresApproval, e.g. Personal Representative)
+  const [decision, setDecision] = useState<{ record: CustomerTypeRecord; action: ApprovalAction } | null>(null);
+  const [closingRecord, setClosingRecord] = useState<CustomerTypeRecord | null>(null);
 
   // Keep the selected tab visible when the tab row is scrolled on narrow screens
   const activeTabRef = useRef<HTMLButtonElement>(null);
@@ -108,6 +134,52 @@ export function CustomerTypeScreen({
     showToast(`${getCustomerType(record.typeId).label} record ${isNew ? 'added' : 'updated'}.`);
   };
 
+  const handleSaveMany = (newRecords: CustomerTypeRecord[]) => {
+    newRecords.forEach(onSaveRecord);
+    setPicking(false);
+    showToast(
+      newRecords.length === 1
+        ? `${getCustomerType(newRecords[0].typeId).label} record added.`
+        : `${newRecords.length} customer type records added.`
+    );
+  };
+
+  const updateApproval = (record: CustomerTypeRecord, approval: CustomerTypeApproval, message: string) => {
+    onSaveRecord({ ...record, approval, updatedAt: new Date().toISOString() });
+    showToast(message);
+  };
+
+  const handleDecision = (reason = '') => {
+    if (!decision?.record.approval) return;
+    const { record, action } = decision;
+    const next = decide(record.approval!, action, reason);
+    setDecision(null);
+    updateApproval(
+      record,
+      next,
+      action === 'authorize'
+        ? next.requestStatus === 'Approved'
+          ? `${record.id} ${next.requestType === 'Close Account' ? 'closed' : 'approved'}.`
+          : `${record.id} sent to ${next.currentWorkflowStage} review.`
+        : action === 'resubmit'
+          ? `${record.id} sent back for resubmission.`
+          : `${record.id} rejected.`
+    );
+  };
+
+  /** Row menu items for the record's current workflow step (approve / resubmit / reject live in the view dialog) */
+  const approvalMenuItems = (record: CustomerTypeRecord): RowMenuItem[] => {
+    const approval = record.approval;
+    if (!approval) return [];
+    if (canRequestClose(approval)) {
+      return [{ label: 'Close Account', icon: CalendarX2, tone: 'rose', onSelect: () => setClosingRecord(record) }];
+    }
+    return [];
+  };
+
+  const decisionCustomer = decision ? customersById.get(decision.record.customerId) : undefined;
+  const closingCustomer = closingRecord ? customersById.get(closingRecord.customerId) : undefined;
+
   const ActiveIcon = activeType.icon;
 
   return (
@@ -126,7 +198,7 @@ export function CustomerTypeScreen({
           <div>
             <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Customer Type</h1>
             <p className="mt-1 text-xs text-slate-500">
-              Manage CSX screen access, client cards, employee trading, VIP and IPO records for every customer.
+              Manage CSX screen access, client cards, employee trading, VIP, IPO and PR customer records for every customer.
             </p>
           </div>
           <button
@@ -287,6 +359,7 @@ export function CustomerTypeScreen({
                     {field.label}
                   </th>
                 ))}
+                {activeType.requiresApproval && <th className="min-w-[160px] whitespace-nowrap px-4 py-3 font-semibold text-slate-700">Request</th>}
                 <th className="whitespace-nowrap px-4 py-3">Last Updated</th>
                 {/* Pinned so actions stay reachable when a type has many columns */}
                 <th className="sticky right-0 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.25)]">
@@ -297,7 +370,7 @@ export function CustomerTypeScreen({
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={listFields.length + 5} className="py-14 text-center">
+                  <td colSpan={listFields.length + (activeType.requiresApproval ? 6 : 5)} className="py-14 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <span className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 text-slate-400">
                         <ActiveIcon className="h-5 w-5" />
@@ -338,6 +411,11 @@ export function CustomerTypeScreen({
                           <FieldValue field={field} value={record.values[field.key]} />
                         </td>
                       ))}
+                      {activeType.requiresApproval && (
+                        <td className="whitespace-nowrap px-4 py-3.5">
+                          <ApprovalStatus approval={record.approval} />
+                        </td>
+                      )}
                       <td className="whitespace-nowrap px-4 py-3.5 text-slate-500">
                         {format(new Date(record.updatedAt), 'dd MMM yyyy')}
                       </td>
@@ -348,6 +426,7 @@ export function CustomerTypeScreen({
                             onView={() => setDialog({ mode: 'view', record })}
                             onEdit={() => setDialog({ mode: 'edit', record })}
                             onDelete={() => setDeletingRecord(record)}
+                            extraItems={approvalMenuItems(record)}
                           />
                         </div>
                       </td>
@@ -365,7 +444,7 @@ export function CustomerTypeScreen({
           customers={customers}
           existingIds={records.map((item) => item.id)}
           onClose={() => setPicking(false)}
-          onSaveRecord={handleSave}
+          onSaveRecords={handleSaveMany}
         />
       )}
 
@@ -376,6 +455,7 @@ export function CustomerTypeScreen({
           records={records}
           customers={customers}
           onClose={() => setDialog(null)}
+          onDecide={(record, action) => setDecision({ record, action })}
         />
       )}
 
@@ -389,6 +469,36 @@ export function CustomerTypeScreen({
           existingIds={records.map((item) => item.id)}
           onClose={() => setDialog(null)}
           onSave={handleSave}
+        />
+      )}
+
+      {decision &&
+        (decision.action === 'authorize' ? (
+          <ApproveDialogAuroraGlass
+            customerName={decisionCustomer ? customerName(decisionCustomer) : decision.record.id}
+            customerId={decision.record.id}
+            nextStage={nextStageLabel(decision.record.approval?.currentWorkflowStage ?? 'Manager')}
+            onCancel={() => setDecision(null)}
+            onConfirm={() => handleDecision()}
+          />
+        ) : (
+          <DecisionDialogMatchedMark
+            action={decision.action}
+            onCancel={() => setDecision(null)}
+            onConfirm={(reason) => handleDecision(reason)}
+          />
+        ))}
+
+      {closingRecord?.approval && (
+        <CloseAccountDialog
+          recordId={closingRecord.id}
+          customerLabel={closingCustomer ? customerName(closingCustomer) : closingRecord.customerId}
+          onCancel={() => setClosingRecord(null)}
+          onSubmit={(cancelledDate) => {
+            const record = closingRecord;
+            setClosingRecord(null);
+            updateApproval(record, requestClose(record.approval!, cancelledDate), `Close account requested for ${record.id}.`);
+          }}
         />
       )}
 
@@ -434,7 +544,22 @@ export function CustomerTypeScreen({
 }
 
 const ROW_MENU_HEIGHT = 132;
+const ROW_MENU_ITEM_HEIGHT = 34;
 const ROW_MENU_ITEM = 'flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium transition';
+
+/** Workflow actions shown above View / Edit / Delete */
+interface RowMenuItem {
+  label: string;
+  icon: LucideIcon;
+  tone: 'emerald' | 'amber' | 'rose';
+  onSelect: () => void;
+}
+
+const ROW_MENU_TONE: Record<RowMenuItem['tone'], string> = {
+  emerald: 'text-emerald-600',
+  amber: 'text-amber-600',
+  rose: 'text-rose-500',
+};
 
 type MenuAnchor = { top: number; right: number; up: boolean };
 
@@ -447,11 +572,13 @@ function RowActionsMenu({
   onView,
   onEdit,
   onDelete,
+  extraItems = [],
 }: {
   recordId: string;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  extraItems?: RowMenuItem[];
 }) {
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -487,7 +614,8 @@ function RowActionsMenu({
       return;
     }
     const rect = triggerRef.current.getBoundingClientRect();
-    const up = window.innerHeight - rect.bottom < ROW_MENU_HEIGHT + 16;
+    const menuHeight = ROW_MENU_HEIGHT + (extraItems.length ? extraItems.length * ROW_MENU_ITEM_HEIGHT + 9 : 0);
+    const up = window.innerHeight - rect.bottom < menuHeight + 16;
     setAnchor({ top: up ? rect.top - 4 : rect.bottom + 4, right: window.innerWidth - rect.right, up });
   };
 
@@ -512,7 +640,15 @@ function RowActionsMenu({
         <MoreVertical className="h-4 w-4" />
       </button>
       {anchor && createPortal(
-        <RowActionsPanel ref={menuRef} anchor={anchor} run={run} onView={onView} onEdit={onEdit} onDelete={onDelete} />,
+        <RowActionsPanel
+          ref={menuRef}
+          anchor={anchor}
+          run={run}
+          onView={onView}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          extraItems={extraItems}
+        />,
         document.body
       )}
     </>
@@ -527,8 +663,9 @@ const RowActionsPanel = React.forwardRef<
     onView: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    extraItems: RowMenuItem[];
   }
->(function RowActionsPanel({ anchor, run, onView, onEdit, onDelete }, ref) {
+>(function RowActionsPanel({ anchor, run, onView, onEdit, onDelete, extraItems }, ref) {
   return (
     <div
       ref={ref}
@@ -536,6 +673,22 @@ const RowActionsPanel = React.forwardRef<
       style={{ right: anchor.right, ...(anchor.up ? { bottom: window.innerHeight - anchor.top } : { top: anchor.top }) }}
       className={cn('fixed z-[60] w-40 animate-in fade-in zoom-in-95', MENU_SURFACE)}
     >
+      {extraItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.label}
+            type="button"
+            role="menuitem"
+            onClick={run(item.onSelect)}
+            className={cn(ROW_MENU_ITEM, 'text-slate-700 hover:bg-slate-50')}
+          >
+            <Icon className={cn('h-3.5 w-3.5', ROW_MENU_TONE[item.tone])} />
+            {item.label}
+          </button>
+        );
+      })}
+      {extraItems.length > 0 && <div className="my-1 border-t border-slate-100" />}
       <button type="button" role="menuitem" onClick={run(onView)} className={cn(ROW_MENU_ITEM, 'text-slate-700 hover:bg-slate-50')}>
         <Eye className="h-3.5 w-3.5 text-blue-600" />
         View

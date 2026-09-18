@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { format } from 'date-fns';
 import {
   Individual,
   SupportingDocument,
@@ -19,12 +20,11 @@ import { cn } from '@/lib/utils';
 import {
   AddressFields,
   FormAddress,
+  FormDatePicker,
   FormInput,
   FormPhone,
   FormSelect,
   FormTextarea,
-  formatPhoneValue,
-  parsePhoneValue,
 } from '@/components/ui/form';
 import { DocumentSlotRow } from '@/components/shared/DocumentSlotRow';
 
@@ -714,11 +714,12 @@ export function IndividualFormFields({
                       className="font-khmer"
                     />
 
-                    <FormInput
+                    <FormDatePicker
                       label="Date of Birth"
-                      type="date"
                       value={dateOfBirth}
-                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      onChange={setDateOfBirth}
+                      max={format(new Date(), 'yyyy-MM-dd')}
+                      dropdowns
                     />
 
                     <FormSelect
@@ -761,14 +762,14 @@ export function IndividualFormFields({
 
                   <FormPhone
                     label="Mobile Phone"
-                    value={parsePhoneValue(mobile)}
-                    onChange={(next) => setMobile(formatPhoneValue(next))}
+                    value={mobile}
+                    onChange={setMobile}
                   />
 
                   <FormPhone
                     label="Telephone (Fixed Line)"
-                    value={parsePhoneValue(telephone)}
-                    onChange={(next) => setTelephone(formatPhoneValue(next))}
+                    value={telephone}
+                    onChange={setTelephone}
                   />
                 </div>
               </div>
@@ -851,18 +852,16 @@ export function IndividualFormFields({
                   onChange={(e) => setIssuedBy(e.target.value)}
                 />
 
-                <FormInput
+                <FormDatePicker
                   label="Issued Date"
-                  type="date"
                   value={issuedDate}
-                  onChange={(e) => setIssuedDate(e.target.value)}
+                  onChange={setIssuedDate}
                 />
 
-                <FormInput
+                <FormDatePicker
                   label="Expired Date"
-                  type="date"
                   value={expiredDate}
-                  onChange={(e) => setExpiredDate(e.target.value)}
+                  onChange={setExpiredDate}
                 />
 
                 <FormInput
@@ -1054,8 +1053,8 @@ export function IndividualFormFields({
 
                 <FormPhone
                   label="Office Telephone"
-                  value={parsePhoneValue(officeTelephone)}
-                  onChange={(next) => setOfficeTelephone(formatPhoneValue(next))}
+                  value={officeTelephone}
+                  onChange={setOfficeTelephone}
                 />
 
                 <FormAddress
@@ -1173,13 +1172,13 @@ export function IndividualFormFields({
                   />
                   <FormPhone
                     label="Mobile Phone"
-                    value={parsePhoneValue(spouseMobile)}
-                    onChange={(next) => setSpouseMobile(formatPhoneValue(next))}
+                    value={spouseMobile}
+                    onChange={setSpouseMobile}
                   />
                   <FormPhone
                     label="Office Telephone"
-                    value={parsePhoneValue(spouseOfficePhone)}
-                    onChange={(next) => setSpouseOfficePhone(formatPhoneValue(next))}
+                    value={spouseOfficePhone}
+                    onChange={setSpouseOfficePhone}
                   />
                   <FormInput
                     label="Occupation"
@@ -1269,8 +1268,8 @@ export function IndividualFormFields({
                   />
                   <FormPhone
                     label="Mobile Phone"
-                    value={parsePhoneValue(relMobile)}
-                    onChange={(next) => setRelMobile(formatPhoneValue(next))}
+                    value={relMobile}
+                    onChange={setRelMobile}
                   />
                   <FormInput
                     label="Email"
@@ -1346,32 +1345,28 @@ export function IndividualFormFields({
                     options={['Normal', 'VIP', 'Restricted']}
                   />
 
-                  <FormInput
+                  <FormDatePicker
                     label="Application Date"
-                    type="date"
                     value={applicationDate}
-                    onChange={(e) => setApplicationDate(e.target.value)}
+                    onChange={setApplicationDate}
                   />
 
-                  <FormInput
+                  <FormDatePicker
                     label="Date Sent to SECC"
-                    type="date"
                     value={dateSentToSECC}
-                    onChange={(e) => setDateSentToSECC(e.target.value)}
+                    onChange={setDateSentToSECC}
                   />
 
-                  <FormInput
+                  <FormDatePicker
                     label="Date Received from SECC"
-                    type="date"
                     value={dateReceivedFromSECC}
-                    onChange={(e) => setDateReceivedFromSECC(e.target.value)}
+                    onChange={setDateReceivedFromSECC}
                   />
 
-                  <FormInput
+                  <FormDatePicker
                     label="Investor ID Expired Date"
-                    type="date"
                     value={investorIdExpiredDate}
-                    onChange={(e) => setInvestorIdExpiredDate(e.target.value)}
+                    onChange={setInvestorIdExpiredDate}
                   />
 
                   <FormInput
@@ -1382,11 +1377,10 @@ export function IndividualFormFields({
                     className="font-mono"
                   />
 
-                  <FormInput
+                  <FormDatePicker
                     label="Account Opening Date"
-                    type="date"
                     value={accountDate}
-                    onChange={(e) => setAccountDate(e.target.value)}
+                    onChange={setAccountDate}
                   />
 
                   <FormInput

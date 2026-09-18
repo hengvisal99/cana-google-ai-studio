@@ -1,15 +1,14 @@
 /**
- * Dial codes for the phone field. Deliberately no flag emoji: Windows renders
- * regional-indicator pairs as bare letters, so the ISO code is shown instead.
- * Cambodia leads the list, then the region, then the markets the bank deals with.
+ * The bank's markets: pinned to the top of the phone field's country picker, and
+ * the country list for addresses. Cambodia leads, then the region, then the rest.
  */
 export interface PhoneCountry {
-  /** Lowercase ISO 3166-1 alpha-2 code, used as the stored value. */
+  /** Lowercase ISO 3166-1 alpha-2 code. */
   iso: string;
   name: string;
   /** Dial prefix including the plus, e.g. "+855". */
   dial: string;
-  /** Digits of a typical national number, used for the placeholder. */
+  /** A typical national number; its grouping becomes the phone mask where the library has none. */
   example: string;
 }
 
@@ -39,79 +38,3 @@ export const PHONE_COUNTRIES: PhoneCountry[] = [
   { iso: 'us', name: 'United States', dial: '+1', example: '201 555 0123' },
   { iso: 'ca', name: 'Canada', dial: '+1', example: '506 234 5678' },
 ];
-
-export const DEFAULT_PHONE_COUNTRY = PHONE_COUNTRIES[0].iso;
-
-export function findPhoneCountry(iso: string, countries: PhoneCountry[] = PHONE_COUNTRIES): PhoneCountry {
-  return countries.find((country) => country.iso === iso) ?? countries[0];
-}
-
-/** What a phone field holds: the country picked, and the national number as typed. */
-export interface PhoneValue {
-  /** ISO code from PHONE_COUNTRIES. */
-  country: string;
-  /** National number without the dial prefix. */
-  number: string;
-}
-
-/** Digit-group sizes read off a country's example, e.g. "12 345 678" -> [2, 3, 3]. */
-export function phoneGroups(example: string): number[] {
-  return example
-    .trim()
-    .split(/\s+/)
-    .map((group) => group.length)
-    .filter(Boolean);
-}
-
-/**
- * Groups a national number the way its country writes it: "12345678" -> "12 345 678".
- * A trunk-prefix 0 is dropped once another digit follows it, since the international
- * form never carries it. Digits past the pattern fall back to groups of three.
- */
-export function formatNationalNumber(input: string, example: string): string {
-  const digits = input.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-  if (!digits) return '';
-
-  const parts: string[] = [];
-  let cursor = 0;
-
-  for (const size of phoneGroups(example)) {
-    if (cursor >= digits.length) break;
-    parts.push(digits.slice(cursor, cursor + size));
-    cursor += size;
-  }
-
-  for (let i = cursor; i < digits.length; i += 3) {
-    parts.push(digits.slice(i, i + 3));
-  }
-
-  return parts.join(' ');
-}
-
-/** Flattens a PhoneValue for storage or display, e.g. "+855 12 345 678". */
-export function formatPhoneValue(
-  value: PhoneValue,
-  countries: PhoneCountry[] = PHONE_COUNTRIES
-): string {
-  const country = findPhoneCountry(value.country, countries);
-  const number = formatNationalNumber(value.number, country.example);
-  if (!number) return '';
-  return `${country.dial} ${number}`;
-}
-
-/** Splits a stored string such as "+855 12 345 678" back into a PhoneValue. */
-export function parsePhoneValue(
-  input: string,
-  countries: PhoneCountry[] = PHONE_COUNTRIES
-): PhoneValue {
-  const trimmed = input.trim();
-  if (!trimmed) return { country: DEFAULT_PHONE_COUNTRY, number: '' };
-
-  // Longest dial code first, so +855 wins over +85 style prefixes.
-  const match = [...countries]
-    .sort((a, b) => b.dial.length - a.dial.length)
-    .find((country) => trimmed.startsWith(country.dial));
-
-  if (!match) return { country: DEFAULT_PHONE_COUNTRY, number: trimmed };
-  return { country: match.iso, number: trimmed.slice(match.dial.length).trim() };
-}

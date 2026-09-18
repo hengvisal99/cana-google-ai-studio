@@ -2,7 +2,7 @@
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Check, Search, X, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Check, DollarSign, Search, X, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   computeFieldValue,
@@ -13,6 +13,14 @@ import {
   type SegmentTone,
 } from '@/lib/customer-types';
 import type { CustomerTypeFieldValue, Individual } from '@/types';
+import {
+  FormDatePicker,
+  FormField,
+  FormInput,
+  FormSelect,
+  FormTextarea,
+  fieldControlClass,
+} from '@/components/ui/form';
 
 export const BTN_SECONDARY =
   'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200';
@@ -41,11 +49,8 @@ export function customerName(individual: Individual): string {
   return individual.fullNameEN || `${individual.firstName} ${individual.lastName}`;
 }
 
-const inputClass = (invalid: boolean) =>
-  cn(
-    'h-9 w-full rounded-lg border bg-white px-2.5 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-2',
-    invalid ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'
-  );
+/** Same control style as the form kit (components/ui/form) */
+const inputClass = (invalid: boolean) => fieldControlClass({ invalid });
 
 /* -------------------------------------------------------------------------- */
 /* Dialog shell                                                               */
@@ -79,10 +84,7 @@ export function DialogShell({
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
@@ -125,9 +127,7 @@ export function DialogShell({
 
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
 
-        {footer && (
-          <div className="flex items-center justify-end gap-2 px-5 pb-4 pt-1">{footer}</div>
-        )}
+        {footer && <div className="flex items-center justify-end gap-2 px-5 pb-4 pt-1">{footer}</div>}
       </div>
     </div>
   );
@@ -143,6 +143,8 @@ export function CustomerTypeForm({
   errors,
   customers,
   customerLocked = false,
+  hideCustomer = false,
+  columns = 3,
   onChange,
 }: {
   type: CustomerTypeDefinition;
@@ -150,50 +152,183 @@ export function CustomerTypeForm({
   errors: Record<string, boolean>;
   customers: Individual[];
   customerLocked?: boolean;
+  /** The customer is picked outside the form (e.g. once for several types) */
+  hideCustomer?: boolean;
+  /** Fields per row on wide screens; 2 keeps start/end date pairs side by side */
+  columns?: 2 | 3;
   onChange: (key: string, value: CustomerTypeFieldValue) => void;
 }) {
-  return (
-    <div className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
-      {type.fields.map((field) => {
-        const id = `ct-${type.id}-${field.key}`;
-        const invalid = !!errors[field.key];
-        return (
-          <div
-            key={field.key}
-            className={cn((field.type === 'textarea' || field.type === 'checkbox') && 'col-span-full')}
-          >
-            {field.type !== 'checkbox' && (
-              <label htmlFor={id} className="mb-1 block text-[11px] font-semibold text-slate-600">
-                {field.label}
-                {field.required && <span className="text-rose-500"> *</span>}
-              </label>
-            )}
+  const fields = hideCustomer ? type.fields.filter((field) => field.type !== 'customer') : type.fields;
 
+  // Consecutive fields sharing a group (e.g. Purchase: quantity, price, total) render as one row
+  const sections: { group?: string; fields: CustomerTypeField[] }[] = [];
+  for (const field of fields) {
+    const last = sections[sections.length - 1];
+    if (last && last.group === field.group) last.fields.push(field);
+    else sections.push({ group: field.group, fields: [field] });
+  }
+
+  const renderField = (field: CustomerTypeField, inGroup = false) => {
+    const id = `ct-${type.id}-${field.key}`;
+    const invalid = !!errors[field.key];
+    const label = (inGroup && field.shortLabel) || field.label;
+
+    const error = invalid ? `${label} is required` : undefined;
+    const text = typeof values[field.key] === 'string' ? (values[field.key] as string) : '';
+    const set = (value: CustomerTypeFieldValue) => onChange(field.key, value);
+
+    switch (field.type) {
+      case 'text':
+      case 'number':
+        return (
+          <FormInput
+            key={field.key}
+            id={id}
+            label={label}
+            required={field.required}
+            error={error}
+            type={field.type}
+            value={text}
+            placeholder={field.placeholder}
+            min={field.type === 'number' ? 0 : undefined}
+            step={field.type === 'number' ? 'any' : undefined}
+            icon={field.format === 'currency' ? DollarSign : undefined}
+            onChange={(e) => set(e.target.value)}
+          />
+        );
+      case 'computed':
+        return (
+          <FormInput
+            key={field.key}
+            id={id}
+            label={label}
+            value={formatFieldValue(field, String(computeFieldValue(field, values)))}
+            readOnly
+            tabIndex={-1}
+            className="cursor-default bg-slate-100 tabular-nums text-slate-500"
+          />
+        );
+      case 'date':
+        return (
+          <FormDatePicker
+            key={field.key}
+            id={id}
+            label={label}
+            required={field.required}
+            error={error}
+            value={text}
+            onChange={set}
+          />
+        );
+      case 'select':
+        return (
+          <FormSelect
+            key={field.key}
+            id={id}
+            label={label}
+            required={field.required}
+            error={error}
+            value={text}
+            placeholder={field.placeholder}
+            options={(field.options ?? []).map((option) => ({
+              value: option,
+              label: field.optionLabels?.[option] ?? option,
+            }))}
+            onChange={set}
+          />
+        );
+      case 'textarea':
+        return (
+          <FormTextarea
+            key={field.key}
+            id={id}
+            label={label}
+            required={field.required}
+            error={error}
+            rows={3}
+            value={text}
+            placeholder={field.placeholder}
+            onChange={(e) => set(e.target.value)}
+            containerClassName="col-span-full"
+          />
+        );
+      case 'checkbox':
+        return (
+          <div key={field.key} className="col-span-full">
+            <FieldInput id={id} field={field} value={values[field.key]} invalid={invalid} onChange={set} />
+          </div>
+        );
+      default:
+        // No kit control for these; FormField keeps the same label / error layout
+        return (
+          <FormField key={field.key} label={label} htmlFor={id} required={field.required} error={error}>
             {field.type === 'customer' ? (
               <CustomerPicker
                 id={id}
-                value={typeof values[field.key] === 'string' ? (values[field.key] as string) : ''}
+                value={text}
                 customers={customers}
                 locked={customerLocked}
                 invalid={invalid}
                 placeholder={field.placeholder}
-                onChange={(value) => onChange(field.key, value)}
+                onChange={set}
               />
             ) : (
-              <FieldInput
-                id={id}
-                field={field}
-                value={
-                  field.type === 'computed'
-                    ? formatFieldValue(field, String(computeFieldValue(field, values)))
-                    : values[field.key]
-                }
-                invalid={invalid}
-                onChange={(value) => onChange(field.key, value)}
-              />
+              <FieldInput id={id} field={field} value={values[field.key]} invalid={invalid} onChange={set} />
             )}
+          </FormField>
+        );
+    }
+  };
 
-            {invalid && <p className="mt-1 text-[11px] font-medium text-rose-600">{field.label} is required</p>}
+  return (
+    <div className="space-y-4">
+      {sections.map((section, sectionIndex) => {
+        if (!section.group) {
+          return (
+            <div
+              key={`fields-${sectionIndex}`}
+              className={cn('grid gap-x-4 gap-y-3.5 sm:grid-cols-2', columns === 3 && 'lg:grid-cols-3')}
+            >
+              {section.fields.map((field) => renderField(field))}
+            </div>
+          );
+        }
+
+        // Quantity × Price = Total when the group has a computed value; its other fields (e.g. a date) sit below
+        const calculated = section.fields.some((field) => field.type === 'computed');
+        const isCalcField = (field: CustomerTypeField) => field.type === 'number' || field.type === 'computed';
+        const rowFields = calculated ? section.fields.filter(isCalcField) : section.fields;
+        const otherFields = calculated ? section.fields.filter((field) => !isCalcField(field)) : [];
+        return (
+          <div key={section.group} className="pt-1">
+            <p className="mb-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">{section.group}</p>
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-start sm:gap-2">
+              {rowFields.map((field, index) => (
+                <React.Fragment key={field.key}>
+                  {index > 0 && calculated && (
+                    <span
+                      aria-hidden
+                      className="hidden h-9 w-4 shrink-0 items-center justify-center text-sm font-semibold text-slate-400 sm:mt-5 sm:flex"
+                    >
+                      {field.type === 'computed' ? '=' : '×'}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">{renderField(field, true)}</div>
+                </React.Fragment>
+              ))}
+            </div>
+            {/* Same columns as the row above, so e.g. a date lines up with Quantity */}
+            {otherFields.map((field) => (
+              <div key={field.key} className="mt-3.5 flex flex-col sm:flex-row sm:gap-2">
+                <div className="min-w-0 flex-1">{renderField(field, true)}</div>
+                {rowFields.slice(1).map((spacer) => (
+                  <React.Fragment key={spacer.key}>
+                    <span aria-hidden className="hidden w-4 shrink-0 sm:block" />
+                    <span aria-hidden className="hidden min-w-0 flex-1 sm:block" />
+                  </React.Fragment>
+                ))}
+              </div>
+            ))}
           </div>
         );
       })}
@@ -217,17 +352,6 @@ function FieldInput({
   const text = typeof value === 'string' ? value : '';
 
   switch (field.type) {
-    case 'computed':
-      return (
-        <input
-          id={id}
-          type="text"
-          value={text}
-          readOnly
-          tabIndex={-1}
-          className={cn(inputClass(false), 'cursor-default bg-slate-100 tabular-nums text-slate-500')}
-        />
-      );
     case 'segmented':
       return (
         <div
@@ -275,46 +399,8 @@ function FieldInput({
           {field.label}
         </label>
       );
-    case 'select':
-      return (
-        <select
-          id={id}
-          value={text}
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(inputClass(invalid), !text && 'text-slate-400')}
-        >
-          <option value="">{field.placeholder ?? 'Select…'}</option>
-          {field.options?.map((option) => (
-            <option key={option} value={option} className="text-slate-800">
-              {option}
-            </option>
-          ))}
-        </select>
-      );
-    case 'textarea':
-      return (
-        <textarea
-          id={id}
-          rows={3}
-          value={text}
-          placeholder={field.placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(inputClass(invalid), 'h-auto resize-none py-2')}
-        />
-      );
     default:
-      return (
-        <input
-          id={id}
-          type={field.type}
-          value={text}
-          placeholder={field.placeholder}
-          min={field.type === 'number' ? 0 : undefined}
-          step={field.type === 'number' ? 'any' : undefined}
-          onChange={(e) => onChange(e.target.value)}
-          className={inputClass(invalid)}
-        />
-      );
+      return null;
   }
 }
 

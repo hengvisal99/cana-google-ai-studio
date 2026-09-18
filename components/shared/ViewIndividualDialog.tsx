@@ -17,12 +17,10 @@ import {
   CheckCircle2,
   LayoutDashboard,
   Users,
-  Lock,
   RotateCcw,
   IdCard,
   Landmark,
-  Send,
-  User
+  Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IndividualOverviewSection } from '@/components/individual/IndividualOverviewSection';
@@ -32,13 +30,20 @@ import { ApproveDialogAuroraGlass } from '@/components/shared/ApproveDialogVaria
 import { DecisionDialogMatchedMark } from '@/components/shared/DecisionDialogVariants';
 
 /** One node in a workflow timeline (registration or account close). */
-function WorkflowTimelineRow({
+export function WorkflowTimelineRow({
   item,
   isLast,
+  closeInfo,
+  details,
 }: {
   item: AuthorizationTimelineItem;
   isLast: boolean;
+  /** Close request details — only passed for the account-close submitter stage. */
+  closeInfo?: { closeDate: string; account: string; reason: string };
+  /** Extra label/value lines under the badge (e.g. a PR cancel date) */
+  details?: { label: string; value: string }[];
 }) {
+  const reason = closeInfo?.reason || item.reason;
   const isDone = item.status === 'Submitted' || item.status === 'Approved';
   const isRejected = item.status === 'Rejected';
   const isPending = item.status === 'Pending' || item.status === 'Resubmit';
@@ -118,15 +123,73 @@ function WorkflowTimelineRow({
           {item.status}
         </span>
 
-        {item.reason && (
+        {closeInfo && (
+          <>
+            <p className="text-sm text-slate-600 pt-0.5">
+              <span className="font-medium text-slate-700">Close Date:</span>{' '}
+              <span className="font-mono">{closeInfo.closeDate}</span>
+            </p>
+            <p className="text-sm text-slate-600 pt-0.5">
+              <span className="font-medium text-slate-700">Delink Account:</span>{' '}
+              <span className="font-mono">{closeInfo.account}</span>
+            </p>
+          </>
+        )}
+
+        {details?.map((detail) => (
+          <p key={detail.label} className="text-sm text-slate-600 pt-0.5">
+            {detail.label}: {detail.value}
+          </p>
+        ))}
+
+        {reason && (
           <p className="text-sm text-slate-600 pt-0.5">
-            <span className="font-medium text-slate-700">Reason:</span> {item.reason}
+            <span className="font-medium text-slate-700">Reason:</span> {reason}
           </p>
         )}
       </div>
     </li>
   );
 }
+
+/** Static placeholder shown until real account-close workflow data is wired up. */
+const STATIC_ACCOUNT_CLOSE_HISTORY: AuthorizationTimelineItem[] = [
+  {
+    id: 'close-static-1',
+    stage: 'Close Request',
+    status: 'Submitted',
+    dateTime: '10 Sep 2026, 10:20 AM',
+    processedBy: 'Chea Vichea',
+    role: 'CSO',
+    reason: 'Customer requested to close the trading account.',
+    requestType: 'Close Account',
+  },
+  {
+    id: 'close-static-2',
+    stage: 'Close Review',
+    status: 'Approved',
+    dateTime: '12 Sep 2026, 03:45 PM',
+    processedBy: 'Meas Sokha',
+    role: 'SR',
+    requestType: 'Close Account',
+  },
+  {
+    id: 'close-static-3',
+    stage: 'Close Approval',
+    status: 'Queue',
+    dateTime: 'Queue',
+    processedBy: 'Ly Chanthy',
+    role: 'Manager',
+    requestType: 'Close Account',
+  },
+];
+
+/** Static placeholder close details, paired with the static timeline above. */
+const STATIC_CLOSE_ACCOUNT_INFO = {
+  closeDate: '2026-09-10',
+  account: 'TRD-000000',
+  reason: 'Customer requested to close the trading account.',
+};
 
 interface ViewIndividualDialogProps {
   individual: Individual | null;
@@ -272,19 +335,22 @@ export function ViewIndividualDialog({
   };
 
   const registrationHistory = (individual.authorizationHistory || []).filter((item) => !isCloseItem(item));
-  const accountCloseHistory = (individual.authorizationHistory || []).filter((item) => isCloseItem(item));
-  const hasCloseRequest = Boolean(
-    individual.closeAccountInfo ||
-    individual.requestType === 'Close Account' ||
-    individual.accountStatus === 'Closed' ||
-    accountCloseHistory.length > 0
-  );
+  const recordedCloseHistory = (individual.authorizationHistory || []).filter((item) => isCloseItem(item));
+  const accountCloseHistory =
+    recordedCloseHistory.length > 0 ? recordedCloseHistory : STATIC_ACCOUNT_CLOSE_HISTORY;
+  const closeInfo = {
+    closeDate: individual.closeAccountInfo?.closeDate || STATIC_CLOSE_ACCOUNT_INFO.closeDate,
+    account:
+      individual.closeAccountInfo?.account ||
+      individual.tradingAccountInfo?.tradingAccountNumber ||
+      STATIC_CLOSE_ACCOUNT_INFO.account,
+    reason: individual.closeAccountInfo?.reason || STATIC_CLOSE_ACCOUNT_INFO.reason,
+  };
 
   return (
     <div
       id="view-individual-modal-overlay"
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in"
-      onClick={onClose}
     >
       <div
         id="view-individual-modal-container"
@@ -292,7 +358,6 @@ export function ViewIndividualDialog({
           'w-full max-w-6xl xl:max-w-[1240px] max-h-[92vh] flex flex-col overflow-hidden text-slate-800 transition-all shadow-2xl',
           modalContainerClasses()
         )}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
         <div className="px-6 py-5 flex items-start justify-between gap-4 bg-white shrink-0">
@@ -386,22 +451,6 @@ export function ViewIndividualDialog({
 
         {/* Dialog Tab Body (Scrollable) */}
         <div className="p-6 overflow-y-auto flex-1 space-y-5 text-xs bg-slate-50/70">
-          {/* If Close Account, show banner across all tabs */}
-          {individual.requestType === 'Close Account' && (
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
-              <div className="flex items-center gap-2 text-purple-900 font-semibold">
-                <Lock className="w-4 h-4 text-purple-700" />
-                <span>Account Closure Pending Authorization</span>
-              </div>
-              <p className="text-purple-800 text-[11px]">
-                Close Date: <strong className="font-semibold">{individual.closeAccountInfo?.closeDate || 'N/A'}</strong> • Target Account: <strong className="font-semibold">{individual.closeAccountInfo?.account || 'Primary'}</strong>
-              </p>
-              <p className="text-purple-700 text-[11px]">
-                Closure Reason: {individual.closeAccountInfo?.reason || 'Customer request'}
-              </p>
-            </div>
-          )}
-
           {/* TAB 1: OVERVIEW — status and contact first, full record below */}
           {activeTab === 'overview' && (
             <IndividualOverviewSection 
@@ -655,51 +704,17 @@ export function ViewIndividualDialog({
 
               {/* CARD 2: ACCOUNT CLOSE TIMELINE */}
               <DossierCard title="Account Close" plain>
-                  {hasCloseRequest ? (
-                    <div className="space-y-5">
-                      {/* Closure parameters */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                        <div>
-                          <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Close Date</span>
-                          <div className="mt-1 text-sm text-slate-900 font-mono">
-                            {individual.closeAccountInfo?.closeDate || <span className="text-slate-400">-</span>}
-                          </div>
-                        </div>
-                        <div>
-                          <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Target Account</span>
-                          <div className="mt-1 text-sm text-slate-900 font-mono">
-                            {individual.closeAccountInfo?.account || individual.tradingAccountInfo?.tradingAccountNumber || <span className="text-slate-400">-</span>}
-                          </div>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Closure Reason</span>
-                          <div className="mt-1 text-sm text-slate-900 break-words">
-                            {individual.closeAccountInfo?.reason || <span className="text-slate-400">-</span>}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Closure timeline */}
-                      {accountCloseHistory.length > 0 && (
-                        <ol className="pt-4 border-t border-slate-100">
-                          {accountCloseHistory.map((item, idx) => (
-                            <WorkflowTimelineRow
-                              key={item.id || idx}
-                              item={item}
-                              isLast={idx === accountCloseHistory.length - 1}
-                            />
-                          ))}
-                        </ol>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="py-10 flex flex-col items-center justify-center text-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-                        <User className="w-7 h-7" />
-                      </div>
-                      <p className="text-sm text-slate-500">This customer&apos;s account has not been closed.</p>
-                    </div>
-                  )}
+                  <ol>
+                    {accountCloseHistory.map((item, idx) => (
+                      <WorkflowTimelineRow
+                        key={item.id || idx}
+                        item={item}
+                        isLast={idx === accountCloseHistory.length - 1}
+                        // The CSO submits the close request, so its stage carries the close details
+                        closeInfo={item.role === 'CSO' ? closeInfo : undefined}
+                      />
+                    ))}
+                  </ol>
               </DossierCard>
             </div>
           )}

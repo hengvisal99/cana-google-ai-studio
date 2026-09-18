@@ -26,7 +26,13 @@ export type ResidencyStatus = 'Resident' | 'Non-Resident';
 export type CustomerType = 'Retail' | 'High Net Worth' | 'Institutional' | 'Corporate Officer';
 
 // Service customer types: a customer can hold many, each with its own dynamic form
-export type CustomerTypeId = 'csx-screen' | 'client-card' | 'employee-trading' | 'vip-customer' | 'ipo-customer';
+export type CustomerTypeId =
+  | 'csx-screen'
+  | 'client-card'
+  | 'employee-trading'
+  | 'vip-customer'
+  | 'ipo-customer'
+  | 'personal-representative';
 export type CustomerTypeFieldValue = string | boolean;
 
 /** One record of a customer type; a customer can have many, including several of the same type */
@@ -36,8 +42,20 @@ export interface CustomerTypeRecord {
   customerId: string;
   typeId: CustomerTypeId;
   values: Record<string, CustomerTypeFieldValue>;
+  /** Registration / close-account workflow, for types that need approval */
+  approval?: CustomerTypeApproval;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Same CSO → SR → Manager flow as a customer's registration and close account */
+export interface CustomerTypeApproval {
+  requestType: RequestType;
+  requestStatus: RequestStatus;
+  currentWorkflowStage: WorkflowStage;
+  history: AuthorizationTimelineItem[];
+  /** Set by a close-account request */
+  cancelledDate?: string;
 }
 export type EducationBackground = 'High School' | "Bachelor's" | "Master's" | 'Doctorate' | 'Professional' | 'Other';
 export type SecuritiesKnowledge = 'None' | 'Beginner' | 'Intermediate' | 'Advanced' | 'Professional';

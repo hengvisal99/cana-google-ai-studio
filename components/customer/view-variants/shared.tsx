@@ -10,6 +10,7 @@ import {
   type SegmentTone,
 } from '@/lib/customer-types';
 import type { CustomerTypeFieldValue, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
+import type { ApprovalAction } from '@/lib/customer-type-approval';
 import { customerName } from '../CustomerTypeForm';
 
 export interface CustomerTypeViewProps {
@@ -22,6 +23,8 @@ export interface CustomerTypeViewProps {
   onClose: () => void;
   /** Render inline (scratch page) instead of as a modal overlay */
   embedded?: boolean;
+  /** Approve / resubmit / reject a record awaiting review (types with requiresApproval) */
+  onDecide?: (record: CustomerTypeRecord, action: ApprovalAction) => void;
 }
 
 /** Active tab, the customer, and their records per type */
@@ -91,7 +94,6 @@ export function ViewFrame({
           : 'max-h-[92vh] shadow-2xl shadow-blue-950/15 animate-in fade-in zoom-in-95',
         className
       )}
-      onClick={(e) => e.stopPropagation()}
     >
       {children}
     </div>
@@ -102,7 +104,6 @@ export function ViewFrame({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-3 backdrop-blur-sm animate-in fade-in sm:p-5"
-      onClick={onClose}
     >
       {panel}
     </div>

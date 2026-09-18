@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Briefcase, CreditCard, Crown, MonitorSmartphone, TrendingUp, type LucideIcon } from 'lucide-react';
+import { Briefcase, CreditCard, Crown, MonitorSmartphone, TrendingUp, UserCheck, type LucideIcon } from 'lucide-react';
 import type { CustomerTypeFieldValue, CustomerTypeId } from '@/types';
 
 export type CustomerTypeValues = Record<string, CustomerTypeFieldValue>;
@@ -26,6 +26,8 @@ export interface CustomerTypeField {
   type: CustomerTypeFieldType;
   required?: boolean;
   options?: string[];
+  /** Display text per option when the stored value is an id */
+  optionLabels?: Record<string, string>;
   /** Colour per option for `segmented` fields (default: primary) */
   optionTones?: Record<string, SegmentTone>;
   defaultValue?: string;
@@ -36,6 +38,8 @@ export interface CustomerTypeField {
   showInList?: boolean;
   /** Detail views draw fields sharing a group under one caption */
   group?: string;
+  /** Label inside its group's row in forms, where the group caption gives context (e.g. Quantity) */
+  shortLabel?: string;
 }
 
 export interface CustomerTypeDefinition {
@@ -46,6 +50,8 @@ export interface CustomerTypeDefinition {
   description: string;
   icon: LucideIcon;
   fields: CustomerTypeField[];
+  /** Records go through registration approval and can request close account, like a customer */
+  requiresApproval?: boolean;
 }
 
 const toNumber = (value: CustomerTypeFieldValue | undefined) => Number(value) || 0;
@@ -78,6 +84,18 @@ const MEMBERSHIP_FIELDS: CustomerTypeField[] = [
   },
   { key: 'reason', label: 'Reason', type: 'textarea', required: true, showInList: true },
 ];
+
+/**
+ * IPOs a customer can subscribe to. Placeholder list until the IPO catalogue comes
+ * from the backend; records store the id, screens show the name.
+ */
+export const IPO_LIST = [
+  { id: 'IPO-2026-001', name: 'MJQE - Mengly J. Quach Education' },
+  { id: 'IPO-2026-002', name: 'CGSM - CamGSM (Cellcard)' },
+  { id: 'IPO-2026-003', name: 'CANA - Canadia Bank Plc' },
+];
+
+export const ipoName = (id: string) => IPO_LIST.find((ipo) => ipo.id === id)?.name ?? id;
 
 /**
  * Customer type catalog. List columns, forms and detail views are all rendered
@@ -140,18 +158,19 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
       CUSTOMER_FIELD,
       {
         key: 'ipoNameId',
-        label: 'IPO Name ID',
+        label: 'IPO Name',
         type: 'select',
         required: true,
         placeholder: 'Choose here',
-        // Placeholder IDs until the IPO list comes from the backend
-        options: ['IPO-2026-001', 'IPO-2026-002', 'IPO-2026-003'],
+        options: IPO_LIST.map((ipo) => ipo.id),
+        optionLabels: Object.fromEntries(IPO_LIST.map((ipo) => [ipo.id, ipo.name])),
         showInList: true,
       },
       { key: 'bookBuildingDate', label: 'Book Building Date', type: 'date', required: true },
       {
         key: 'purchaseQuantity',
         label: 'Purchase Quantity',
+        shortLabel: 'Quantity',
         type: 'number',
         required: true,
         showInList: true,
@@ -160,6 +179,7 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
       {
         key: 'purchasePrice',
         label: 'Purchase Price',
+        shortLabel: 'Price',
         type: 'number',
         required: true,
         format: 'currency',
@@ -169,17 +189,34 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
       {
         key: 'totalAmount',
         label: 'Total Amount',
+        shortLabel: 'Total',
         type: 'computed',
         format: 'currency',
         compute: (v) => toNumber(v.purchaseQuantity) * toNumber(v.purchasePrice),
         showInList: true,
         group: 'Purchase',
       },
-      { key: 'subQuantity', label: 'Sub Quantity', type: 'number', required: true, group: 'Subscription' },
-      { key: 'subPrice', label: 'Sub Price', type: 'number', required: true, format: 'currency', group: 'Subscription' },
+      {
+        key: 'subQuantity',
+        label: 'Sub Quantity',
+        shortLabel: 'Quantity',
+        type: 'number',
+        required: true,
+        group: 'Subscription',
+      },
+      {
+        key: 'subPrice',
+        label: 'Sub Price',
+        shortLabel: 'Price',
+        type: 'number',
+        required: true,
+        format: 'currency',
+        group: 'Subscription',
+      },
       {
         key: 'subTotalAmount',
         label: 'Sub Total Amount',
+        shortLabel: 'Total',
         type: 'computed',
         format: 'currency',
         compute: (v) => toNumber(v.subQuantity) * toNumber(v.subPrice),
@@ -190,6 +227,34 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
         label: 'Subscription Date',
         type: 'date',
         required: true,
+        showInList: true,
+        group: 'Subscription',
+      },
+    ],
+  },
+  {
+    id: 'personal-representative',
+    idPrefix: 'PR',
+    label: 'PR Customer',
+    description: 'Acts on the customer\'s behalf; needs approval.',
+    icon: UserCheck,
+    requiresApproval: true,
+    fields: [
+      CUSTOMER_FIELD,
+      {
+        key: 'accountCheckedBy',
+        label: 'Account Checked By',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. Dara Vong (SR)',
+        showInList: true,
+      },
+      {
+        key: 'accountApprovedBy',
+        label: 'Account Approved By',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. Vannak Lim (Manager)',
         showInList: true,
       },
     ],
@@ -258,6 +323,7 @@ export function withComputedValues(type: CustomerTypeDefinition, values: Custome
 export function formatFieldValue(field: CustomerTypeField, value: CustomerTypeFieldValue | undefined): string {
   if (value === undefined || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (field.optionLabels?.[value]) return field.optionLabels[value];
 
   if (field.type === 'date') {
     const date = new Date(`${value}T00:00:00`);

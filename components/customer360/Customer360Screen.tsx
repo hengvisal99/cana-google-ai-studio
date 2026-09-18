@@ -203,6 +203,17 @@ export function Customer360Screen({
     );
   }, [filteredTransactions]);
 
+  // Shared column widths for the transaction body and its pinned totals table.
+  const txColGroup = (
+    <colgroup>
+      <col className="w-[30%]" />
+      <col className="w-[18%]" />
+      <col className="w-[16%]" />
+      <col className="w-[14%]" />
+      <col className="w-[22%]" />
+    </colgroup>
+  );
+
   // Print Dossier Action
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -728,83 +739,86 @@ export function Customer360Screen({
                     </div>
                   </div>
 
-                  {/* Transaction Table (Transaction Type column removed) */}
-                  <div className="overflow-auto xl:flex-1 xl:min-h-0 border border-slate-200 rounded-xl bg-white">
-                    <table className="w-full text-left text-xs border-collapse xl:h-full">
-                      <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                          <th className="py-2.5 px-3">Date & Time</th>
-                          <th className="py-2.5 px-3">IPO Name</th>
-                          <th className="py-2.5 px-3 text-right">Quantity</th>
-                          <th className="py-2.5 px-3 text-right">Price</th>
-                          <th className="py-2.5 px-3 text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {filteredTransactions.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
-                              <div className="flex flex-col items-center justify-center gap-1.5">
-                                <AlertCircle className="w-5 h-5 text-slate-300" />
-                                <span>No record found</span>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredTransactions.map((tx) => (
-                            <tr key={tx.id} className="hover:bg-slate-50/70 transition-colors">
-                              <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap font-medium text-[11px]">
-                                {tx.dateTime}
-                              </td>
-                              <td className="py-2.5 px-3 font-medium text-slate-900">
-                                {ipoTicker(tx.ipoName)}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-800">
-                                {tx.quantity.toLocaleString()}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono text-slate-600">
-                                ${tx.price.toFixed(2)}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
-                                ${tx.tradingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </td>
+                  {/* Transaction Table (Transaction Type column removed).
+                      At xl the card stretches to match the timeline opposite.
+                      Rows keep their natural height inside a scrolling body and
+                      the totals live in a separate table pinned to the card's
+                      bottom edge; both tables share one fixed colgroup so the
+                      columns line up. */}
+                  <div className="flex flex-col overflow-x-auto xl:flex-1 xl:min-h-0 border border-slate-200 rounded-xl bg-white">
+                    <div className="flex flex-1 min-h-0 min-w-[520px] flex-col">
+                      <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
+                        <table className="w-full table-fixed text-left text-xs border-collapse">
+                          {txColGroup}
+                          <thead>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                              <th className="py-2.5 px-3">Date & Time</th>
+                              <th className="py-2.5 px-3">IPO Name</th>
+                              <th className="py-2.5 px-3 text-right">Quantity</th>
+                              <th className="py-2.5 px-3 text-right">Price</th>
+                              <th className="py-2.5 px-3 text-right">Amount</th>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                      {/* Filler row: at xl the card is stretched to the timeline
-                          opposite, so this absorbs the leftover height and drops
-                          the totals onto the bottom edge instead of leaving them
-                          floating above blank space. Its own tbody keeps it clear
-                          of the divide-y separators above. */}
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {filteredTransactions.length === 0 ? (
+                              <tr>
+                                <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
+                                  <div className="flex flex-col items-center justify-center gap-1.5">
+                                    <AlertCircle className="w-5 h-5 text-slate-300" />
+                                    <span>No record found</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              filteredTransactions.map((tx) => (
+                                <tr key={tx.id} className="hover:bg-slate-50/70 transition-colors">
+                                  <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap font-medium text-[11px]">
+                                    {tx.dateTime}
+                                  </td>
+                                  <td className="py-2.5 px-3 font-medium text-slate-900 truncate">
+                                    {ipoTicker(tx.ipoName)}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-800">
+                                    {tx.quantity.toLocaleString()}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-mono text-slate-600">
+                                    ${tx.price.toFixed(2)}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
+                                    ${tx.tradingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                       {filteredTransactions.length > 0 && (
-                        <tbody aria-hidden="true" className="hidden xl:table-row-group">
-                          <tr className="h-full">
-                            <td colSpan={5} className="p-0" />
-                          </tr>
-                        </tbody>
+                        <div className="overflow-y-hidden [scrollbar-gutter:stable] bg-slate-50/90 border-t-2 border-slate-200">
+                          <table className="w-full table-fixed text-left text-xs border-collapse">
+                            {txColGroup}
+                            <tbody>
+                              <tr>
+                                <td colSpan={2} className="py-3 px-3">
+                                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">
+                                    Total
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900 text-xs">
+                                  {transactionTotals.quantity.toLocaleString()}
+                                </td>
+                                <td className="py-3 px-3 text-right text-slate-400 font-normal">
+                                  —
+                                </td>
+                                <td className="py-3 px-3 text-right font-mono font-semibold text-blue-700 text-sm">
+                                  ${transactionTotals.tradingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       )}
-                      {filteredTransactions.length > 0 && (
-                        <tfoot className="bg-slate-50/90 border-t-2 border-slate-200">
-                          <tr>
-                            <td colSpan={2} className="py-3 px-3.5">
-                              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-700">
-                                Total
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 text-right font-mono font-semibold text-slate-900 text-xs">
-                              {transactionTotals.quantity.toLocaleString()}
-                            </td>
-                            <td className="py-3 px-3 text-right text-slate-400 font-normal">
-                              —
-                            </td>
-                            <td className="py-3 px-3 text-right font-mono font-semibold text-blue-700 text-sm">
-                              ${transactionTotals.tradingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      )}
-                    </table>
+                    </div>
                   </div>
                 </div>
               </section>

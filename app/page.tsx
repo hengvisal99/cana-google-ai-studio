@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { 
   DesignTheme, 
   NavigationPage, 
@@ -11,6 +11,16 @@ import {
 import type { CustomerTypeRecord } from '@/types';
 import { INITIAL_INDIVIDUALS } from '@/lib/data';
 import { INITIAL_CUSTOMER_TYPE_RECORDS } from '@/lib/customer-type-records';
+
+/** Below this width the sidebar starts collapsed, leaving the dashboard's chart grid more room. */
+const SIDEBAR_AUTO_COLLAPSE_QUERY = '(max-width: 1399.98px)';
+
+const subscribeToNarrowScreen = (onChange: () => void) => {
+  const query = window.matchMedia(SIDEBAR_AUTO_COLLAPSE_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+};
+const isNarrowScreen = () => window.matchMedia(SIDEBAR_AUTO_COLLAPSE_QUERY).matches;
 
 // Theme Shells
 import { SoftFintechShell } from '@/components/themes/SoftFintechShell';
@@ -39,7 +49,12 @@ export default function Home() {
   // Header State
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>('EN');
   const [currentApp, setCurrentApp] = useState<EnterpriseApp>('Nexus Core Banking');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Collapsed by default below 1400px. A manual toggle holds until the screen crosses 1400px,
+  // at which point the sidebar follows the width again.
+  const isNarrow = useSyncExternalStore(subscribeToNarrowScreen, isNarrowScreen, () => false);
+  const [sidebarOverride, setSidebarOverride] = useState<{ narrow: boolean; collapsed: boolean } | null>(null);
+  const sidebarCollapsed =
+    sidebarOverride && sidebarOverride.narrow === isNarrow ? sidebarOverride.collapsed : isNarrow;
 
   // Individual Database State
   const [individuals, setIndividuals] = useState<Individual[]>(INITIAL_INDIVIDUALS);
@@ -274,6 +289,7 @@ export default function Home() {
             onViewIndividual={handleViewIndividual}
             onNavigateToUpdate={handleNavigateToUpdate}
             theme={currentTheme}
+            customerTypeRecords={customerTypeRecords}
           />
         );
 
@@ -370,7 +386,7 @@ export default function Home() {
     currentApp,
     onAppChange: setCurrentApp,
     sidebarCollapsed,
-    onToggleSidebar: () => setSidebarCollapsed(!sidebarCollapsed),
+    onToggleSidebar: () => setSidebarOverride({ narrow: isNarrow, collapsed: !sidebarCollapsed }),
     children: renderActiveScreen(),
   };
 

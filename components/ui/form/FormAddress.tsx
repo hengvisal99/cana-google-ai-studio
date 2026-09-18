@@ -318,7 +318,6 @@ export function FormAddress({
             >
               <div
                 aria-hidden
-                onClick={close}
                 className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-150"
               />
 

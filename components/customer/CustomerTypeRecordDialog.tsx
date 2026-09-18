@@ -10,6 +10,7 @@ import {
   withComputedValues,
   type CustomerTypeValues,
 } from '@/lib/customer-types';
+import { newRegistration, resubmitted } from '@/lib/customer-type-approval';
 import type { CustomerTypeFieldValue, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
 import { BTN_PRIMARY, BTN_SECONDARY, CustomerTypeForm, DialogShell, customerName } from './CustomerTypeForm';
 
@@ -75,11 +76,20 @@ export function CustomerTypeRecordDialog({
 
     const now = new Date().toISOString();
     const finalValues = withComputedValues(type, values);
+    // Correcting a record sent back for resubmission puts it up for review again
+    const approval = record?.approval
+      ? record.approval.requestStatus === 'Resubmit'
+        ? resubmitted(record.approval)
+        : record.approval
+      : type.requiresApproval
+        ? newRegistration()
+        : undefined;
     onSave({
       id: record?.id ?? nextRecordId(type, existingIds),
       customerId: customerKey ? String(finalValues[customerKey]) : customerId,
       typeId,
       values: finalValues,
+      approval,
       createdAt: record?.createdAt ?? now,
       updatedAt: now,
     });

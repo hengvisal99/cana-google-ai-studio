@@ -6,6 +6,7 @@ import {
   AtSign,
   Building2,
   CalendarDays,
+  CalendarRange,
   Check,
   ChevronsUpDown,
   Copy,
@@ -20,14 +21,13 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
+  FormDatePicker,
   FormInput,
   FormMultiSelect,
   FormPhone,
   FormSelect,
   FormTextarea,
-  formatPhoneValue,
   type FieldOption,
-  type PhoneValue,
 } from '@/components/ui/form';
 
 const CARD = 'rounded-2xl border border-slate-200/70 bg-white shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)]';
@@ -55,6 +55,9 @@ const PRODUCTS: FieldOption[] = [
   { value: 'ipo', label: 'IPO Subscription', description: 'Primary market', disabled: true },
 ];
 
+/** Fixed so the demo's min/max bounds stay stable across reloads. */
+const TODAY = '2026-09-18';
+
 const BRANCHES: FieldOption[] = ['Phnom Penh HQ', 'Siem Reap', 'Battambang', 'Sihanoukville', 'Kampong Cham'];
 
 /** Long enough that scanning it by eye is slower than typing - the case the filter box is for. */
@@ -78,11 +81,12 @@ const COUNTRIES: FieldOption[] = [
   { value: 'kp', label: 'North Korea', description: 'Sanctioned', disabled: true },
 ];
 
-type TabId = 'input' | 'textarea' | 'phone' | 'select' | 'multiselect' | 'playground';
+type TabId = 'input' | 'textarea' | 'date' | 'phone' | 'select' | 'multiselect' | 'playground';
 
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'input', label: 'FormInput', icon: TextCursorInput },
   { id: 'textarea', label: 'FormTextarea', icon: AlignLeft },
+  { id: 'date', label: 'FormDatePicker', icon: CalendarRange },
   { id: 'phone', label: 'FormPhone', icon: Phone },
   { id: 'select', label: 'FormSelect', icon: ChevronsUpDown },
   { id: 'multiselect', label: 'FormMultiSelect', icon: ListChecks },
@@ -226,10 +230,18 @@ export function FormFieldsScreen() {
   const [notes, setNotes] = useState('');
   const [summary, setSummary] = useState('Opened a premier savings account on 14 Jan.');
 
+  // FormDatePicker
+  const [dob, setDob] = useState('1990-01-15');
+  const [openedOn, setOpenedOn] = useState('');
+  const [valueDate, setValueDate] = useState('');
+  const [maturity, setMaturity] = useState('');
+  const [reviewDate, setReviewDate] = useState('2026-10-01');
+  const [dateSizeDemo, setDateSizeDemo] = useState('2026-09-18');
+
   // FormPhone
-  const [mobile, setMobile] = useState<PhoneValue>({ country: 'kh', number: '12 345 678' });
-  const [officePhone, setOfficePhone] = useState<PhoneValue>({ country: 'sg', number: '' });
-  const [emergency, setEmergency] = useState<PhoneValue>({ country: 'kh', number: '' });
+  const [mobile, setMobile] = useState('+85512345678');
+  const [officePhone, setOfficePhone] = useState('');
+  const [emergency, setEmergency] = useState('');
 
   // FormSelect
   const [customerType, setCustomerType] = useState('Retail');
@@ -248,10 +260,11 @@ export function FormFieldsScreen() {
   const [channels, setChannels] = useState<string[]>(['Email']);
 
   // Playground
-  const [form, setForm] = useState({ name: '', type: '', products: [] as string[] });
+  const [form, setForm] = useState({ name: '', type: '', openedOn: '', products: [] as string[] });
   const [submitted, setSubmitted] = useState<string | null>(null);
   const nameError = submitted !== null && !form.name.trim() ? 'Customer name is required' : undefined;
   const typeError = submitted !== null && !form.type ? 'Pick a customer type' : undefined;
+  const openedOnError = submitted !== null && !form.openedOn ? 'Pick an opening date' : undefined;
   const productsError = submitted !== null && form.products.length === 0 ? 'Select at least one product' : undefined;
 
   return (
@@ -484,33 +497,139 @@ export function FormFieldsScreen() {
         )}
 
         {/* ---------------------------------------------------------------- */}
+        {tab === 'date' && (
+          <>
+            <Doc
+              icon={CalendarRange}
+              name="FormDatePicker"
+              description="Single date — a react-day-picker calendar in a portalled panel, stored as YYYY-MM-DD."
+              importLine="import { FormDatePicker } from '@/components/ui/form'"
+            >
+              <Row name="Default" note="Click or press ↓ to open; arrow keys walk the days, Esc closes.">
+                <FormDatePicker label="Account Opened On" value={openedOn} onChange={setOpenedOn} />
+                <p className="mt-2 font-mono text-[10px] text-slate-400">value → {openedOn ? `'${openedOn}'` : "''"}</p>
+              </Row>
+
+              <Row
+                name="Month & year dropdowns"
+                note="dropdowns adds month and year selects — for dates far from today, like a birth date."
+              >
+                <FormDatePicker
+                  label="Date of Birth"
+                  dropdowns
+                  max={TODAY}
+                  value={dob}
+                  onChange={setDob}
+                  hint="Future dates are disabled"
+                />
+              </Row>
+
+              <Row name="Min / max" note="Days outside the range are struck through and cannot be picked.">
+                <FormDatePicker
+                  label="Value Date"
+                  min="2026-09-01"
+                  max="2026-09-30"
+                  value={valueDate}
+                  onChange={setValueDate}
+                  hint="September 2026 only"
+                />
+              </Row>
+
+              <Row name="Required + error" note="Same contract as every other field.">
+                <FormDatePicker
+                  label="Maturity Date"
+                  required
+                  min={TODAY}
+                  value={maturity}
+                  onChange={setMaturity}
+                  error={maturity ? undefined : 'Maturity date is required'}
+                />
+              </Row>
+
+              <Row name="Clearable + format" note="clearable adds an inline reset; displayFormat changes only the text.">
+                <FormDatePicker
+                  label="Next KYC Review"
+                  clearable
+                  displayFormat="EEEE, d MMMM yyyy"
+                  value={reviewDate}
+                  onChange={setReviewDate}
+                />
+              </Row>
+
+              <Row name="Disabled" note="For dates the workflow locks.">
+                <FormDatePicker
+                  label="Approved On"
+                  value="2026-01-14"
+                  onChange={() => undefined}
+                  disabled
+                  hint="Set by the approval workflow"
+                />
+              </Row>
+
+              <Row name="Sizes" note="sm · md (default) · lg." full>
+                <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+                  <FormDatePicker label="Small" size="sm" value={dateSizeDemo} onChange={setDateSizeDemo} />
+                  <FormDatePicker label="Medium" size="md" value={dateSizeDemo} onChange={setDateSizeDemo} />
+                  <FormDatePicker label="Large" size="lg" value={dateSizeDemo} onChange={setDateSizeDemo} />
+                </div>
+              </Row>
+            </Doc>
+
+            <ApiTable
+              rows={[
+                {
+                  name: 'value / onChange',
+                  type: 'string / (v) => void',
+                  description: "YYYY-MM-DD string; '' means no date.",
+                },
+                { name: 'min / max', type: 'string', description: 'YYYY-MM-DD bounds; days outside are disabled.' },
+                { name: 'dropdowns', type: 'boolean', description: 'Month and year selects in the calendar caption.' },
+                {
+                  name: 'displayFormat',
+                  type: 'string',
+                  description: 'date-fns pattern for the trigger text. Default "dd MMM yyyy".',
+                },
+                { name: 'clearable', type: 'boolean', description: 'Inline reset button once a date is picked.' },
+                { name: 'placeholder', type: 'string', description: 'Shown while no date is selected.' },
+                { name: 'name', type: 'string', description: 'Mirrors the value into a hidden input for form posts.' },
+                { name: 'label / hint / error / size', type: '—', description: 'Same contract as the other fields.' },
+              ]}
+            />
+          </>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
         {tab === 'phone' && (
           <>
             <Doc
               icon={Phone}
               name="FormPhone"
-              description="Phone number with a searchable country code, grouped as you type."
+              description="Phone number on react-international-phone — flags, searchable country code, masked as you type."
               importLine="import { FormPhone } from '@/components/ui/form'"
             >
               <Row
                 name="Default"
-                note="Type digits only — grouping is applied live. Search the code by name or number."
+                note="Type digits only — the country's mask is applied live. Search the code by name or number."
                 full
               >
                 <div className="max-w-xs">
                   <FormPhone label="Mobile Number" value={mobile} onChange={setMobile} />
                 </div>
                 <p className="mt-2 font-mono text-[10px] text-slate-400">
-                  formatPhoneValue() → {formatPhoneValue(mobile) || '—'}
+                  value → {mobile ? `'${mobile}'` : "''"}
                 </p>
               </Row>
 
-              <Row name="Other country" note="The value keeps the ISO code, so the dial code is never stored twice.">
+              <Row
+                name="Other country"
+                note="defaultCountry sets the code while empty. Pasting a number with a + prefix switches it."
+              >
                 <FormPhone
                   label="Office Number"
+                  defaultCountry="sg"
                   value={officePhone}
                   onChange={setOfficePhone}
-                  hint="Country and number are stored separately"
+                  hint="Stored as E.164, e.g. +6581234567"
                 />
               </Row>
 
@@ -520,14 +639,14 @@ export function FormFieldsScreen() {
                   required
                   value={emergency}
                   onChange={setEmergency}
-                  error={emergency.number.trim() ? undefined : 'A contact number is required'}
+                  error={emergency ? undefined : 'A contact number is required'}
                 />
               </Row>
 
               <Row name="Disabled" note="Neither the code nor the number can be changed.">
                 <FormPhone
                   label="Verified Number"
-                  value={{ country: 'kh', number: '77 889 900' }}
+                  value="+85577889900"
                   onChange={() => undefined}
                   disabled
                   hint="Locked after OTP verification"
@@ -547,26 +666,23 @@ export function FormFieldsScreen() {
               rows={[
                 {
                   name: 'value / onChange',
-                  type: '{ country, number }',
-                  description: 'country is an ISO code; number is the national part as typed.',
+                  type: 'string / (v, country) => void',
+                  description: "E.164 string like '+85512345678'; '' while no number is typed.",
                 },
+                { name: 'defaultCountry', type: 'CountryIso2', description: 'Code shown while the value is empty. Default "kh".' },
                 {
                   name: 'countries',
-                  type: 'PhoneCountry[]',
-                  description: 'Defaults to PHONE_COUNTRIES. Pass a subset to narrow the list.',
+                  type: 'CountryData[]',
+                  description: 'Defaults to PHONE_INPUT_COUNTRIES (the full list). Pass a subset to narrow it.',
                 },
                 {
-                  name: 'placeholder',
-                  type: 'string',
-                  description: "Overrides the country's example number.",
+                  name: 'preferredCountries',
+                  type: 'CountryIso2[]',
+                  description: "Pinned to the top of the picker. Default: the bank's markets.",
                 },
-                { name: 'name', type: 'string', description: 'Hidden input carrying "+855 12 345 678" for form posts.' },
+                { name: 'placeholder', type: 'string', description: "Overrides the country's example number." },
+                { name: 'name', type: 'string', description: 'Hidden input carrying the E.164 value for form posts.' },
                 { name: 'label / hint / error / size', type: '—', description: 'Same contract as the other fields.' },
-                {
-                  name: 'formatPhoneValue / parsePhoneValue',
-                  type: 'helpers',
-                  description: 'Flatten to a string for storage, and read one back.',
-                },
               ]}
             />
           </>
@@ -821,7 +937,7 @@ export function FormFieldsScreen() {
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-slate-900">Playground</h2>
                 <p className="text-xs text-slate-500">
-                  All three fields in one form. Submit empty to see the error states together.
+                  Every field in one form. Submit empty to see the error states together.
                 </p>
               </div>
             </div>
@@ -853,6 +969,14 @@ export function FormFieldsScreen() {
                     onChange={(next) => setForm({ ...form, type: next })}
                     error={typeError}
                   />
+                  <FormDatePicker
+                    label="Account Opened On"
+                    required
+                    max={TODAY}
+                    value={form.openedOn}
+                    onChange={(next) => setForm({ ...form, openedOn: next })}
+                    error={openedOnError}
+                  />
                   <FormMultiSelect
                     label="Products"
                     required
@@ -874,7 +998,7 @@ export function FormFieldsScreen() {
                   <button
                     type="button"
                     onClick={() => {
-                      setForm({ name: '', type: '', products: [] });
+                      setForm({ name: '', type: '', openedOn: '', products: [] });
                       setSubmitted(null);
                     }}
                     className="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"

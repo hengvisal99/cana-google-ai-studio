@@ -135,11 +135,15 @@ function DenseField({
   clamp,
   onCopy,
   copiedKey,
+  href,
+  linkTitle,
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
   copyKey?: string;
+  href?: string;
+  linkTitle?: string;
   mono?: boolean;
   clamp?: boolean;
   onCopy: (text: string, key: string) => void;
@@ -165,16 +169,30 @@ function DenseField({
           </button>
         )}
       </div>
-      <span
-        className={cn(
-          'mt-0.5 block text-[13px] font-semibold text-slate-900',
-          mono && 'font-mono',
-          clamp ? 'line-clamp-2 break-words' : 'truncate'
-        )}
-        title={value}
-      >
-        {value}
-      </span>
+      {href ? (
+        <a
+          href={href}
+          className={cn(
+            'mt-0.5 block text-[13px] font-semibold text-slate-900 hover:text-blue-600 hover:underline',
+            mono && 'font-mono',
+            clamp ? 'line-clamp-2 break-words' : 'truncate'
+          )}
+          title={linkTitle || value}
+        >
+          {value}
+        </a>
+      ) : (
+        <span
+          className={cn(
+            'mt-0.5 block text-[13px] font-semibold text-slate-900',
+            mono && 'font-mono',
+            clamp ? 'line-clamp-2 break-words' : 'truncate'
+          )}
+          title={value}
+        >
+          {value}
+        </span>
+      )}
     </div>
   );
 }
@@ -326,6 +344,8 @@ export function Customer360ProfileHeader({
           label="Email"
           value={email}
           copyKey="email"
+          href={email && email.includes('@') ? 'mailto:' + email : undefined}
+          linkTitle={'Send email to ' + email}
           onCopy={onCopy}
           copiedKey={copiedKey}
         />

@@ -77,7 +77,6 @@ function Frame({
   return (
     <div
       className="fixed inset-0 z-70 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onCancel}
     >
       {children}
     </div>
@@ -146,7 +145,6 @@ export function DecisionDialogMatchedMark({
   return (
     <Frame onCancel={onCancel} embedded={embedded}>
       <div
-        onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-[29rem] overflow-hidden rounded-[26px] bg-white shadow-[0_24px_60px_-20px_rgba(15,23,42,0.3)] ring-1 ring-slate-900/10 animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
       >
         <CloseButton onCancel={onCancel} className="right-4 top-4 z-10" />
@@ -228,7 +226,6 @@ export function DecisionDialogBannerHead({
   return (
     <Frame onCancel={onCancel} embedded={embedded}>
       <div
-        onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-[28rem] overflow-hidden rounded-2xl bg-white shadow-[0_24px_60px_-20px_rgba(15,23,42,0.3)] ring-1 ring-slate-900/10 animate-in zoom-in-95 duration-200"
       >
         {/* Tinted banner */}

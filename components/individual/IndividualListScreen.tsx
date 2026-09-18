@@ -55,6 +55,7 @@ import { motion } from 'motion/react';
 import { CheckBadge, FilterSelect, LIFTED_ACTIVE, MENU_SURFACE, Popover } from './DirectoryControls';
 import { CustomerTypePickerDialog } from '@/components/customer/CustomerTypePickerDialog';
 import type { CustomerTypeRecord } from '@/types';
+import { FormDatePicker } from '@/components/ui/form';
 
 interface IndividualListScreenProps {
   individuals: Individual[];
@@ -190,7 +191,9 @@ export function IndividualListScreen({
   const [closeDate, setCloseDate] = useState('2026-09-09');
   const [closeAccountName, setCloseAccountName] = useState('');
   const [closeReason, setCloseReason] = useState('');
-  const [closeOfficer, setCloseOfficer] = useState('Sophea Keo (CSO)');
+  const [closeOfficer] = useState('Sophea Keo (CSO)');
+  const [closeDelinkCsx, setCloseDelinkCsx] = useState(false);
+  const [closeDelinkBankAc, setCloseDelinkBankAc] = useState(false);
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1045,6 +1048,8 @@ export function IndividualListScreen({
                                   setCloseAccountModalIndividual(item);
                                   setCloseAccountName(item.tradingAccountInfo?.tradingAccountNumber || 'Primary Account');
                                   setCloseReason('');
+                                  setCloseDelinkCsx(false);
+                                  setCloseDelinkBankAc(false);
                                 }}
                                 className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                               >
@@ -1693,8 +1698,8 @@ export function IndividualListScreen({
       {/* Close Account Modal (For Active Accounts) */}
       {closeAccountIndividual && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 border border-slate-200 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Lock className="w-5 h-5 text-purple-600" />
                 <div>
@@ -1712,43 +1717,36 @@ export function IndividualListScreen({
               </button>
             </div>
 
-            <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs text-purple-900">
-              Initiating account closure transitions this profile to <strong className="font-semibold">Close Account</strong> request status and routes through SR and Manager authorizations.
-            </div>
-
-            <div className="space-y-3 text-xs">
+            <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Close Date</label>
-                <input
-                  type="date"
-                  value={closeDate}
-                  onChange={(e) => setCloseDate(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800"
-                />
+                <label htmlFor="close-account-date" className="block text-[11px] font-semibold text-slate-600 mb-1">Close Date</label>
+                <FormDatePicker id="close-account-date" value={closeDate} onChange={setCloseDate} />
+              </div>
+
+              <div className="space-y-2">
+                <span className="block text-[11px] font-semibold text-slate-600">Delink Accounts</span>
+                <label className="flex items-center gap-2 text-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={closeDelinkCsx}
+                    onChange={(e) => setCloseDelinkCsx(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-slate-300 accent-purple-600"
+                  />
+                  ACC_Delink CSX
+                </label>
+                <label className="flex items-center gap-2 text-slate-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={closeDelinkBankAc}
+                    onChange={(e) => setCloseDelinkBankAc(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-slate-300 accent-purple-600"
+                  />
+                  ACC_Delink BankAC
+                </label>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Account to Close</label>
-                <input
-                  type="text"
-                  value={closeAccountName}
-                  onChange={(e) => setCloseAccountName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Processed By (Officer)</label>
-                <input
-                  type="text"
-                  value={closeOfficer}
-                  onChange={(e) => setCloseOfficer(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Reason for Closure *</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Reason *</label>
                 <textarea
                   rows={2}
                   value={closeReason}
@@ -1759,7 +1757,7 @@ export function IndividualListScreen({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setCloseAccountModalIndividual(null)}
@@ -1772,20 +1770,24 @@ export function IndividualListScreen({
                 onClick={handleSubmitCloseAccount}
                 className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition shadow-xs"
               >
-                Submit Close Request
+                Close Account
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Customer Type: pick a type, then add a record with its dynamic form */}
+      {/* Customer Type: pick one or more types, then add a record for each with its dynamic form */}
       {customerTypeIndividual && (
         <CustomerTypePickerDialog
           individual={customerTypeIndividual}
+          customers={individuals}
           existingIds={customerTypeRecordIds}
           onClose={() => setCustomerTypeIndividualId(null)}
-          onSaveRecord={(record) => onSaveCustomerTypeRecord?.(record)}
+          onSaveRecords={(records) => {
+            records.forEach((record) => onSaveCustomerTypeRecord?.(record));
+            setCustomerTypeIndividualId(null);
+          }}
         />
       )}
 

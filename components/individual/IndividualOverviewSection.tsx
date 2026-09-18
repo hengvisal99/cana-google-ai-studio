@@ -21,18 +21,19 @@ interface IndividualOverviewSectionProps {
 type Tone = 'neutral' | 'info' | 'accent' | 'good' | 'warn' | 'danger';
 
 /**
- * Every tile sits on white; the tone only ever touches the accent bar, the
- * border and the value. A 1px border alone is too faint to catch on the
- * slate body, so the accent bar carries the signal -- and it echoes the bar
- * already heading each field group below.
+ * The tone tints the whole tile: fill, border, accent bar, icon disc and
+ * value. The accent bar echoes the bar already heading each field group below.
  */
-const TONE: Record<Tone, { border: string; accent: string; value: string }> = {
-  neutral: { border: 'border-slate-200', accent: 'bg-slate-300', value: 'text-slate-900' },
-  info: { border: 'border-blue-200', accent: 'bg-blue-500', value: 'text-blue-700' },
-  accent: { border: 'border-purple-200', accent: 'bg-purple-500', value: 'text-purple-700' },
-  good: { border: 'border-emerald-200', accent: 'bg-emerald-500', value: 'text-emerald-700' },
-  warn: { border: 'border-amber-200', accent: 'bg-amber-500', value: 'text-amber-700' },
-  danger: { border: 'border-rose-200', accent: 'bg-rose-500', value: 'text-rose-700' },
+const TONE: Record<
+  Tone,
+  { border: string; accent: string; value: string; soft: string; iconBg: string; hover: string }
+> = {
+  neutral: { border: 'border-slate-200', accent: 'bg-slate-300', value: 'text-slate-900', soft: 'bg-slate-50', iconBg: 'bg-slate-200/70', hover: 'hover:border-slate-300 hover:shadow-slate-500/10' },
+  info: { border: 'border-blue-200', accent: 'bg-blue-500', value: 'text-blue-700', soft: 'bg-blue-50/70', iconBg: 'bg-blue-100', hover: 'hover:border-blue-300 hover:shadow-blue-500/15' },
+  accent: { border: 'border-purple-200', accent: 'bg-purple-500', value: 'text-purple-700', soft: 'bg-purple-50/70', iconBg: 'bg-purple-100', hover: 'hover:border-purple-300 hover:shadow-purple-500/15' },
+  good: { border: 'border-emerald-200', accent: 'bg-emerald-500', value: 'text-emerald-700', soft: 'bg-emerald-50/70', iconBg: 'bg-emerald-100', hover: 'hover:border-emerald-300 hover:shadow-emerald-500/15' },
+  warn: { border: 'border-amber-200', accent: 'bg-amber-500', value: 'text-amber-700', soft: 'bg-amber-50/70', iconBg: 'bg-amber-100', hover: 'hover:border-amber-300 hover:shadow-amber-500/15' },
+  danger: { border: 'border-rose-200', accent: 'bg-rose-500', value: 'text-rose-700', soft: 'bg-rose-50/70', iconBg: 'bg-rose-100', hover: 'hover:border-rose-300 hover:shadow-rose-500/15' },
 };
 
 const RISK_TONE: Record<string, Tone> = {
@@ -45,8 +46,8 @@ const RISK_TONE: Record<string, Tone> = {
 
 /**
  * One value in the focus strip: the things staff act on before reading the
- * record. The icon rides in the label row rather than beside the value, so
- * every tile keeps the same text baseline however long its icon set is.
+ * record. The tinted fill and icon disc give the strip enough weight to hold
+ * the eye against the white record surface below.
  */
 function FocusTile({
   label,
@@ -67,24 +68,39 @@ function FocusTile({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border bg-white pl-4 pr-3.5 py-3 min-w-0',
-        t.border
+        // Read-only tile: hover lifts and tints it, but no pointer cursor.
+        'group/tile relative overflow-hidden rounded-xl border pl-5 pr-4 py-4 min-w-0 flex items-center gap-3.5',
+        'transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+        t.border,
+        t.soft,
+        t.hover
       )}
     >
-      <span className={cn('absolute inset-y-0 left-0 w-1', t.accent)} aria-hidden="true" />
-
-      <div className="flex items-start justify-between gap-2">
+      <span
+        className={cn('absolute inset-y-0 left-0 w-1 transition-[width] duration-200 group-hover/tile:w-1.5', t.accent)}
+        aria-hidden="true"
+      />
+      <span
+        className={cn(
+          'grid h-10 w-10 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover/tile:scale-110 motion-reduce:group-hover/tile:scale-100',
+          t.iconBg,
+          t.value
+        )}
+        aria-hidden="true"
+      >
+        <Icon className="w-5 h-5" />
+      </span>
+      <div className="min-w-0">
         {/* Labels stay uniformly muted so the tone reads on the value alone. */}
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           {label}
         </span>
-        <Icon className={cn('w-3.5 h-3.5 shrink-0 opacity-70', t.value)} aria-hidden="true" />
-      </div>
-      <div
-        className={cn('mt-1 text-sm font-semibold truncate', t.value, valueClassName)}
-        title={typeof value === 'string' ? value : undefined}
-      >
-        {isEmpty ? <span className="text-slate-400">-</span> : value}
+        <div
+          className={cn('mt-1.5 text-base font-semibold leading-tight truncate', t.value, valueClassName)}
+          title={typeof value === 'string' ? value : undefined}
+        >
+          {isEmpty ? <span className="text-slate-400">-</span> : value}
+        </div>
       </div>
     </div>
   );
