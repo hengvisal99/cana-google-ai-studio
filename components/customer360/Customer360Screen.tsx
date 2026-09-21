@@ -28,9 +28,16 @@ import {
   UserPlus,
   SlidersHorizontal,
   RotateCcw,
-  Tag
+  Tag,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Monitor,
+  Briefcase,
+  Crown,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FormSelect } from '@/components/ui/form';
 import { Customer360SummarySection } from './Customer360SummarySection';
 import { Customer360ProfileHeader } from './Customer360ProfileHeader';
 
@@ -40,6 +47,25 @@ const isActiveAccount = (ind: Individual) =>
 
 const isClosedAccount = (ind: Individual) =>
   ind.accountStatus === 'Closed' || ind.requestType === 'Close Account';
+
+// Remaining-days tone: green when comfortably valid, neutral in the normal
+// range, amber when renewal is due, rose when it is about to lapse.
+const remainingTone = (expiryDays: string) => {
+  const days = parseInt(expiryDays, 10);
+  if (Number.isNaN(days)) return 'text-slate-800';
+  if (days <= 7) return 'text-rose-600';
+  if (days <= 30) return 'text-amber-600';
+  if (days >= 90) return 'text-emerald-600';
+  return 'text-slate-800';
+};
+
+// Product icon by name; the status pill already carries the state colour.
+const PRODUCT_ICONS: Record<string, React.ElementType> = {
+  'CSX Screen': Monitor,
+  'Client Card': CreditCard,
+  'Employee Trading': Briefcase,
+  'VIP Customer': Crown,
+};
 
 interface Customer360ScreenProps {
   individuals: Individual[];
@@ -61,6 +87,29 @@ export function Customer360Screen({
   // Left Sidebar State
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [customerTab, setCustomerTab] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Temporary A/B toggle: compare the current typography against the
+  // recommended hierarchy (3 weights, semibold reserved for emphasis).
+  const [refined, setRefined] = useState(false);
+  const sectionTitle = cn('text-sm font-semibold', refined ? 'text-slate-600' : 'text-slate-900');
+
+  // Temporary A/B toggle: where "show customer list" sits once the sidebar is hidden.
+  const [togglePlacement, setTogglePlacement] = useState<'current' | 'cardEdge' | 'besidePrint' | 'rail'>('current');
+  const sidebarClosedOn = (p: typeof togglePlacement) => !sidebarOpen && togglePlacement === p;
+  const iconToggle = (
+    <button
+      type="button"
+      onClick={() => setSidebarOpen(true)}
+      aria-expanded={false}
+      aria-controls="customer-360-left-sidebar"
+      title="Show customer list"
+      aria-label="Show customer list"
+      className="hidden lg:grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition cursor-pointer hover:border-blue-300 hover:text-blue-600 print:hidden"
+    >
+      <PanelLeftOpen className="w-4 h-4" />
+    </button>
+  );
 
   // Transaction History Filters (Dropdown layout)
   const [selectedIpoFilter, setSelectedIpoFilter] = useState<string>('ALL');
@@ -239,7 +288,7 @@ export function Customer360Screen({
   const displayAddress = activeIndividual.employment?.organizationAddress || activeIndividual.residency || 'Street 214, Sangkat Boeung Raing, Phnom Penh';
 
   return (
-    <div id="customer-360-screen" className="space-y-5 lg:flex lg:h-full lg:min-h-0 lg:flex-col print:block print:h-auto print:p-0 print:space-y-3">
+    <div id="customer-360-screen" className="relative space-y-5 lg:flex lg:h-full lg:min-h-0 lg:flex-col print:block print:h-auto print:p-0 print:space-y-3">
       {/* Print styles for clean presentation */}
       <style jsx global>{`
         @media print {
@@ -267,8 +316,91 @@ export function Customer360Screen({
         }
       `}</style>
 
+      {/* Temporary sidebar-toggle placement comparison - remove once one is chosen. */}
+      <div className="fixed bottom-17 right-5 z-40 flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur print:hidden">
+        <span className="px-2 text-[11px] font-medium text-slate-500">List toggle</span>
+        {([['Current', 'current'], ['Card edge', 'cardEdge'], ['Beside Print', 'besidePrint'], ['Rail', 'rail']] as const).map(([label, value]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => {
+              setTogglePlacement(value);
+              setSidebarOpen(false);
+            }}
+            aria-pressed={togglePlacement === value}
+            className={cn(
+              'rounded-full px-3 py-1.5 text-xs font-semibold transition cursor-pointer',
+              togglePlacement === value ? 'bg-blue-500 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Temporary typography comparison toggle - remove once a style is chosen. */}
+      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur print:hidden">
+        <span className="px-2 text-[11px] font-medium text-slate-500">Typography</span>
+        {([['Current', false], ['Recommended', true]] as const).map(([label, value]) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setRefined(value)}
+            aria-pressed={refined === value}
+            className={cn(
+              'rounded-full px-3 py-1.5 text-xs font-semibold transition cursor-pointer',
+              refined === value ? 'bg-blue-500 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Main 2-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-hidden print:block print:overflow-visible">
+      <div className={cn(
+        'grid grid-cols-1 gap-5 items-start lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-hidden print:block print:overflow-visible',
+        sidebarOpen && 'lg:grid-cols-12',
+        sidebarClosedOn('rail') && 'lg:grid-cols-[56px_minmax(0,1fr)]'
+      )}>
+        {/* Option: slim rail in place of the hidden sidebar - toggle on top, customers below */}
+        {sidebarClosedOn('rail') && (
+          <nav
+            aria-label="Customers"
+            className="hidden lg:flex lg:h-full lg:min-h-0 flex-col items-center gap-2.5 rounded-xl border border-slate-200 bg-white py-3 shadow-xs print:hidden"
+          >
+            {iconToggle}
+            <span className="h-px w-6 shrink-0 bg-slate-100" />
+            <div className="flex min-h-0 flex-1 flex-col items-center gap-2.5 overflow-y-auto px-2 py-0.5">
+              {filteredCustomers.map((ind) => {
+                const isSelected = ind.id === activeIndividual.id;
+                return (
+                  <button
+                    key={ind.id}
+                    type="button"
+                    onClick={() => onSelectCustomer(ind.id)}
+                    title={ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
+                    className="shrink-0 cursor-pointer rounded-xl"
+                  >
+                    <Image
+                      src={ind.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                      alt={ind.firstName}
+                      width={36}
+                      height={36}
+                      className={cn(
+                        'h-9 w-9 rounded-xl border object-cover transition',
+                        isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200 opacity-80 hover:opacity-100'
+                      )}
+                      referrerPolicy="no-referrer"
+                      unoptimized
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+        )}
+
         {/* =========================================================================
             1. LEFT SIDEBAR: CUSTOMER LIST
            ========================================================================= */}
@@ -277,6 +409,7 @@ export function Customer360Screen({
           aria-label="Customer 360 Customer List"
           className={cn(
             'lg:col-span-4 xl:col-span-3 bg-white border border-slate-200 overflow-hidden flex flex-col lg:min-h-0 lg:h-full print:hidden',
+            !sidebarOpen && 'lg:hidden',
             theme === 'glassmorphism'
               ? 'rounded-2xl bg-white/85 backdrop-blur-xl border-white/80 shadow-md'
               : theme === 'aurora'
@@ -286,11 +419,21 @@ export function Customer360Screen({
         >
           {/* Sidebar Header & Search Group */}
           <div className="p-3.5 bg-slate-50/70 space-y-3">
-            <div>
-              <span className="text-[10px] uppercase font-semibold text-blue-600 tracking-wider block">
-                Customer Directory
-              </span>
-              <h3 className="text-sm font-semibold text-slate-900">Customer 360</h3>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <Users className="w-4 h-4 text-blue-600" />
+                <span>Customer 360</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                aria-expanded={true}
+                aria-controls="customer-360-left-sidebar"
+                className="hidden lg:flex p-1.5 -mr-1 rounded-lg text-slate-600 hover:bg-white hover:text-blue-600 transition cursor-pointer"
+                title="Hide customer list"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Search: Customer ID (CID) & Full Name */}
@@ -323,7 +466,8 @@ export function Customer360Screen({
                 id="tab-customers-all"
                 onClick={() => setCustomerTab('ALL')}
                 className={cn(
-                  'flex-1 py-1.5 px-2 text-center text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5',
+                  'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
+                  refined && customerTab !== 'ALL' ? 'font-medium' : 'font-semibold',
                   customerTab === 'ALL'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -331,7 +475,7 @@ export function Customer360Screen({
               >
                 <span>All</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full font-semibold',
+                  'text-[10px] px-1.5 py-0.2 rounded-full', refined ? 'font-medium' : 'font-semibold',
                   customerTab === 'ALL' ? 'bg-slate-100 text-slate-700' : 'bg-slate-300/60 text-slate-600'
                 )}>
                   {countAll}
@@ -343,7 +487,8 @@ export function Customer360Screen({
                 id="tab-customers-active"
                 onClick={() => setCustomerTab('ACTIVE')}
                 className={cn(
-                  'flex-1 py-1.5 px-2 text-center text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5',
+                  'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
+                  refined && customerTab !== 'ACTIVE' ? 'font-medium' : 'font-semibold',
                   customerTab === 'ACTIVE'
                     ? 'bg-white text-emerald-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -351,7 +496,7 @@ export function Customer360Screen({
               >
                 <span>Active</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full font-semibold',
+                  'text-[10px] px-1.5 py-0.2 rounded-full', refined ? 'font-medium' : 'font-semibold',
                   customerTab === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/60 text-slate-600'
                 )}>
                   {countActive}
@@ -363,7 +508,8 @@ export function Customer360Screen({
                 id="tab-customers-closed"
                 onClick={() => setCustomerTab('CLOSED')}
                 className={cn(
-                  'flex-1 py-1.5 px-2 text-center text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5',
+                  'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
+                  refined && customerTab !== 'CLOSED' ? 'font-medium' : 'font-semibold',
                   customerTab === 'CLOSED'
                     ? 'bg-white text-rose-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -371,7 +517,7 @@ export function Customer360Screen({
               >
                 <span>Closed</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full font-semibold',
+                  'text-[10px] px-1.5 py-0.2 rounded-full', refined ? 'font-medium' : 'font-semibold',
                   customerTab === 'CLOSED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-300/60 text-slate-600'
                 )}>
                   {countClosed}
@@ -436,7 +582,7 @@ export function Customer360Screen({
                             {ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
                           </span>
                           <span className={cn(
-                            'text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0',
+                            'text-[11px] px-2 py-0.5 rounded-md shrink-0', refined ? 'font-medium' : 'font-semibold',
                             status === 'Active'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : status === 'Closed'
@@ -455,12 +601,12 @@ export function Customer360Screen({
 
                     {/* Bento Card Footer Micro-Bar */}
                     <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[11px]">
-                      <span className="font-mono text-[11px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                      <span className={cn('font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200', refined ? 'font-normal' : 'font-medium')}>
                         {ind.customerId || ind.id}
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className="text-slate-500 text-[11px] font-medium">Total IPO:</span>
-                        <span className="font-mono text-xs font-semibold text-slate-800">
+                        <span className={cn('text-slate-500 text-[11px]', refined ? 'font-normal' : 'font-medium')}>Total IPO:</span>
+                        <span className={cn('font-mono text-xs text-slate-800', refined ? 'font-medium' : 'font-semibold')}>
                           ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -475,10 +621,29 @@ export function Customer360Screen({
         {/* =========================================================================
             RIGHT CONTENT AREA: CUSTOMER 360 DETAILS
            ========================================================================= */}
-        <main className="lg:col-span-8 xl:col-span-9 space-y-5 print-full-width lg:flex lg:flex-col lg:h-full lg:min-h-0 lg:space-y-0 lg:gap-5 print:block print:h-auto">
+        <main className={cn(
+          'space-y-5 print-full-width lg:flex lg:flex-col lg:h-full lg:min-h-0 lg:space-y-0 lg:gap-5 print:block print:h-auto',
+          sidebarOpen && 'lg:col-span-8 xl:col-span-9'
+        )}>
           {/* =======================================================================
               2. CUSTOMER 360 HEADER
              ======================================================================= */}
+          {/* Back button: the way back to the hidden customer list, above the profile. */}
+          {sidebarClosedOn('current') && (
+            <div className="hidden lg:flex lg:shrink-0 items-center -mb-2 print:hidden">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                aria-expanded={false}
+                aria-controls="customer-360-left-sidebar"
+                className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white py-1.5 pl-2 pr-2.5 text-xs font-semibold text-slate-700 shadow-2xs transition cursor-pointer hover:border-blue-300 hover:text-blue-600 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2"
+              >
+                <PanelLeftOpen className="w-3.5 h-3.5 text-slate-500 transition group-hover:text-blue-600" />
+                <span>Customer list</span>
+              </button>
+            </div>
+          )}
+
           <div className="lg:shrink-0">
             <Customer360ProfileHeader
               avatarUrl={activeIndividual.avatarUrl}
@@ -496,6 +661,25 @@ export function Customer360Screen({
               onPrint={handlePrint}
               onCopy={handleCopy}
               copiedKey={copiedKey}
+              refined={refined}
+              leading={sidebarClosedOn('cardEdge') ? (
+                <>
+                  {iconToggle}
+                  <span className="hidden lg:block h-10 w-px shrink-0 bg-slate-200 print:hidden" />
+                </>
+              ) : undefined}
+              actions={sidebarClosedOn('besidePrint') ? (
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-expanded={false}
+                  aria-controls="customer-360-left-sidebar"
+                  className="group hidden lg:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition cursor-pointer hover:border-blue-300 hover:text-blue-600 print:hidden"
+                >
+                  <PanelLeftOpen className="w-4 h-4 text-slate-500 transition group-hover:text-blue-600" />
+                  <span>Customer list</span>
+                </button>
+              ) : undefined}
             />
           </div>
 
@@ -510,18 +694,19 @@ export function Customer360Screen({
             <Customer360SummarySection 
               kpis={customer360Data.kpis} 
               theme={theme} 
-              customerName={displayNameEN} 
+              customerName={displayNameEN}
+              refined={refined} 
             />
 
             {/* =======================================================================
-                4. CUSTOMER TYPE
+                4. PRODUCT
                ======================================================================= */}
             {/* No card of its own: the product rows are already cards, and nesting
                 them inside another one just adds a frame around a frame. */}
-            <section id="c360-customer-type-section" className="space-y-3">
+            <section id="c360-product-section" className="space-y-3">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-blue-600" />
-                <h3 className="text-sm font-semibold text-slate-900">Customer Type</h3>
+                <h3 className={sectionTitle}>Product Portfolio</h3>
               </div>
 
               {/* One Row One Card Layout */}
@@ -530,50 +715,54 @@ export function Customer360Screen({
                   <div
                     key={prod.id}
                     className={cn(
-                      'relative overflow-hidden p-4 pl-5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/70 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs',
-                      'before:absolute before:left-0 before:inset-y-0 before:w-1.5',
-                      prod.status === 'Active'
-                        ? 'before:bg-emerald-500'
-                        : prod.status === 'Expiring Soon'
-                        ? 'before:bg-amber-500'
-                        : 'before:bg-rose-500'
+                      'relative overflow-hidden p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/70 hover:border-blue-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs'
                     )}
                   >
-                    {/* Left: Product Name & ID */}
-                    <div className="min-w-[240px]">
-                      <div className="text-sm font-semibold text-slate-900">
-                        {prod.productName}
-                      </div>
-                      <div className="font-mono text-xs font-medium text-slate-500 mt-0.5">
-                        {prod.productId}
+                    {/* Left: Product Icon, Name & ID */}
+                    <div className="min-w-[240px] flex items-center gap-3">
+                      {(() => {
+                        const ProductIcon = PRODUCT_ICONS[prod.productName] || Layers;
+                        return (
+                          <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200/60 text-blue-600 flex items-center justify-center shrink-0">
+                            <ProductIcon className="w-4 h-4" />
+                          </div>
+                        );
+                      })()}
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900">
+                          {prod.productName}
+                        </div>
+                        <div className={cn('font-mono text-xs text-slate-500 mt-0.5', refined ? 'font-normal' : 'font-medium')}>
+                          {prod.productId}
+                        </div>
                       </div>
                     </div>
 
                     {/* Right: Valid From, Valid To, Expiry, Status */}
-                    <div className="flex items-center gap-5 sm:gap-7 flex-wrap md:flex-nowrap justify-between md:justify-end text-xs">
+                    <div className={cn('flex items-center flex-wrap md:flex-nowrap justify-between md:justify-end text-xs', refined ? 'gap-6 sm:gap-10' : 'gap-5 sm:gap-7')}>
                       <div>
-                        <span className="text-[11px] uppercase font-medium text-slate-500 tracking-wider block">
+                        <span className={cn('text-[11px] uppercase text-slate-500 tracking-wider block', refined ? 'font-normal' : 'font-medium')}>
                           Valid From
                         </span>
-                        <span className="font-semibold text-slate-700 block mt-0.5 whitespace-nowrap">
+                        <span className={cn('text-slate-700 block whitespace-nowrap', refined ? 'mt-1 font-medium' : 'mt-0.5 font-semibold')}>
                           {prod.validFrom}
                         </span>
                       </div>
 
                       <div>
-                        <span className="text-[11px] uppercase font-medium text-slate-500 tracking-wider block">
+                        <span className={cn('text-[11px] uppercase text-slate-500 tracking-wider block', refined ? 'font-normal' : 'font-medium')}>
                           Valid To
                         </span>
-                        <span className="font-semibold text-slate-700 block mt-0.5 whitespace-nowrap">
+                        <span className={cn('text-slate-700 block whitespace-nowrap', refined ? 'mt-1 font-medium' : 'mt-0.5 font-semibold')}>
                           {prod.validTo}
                         </span>
                       </div>
 
                       <div className="min-w-[65px] text-left md:text-right">
-                        <span className="text-[11px] uppercase font-medium text-slate-500 tracking-wider block">
+                        <span className={cn('text-[11px] uppercase text-slate-500 tracking-wider block', refined ? 'font-normal' : 'font-medium')}>
                           Remaining
                         </span>
-                        <span className="font-semibold text-slate-800 block mt-0.5 whitespace-nowrap">
+                        <span className={cn('block whitespace-nowrap', refined ? cn('mt-1 font-medium', remainingTone(prod.expiryDays)) : 'mt-0.5 font-semibold text-slate-800')}>
                           {prod.expiryDays}
                         </span>
                       </div>
@@ -616,7 +805,7 @@ export function Customer360Screen({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 xl:h-8 xl:shrink-0">
                     <div className="flex items-center gap-2">
                       <History className="w-4 h-4 text-blue-600" />
-                      <h3 className="text-sm font-semibold text-slate-900">Transaction History</h3>
+                      <h3 className={sectionTitle}>Transaction History</h3>
                     </div>
 
                     {/* Filter Trigger & Dropdown Popover */}
@@ -679,49 +868,33 @@ export function Customer360Screen({
                               )}
                             </div>
 
-                            {/* Field 1: IPO Filter */}
-                            <div className="space-y-1">
-                              <label htmlFor="filter-ipo-name" className="text-[11px] font-medium text-slate-600 block">
-                                IPO Name
-                              </label>
-                              <div className="relative">
-                                <select
-                                  id="filter-ipo-name"
-                                  value={selectedIpoFilter}
-                                  onChange={(e) => setSelectedIpoFilter(e.target.value)}
-                                  className="w-full bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none pr-8 cursor-pointer transition"
-                                >
-                                  <option value="ALL">All IPOs ({customer360Data.transactions.length})</option>
-                                  {ipoOptions.map((ipo) => (
-                                    <option key={ipo} value={ipo}>
-                                      {ipoTicker(ipo)} ({ipoCounts[ipo] || 0})
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
-                              </div>
-                            </div>
+                            <FormSelect
+                              id="filter-ipo-name"
+                              label="IPO Name"
+                              size="sm"
+                              searchable={false}
+                              value={selectedIpoFilter}
+                              onChange={setSelectedIpoFilter}
+                              options={[
+                                { value: 'ALL', label: `All IPOs (${customer360Data.transactions.length})` },
+                                ...ipoOptions.map((ipo) => ({ value: ipo, label: `${ipoTicker(ipo)} (${ipoCounts[ipo] || 0})` })),
+                              ]}
+                            />
 
-                            {/* Field 2: Date Range Filter */}
-                            <div className="space-y-1">
-                              <label htmlFor="filter-date-range" className="text-[11px] font-medium text-slate-600 block">
-                                Date Period
-                              </label>
-                              <div className="relative">
-                                <select
-                                  id="filter-date-range"
-                                  value={selectedDateRange}
-                                  onChange={(e) => setSelectedDateRange(e.target.value)}
-                                  className="w-full bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none pr-8 cursor-pointer transition"
-                                >
-                                  <option value="ALL">All Dates</option>
-                                  <option value="JAN_2026">Jan 2026</option>
-                                  <option value="2026">Year 2026</option>
-                                  <option value="2025">Year 2025</option>
-                                </select>
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400 pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
-                              </div>
-                            </div>
+                            <FormSelect
+                              id="filter-date-range"
+                              label="Date Period"
+                              size="sm"
+                              searchable={false}
+                              value={selectedDateRange}
+                              onChange={setSelectedDateRange}
+                              options={[
+                                { value: 'ALL', label: 'All Dates' },
+                                { value: 'JAN_2026', label: 'Jan 2026' },
+                                { value: '2026', label: 'Year 2026' },
+                                { value: '2025', label: 'Year 2025' },
+                              ]}
+                            />
 
                             {/* Footer with Done button */}
                             <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
@@ -751,7 +924,7 @@ export function Customer360Screen({
                         <table className="w-full table-fixed text-left text-xs border-collapse">
                           {txColGroup}
                           <thead>
-                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                            <tr className={cn('bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider', refined ? '[&>th]:font-medium text-slate-600' : '[&>th]:font-semibold text-slate-600')}>
                               <th className="py-2.5 px-3">Date & Time</th>
                               <th className="py-2.5 px-3">IPO Name</th>
                               <th className="py-2.5 px-3 text-right">Quantity</th>
@@ -772,19 +945,19 @@ export function Customer360Screen({
                             ) : (
                               filteredTransactions.map((tx) => (
                                 <tr key={tx.id} className="hover:bg-slate-50/70 transition-colors">
-                                  <td className="py-2.5 px-3 text-slate-700 whitespace-nowrap font-medium text-[11px]">
+                                  <td className={cn('py-2.5 px-3 whitespace-nowrap', refined ? 'font-normal text-xs text-slate-600' : 'font-medium text-[11px] text-slate-700')}>
                                     {tx.dateTime}
                                   </td>
-                                  <td className="py-2.5 px-3 font-medium text-slate-900 truncate">
+                                  <td className={cn('py-2.5 px-3 truncate', refined ? 'font-normal text-slate-800' : 'font-medium text-slate-900')}>
                                     {ipoTicker(tx.ipoName)}
                                   </td>
-                                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-800">
+                                  <td className={cn('py-2.5 px-3 text-right font-mono', refined ? 'font-normal text-slate-700' : 'font-semibold text-slate-800')}>
                                     {tx.quantity.toLocaleString()}
                                   </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-600">
+                                  <td className={cn('py-2.5 px-3 text-right font-mono', refined ? 'text-slate-500' : 'text-slate-600')}>
                                     ${tx.price.toFixed(2)}
                                   </td>
-                                  <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
+                                  <td className={cn('py-2.5 px-3 text-right font-mono text-slate-900', refined ? 'font-medium' : 'font-semibold')}>
                                     ${tx.tradingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                 </tr>
@@ -831,7 +1004,7 @@ export function Customer360Screen({
                 <div className="flex items-center justify-between gap-3 xl:h-8 xl:shrink-0">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-slate-900">Activity Timeline</h3>
+                    <h3 className={sectionTitle}>Activity Timeline</h3>
                   </div>
                 </div>
 
@@ -854,14 +1027,14 @@ export function Customer360Screen({
 
                         {/* Right Side Card UI */}
                         <div className="bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl p-3 transition-all shadow-2xs hover:shadow-xs hover:border-blue-200">
-                          <span className="text-[11px] font-medium text-slate-500 block">
+                          <span className={cn('block', refined ? 'text-xs font-normal text-slate-500' : 'text-[11px] font-medium text-slate-500')}>
                             {act.dateTime}
                           </span>
 
                           {/* Activity, then its qualifier inline: the reference id
                               for product registrations, or the approver's role for
                               the onboarding steps, which carry no reference. */}
-                          <h4 className="text-xs font-semibold text-slate-900 mt-0.5">
+                          <h4 className={cn('mt-0.5', refined ? 'text-[13px] font-medium text-slate-900' : 'text-xs font-semibold text-slate-900')}>
                             {act.activity}
                             {(act.referenceId || act.role) && (
                               <span className="font-normal text-slate-500">

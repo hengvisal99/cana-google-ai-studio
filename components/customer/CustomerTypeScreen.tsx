@@ -196,7 +196,7 @@ export function CustomerTypeScreen({
         {/* Row 1: identity + primary action */}
         <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
           <div>
-            <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Customer Type</h1>
+            <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Sale Pipeline</h1>
             <p className="mt-1 text-xs text-slate-500">
               Manage CSX screen access, client cards, employee trading, VIP, IPO and PR customer records for every customer.
             </p>

@@ -9,6 +9,7 @@ import {
   User,
   Menu,
   ChevronDown,
+  Workflow,
 } from 'lucide-react';
 import { HeaderActions } from '@/components/shared/HeaderActions';
 import { useScrollbarWidth } from '@/hooks/use-scrollbar-width';
@@ -47,8 +48,7 @@ export function AuroraShell({
   const isCustomerPage =
     currentPage === 'individual-list' ||
     currentPage === 'individual-insert' ||
-    currentPage === 'individual-update' ||
-    currentPage === 'customer-type';
+    currentPage === 'individual-update';
   const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
     {
       label: 'List',
@@ -57,8 +57,7 @@ export function AuroraShell({
         currentPage === 'individual-list' ||
         currentPage === 'individual-update' ||
         currentPage === 'individual-insert',
-    },
-    { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
+    },
   ];
 
   return (
@@ -155,7 +154,7 @@ export function AuroraShell({
                   <Users className="w-4 h-4 shrink-0" />
                   {!sidebarCollapsed && <span>Customer 360</span>}
                 </button>
-                {/* Customer: expandable group (List, Create, Customer Type) */}
+                {/* Customer: expandable group (List) */}
                 <button
                   id="aurora-nav-customer"
                   type="button"
@@ -204,6 +203,23 @@ export function AuroraShell({
                     ))}
                   </div>
                 )}
+
+                {/* Sale Pipeline */}
+                <button
+                  id="aurora-nav-sale-pipeline"
+                  type="button"
+                  onClick={() => onNavigate('customer-type')}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all duration-150',
+                    currentPage === 'customer-type'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  )}
+                  title="Sale Pipeline"
+                >
+                  <Workflow className="w-4 h-4 shrink-0" />
+                  {!sidebarCollapsed && <span>Sale Pipeline</span>}
+                </button>
               </div>
             </div>
 

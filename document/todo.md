@@ -10,4 +10,19 @@ one customer can have many customer type such as csx screen , client card , empl
 account number or trading account number follow this format
 001-0000347677
 
+customer 360 : 
+    add shortcut key with search customer
+    customer type :
+        - add amount for some product
+        - redesign ui
+        - bank name
 
+
+each table action use sort cut key with right click , sort column all but when use only one sort column
+
+
+customer type add : 
+    - change select customer ui : after click show add letter and remove icon
+
+setting : 
+    - authorization : 1 user can do two level

@@ -775,8 +775,8 @@ export function IndividualFormFields({
               </div>
 
               {/* Residential Address */}
-              <div className="pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-3">
+              <div className="pt-2">
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
                   Residential Address
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
@@ -808,7 +808,7 @@ export function IndividualFormFields({
             <div className="space-y-5 animate-in fade-in">
               <div className="border-b border-slate-100 pb-3">
                 <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <ShieldCheck className="w-4 h-4 text-blue-600" />
                   <span>Identification & Supporting Documents</span>
                 </h2>
               </div>
@@ -883,17 +883,10 @@ export function IndividualFormFields({
               </div>
 
               {/* Supporting Documents Section with Integrated Card Upload UI */}
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
-                    Supporting Documents
-                  </span>
-                  {documents.length > 0 && (
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                      {documents.length} / 3 uploaded
-                    </span>
-                  )}
-                </div>
+              <div className="pt-4 space-y-3">
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
+                  Supporting Documents
+                </span>
 
                 {/* Hidden File Inputs (single file selection) */}
                 <input
@@ -1126,19 +1119,11 @@ export function IndividualFormFields({
 
               {/* Spouse Section - Always visible */}
               <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
-                      Spouse Information
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    Optional (Provide if legally married)
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
+                  Spouse Information
+                </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                   <FormInput
                     label="Full Name (English / Khmer)"
                     value={spouseName}
@@ -1229,19 +1214,11 @@ export function IndividualFormFields({
 
               {/* Related Person Section - Always visible */}
               <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
-                      Related Person / Emergency Contact
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    Optional (Designated emergency or affiliate party)
-                  </span>
-                </div>
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
+                  Related Person / Emergency Contact
+                </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                   <FormInput
                     label="Full Name"
                     value={relName}
@@ -1314,7 +1291,7 @@ export function IndividualFormFields({
 
               {/* Investor ID + trading account: one registration lifecycle */}
               <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
-                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
                   Investor ID & Trading Account
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
@@ -1400,7 +1377,7 @@ export function IndividualFormFields({
 
               {/* Investor Profile & Appropriateness */}
               <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
-                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
+                <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
                   Investor Profile & Appropriateness
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">

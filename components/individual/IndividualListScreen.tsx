@@ -54,6 +54,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { CheckBadge, FilterSelect, LIFTED_ACTIVE, MENU_SURFACE, Popover } from './DirectoryControls';
 import { CustomerTypePickerDialog } from '@/components/customer/CustomerTypePickerDialog';
+import { ResendEmailDialog } from '@/components/shared/ApproveDialogVariants';
 import type { CustomerTypeRecord } from '@/types';
 import { FormDatePicker } from '@/components/ui/form';
 
@@ -209,6 +210,10 @@ export function IndividualListScreen({
   // Customer Type dialog: the customer whose row opened it
   const [customerTypeIndividualId, setCustomerTypeIndividualId] = useState<string | null>(null);
   const customerTypeIndividual = individuals.find((item) => item.id === customerTypeIndividualId);
+
+  // Resend Email confirmation: the customer whose row opened it
+  const [resendEmailId, setResendEmailId] = useState<string | null>(null);
+  const resendEmailIndividual = individuals.find((item) => item.id === resendEmailId);
 
   // Status Tab counts
   const countAll = individuals.length;
@@ -1026,12 +1031,13 @@ export function IndividualListScreen({
                               <span>Customer Type</span>
                             </button>
 
-                            {/* Resend Email: no mail backend yet, so confirm with a toast */}
+                            {/* Resend Email: confirm first; no mail backend yet, so the result is a toast */}
                             <button
                               id={`action-resend-email-${item.id}`}
                               onClick={() => {
                                 setOpenActionMenuId(null);
-                                triggerToast(item.email ? `Email resent to ${item.email}.` : 'No email address on file.');
+                                if (item.email) setResendEmailId(item.id);
+                                else triggerToast('No email address on file.');
                               }}
                               className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
                             >
@@ -1775,6 +1781,18 @@ export function IndividualListScreen({
             </div>
           </div>
         </div>
+      )}
+
+      {resendEmailIndividual && (
+        <ResendEmailDialog
+          customerName={resendEmailIndividual.fullNameEN || `${resendEmailIndividual.firstName} ${resendEmailIndividual.lastName}`}
+          email={resendEmailIndividual.email}
+          onCancel={() => setResendEmailId(null)}
+          onConfirm={() => {
+            triggerToast(`Email resent to ${resendEmailIndividual.email}.`);
+            setResendEmailId(null);
+          }}
+        />
       )}
 
       {/* Customer Type: pick one or more types, then add a record for each with its dynamic form */}

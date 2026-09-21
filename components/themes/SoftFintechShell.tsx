@@ -9,6 +9,7 @@ import {
   Users,
   Menu,
   ChevronDown,
+  Workflow,
   ShieldCheck,
   User,
 } from 'lucide-react';
@@ -49,8 +50,7 @@ export function SoftFintechShell({
   const isCustomerPage =
     currentPage === 'individual-list' ||
     currentPage === 'individual-insert' ||
-    currentPage === 'individual-update' ||
-    currentPage === 'customer-type';
+    currentPage === 'individual-update';
   const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
     {
       label: 'List',
@@ -59,8 +59,7 @@ export function SoftFintechShell({
         currentPage === 'individual-list' ||
         currentPage === 'individual-update' ||
         currentPage === 'individual-insert',
-    },
-    { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
+    },
   ];
 
   return (
@@ -144,7 +143,7 @@ export function SoftFintechShell({
                   {!sidebarCollapsed && <span className="truncate">Customer 360</span>}
                 </button>
 
-                {/* Customer: expandable group (List, Create, Customer Type) */}
+                {/* Customer: expandable group (List) */}
                 <button
                   id="nav-btn-customer"
                   type="button"
@@ -196,6 +195,23 @@ export function SoftFintechShell({
                     ))}
                   </div>
                 )}
+
+                {/* Sale Pipeline */}
+                <button
+                  id="nav-btn-sale-pipeline"
+                  type="button"
+                  onClick={() => onNavigate('customer-type')}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-semibold transition-all relative',
+                    currentPage === 'customer-type'
+                      ? 'bg-blue-50 text-blue-700 font-semibold border-l-3 border-blue-500'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  )}
+                  title="Sale Pipeline"
+                >
+                  <Workflow className="w-4 h-4 shrink-0 text-blue-600" />
+                  {!sidebarCollapsed && <span className="truncate">Sale Pipeline</span>}
+                </button>
               </div>
             </div>
 

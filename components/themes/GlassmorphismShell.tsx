@@ -10,6 +10,7 @@ import {
   Menu,
   ChevronDown,
   Compass,
+  Workflow,
 } from 'lucide-react';
 import { HeaderActions } from '@/components/shared/HeaderActions';
 import { useScrollbarWidth } from '@/hooks/use-scrollbar-width';
@@ -61,8 +62,7 @@ export function GlassmorphismShell({
   const isCustomerPage =
     currentPage === 'individual-list' ||
     currentPage === 'individual-insert' ||
-    currentPage === 'individual-update' ||
-    currentPage === 'customer-type';
+    currentPage === 'individual-update';
   // Icons grow in the collapsed dock and carry the blue in both states.
   const navIcon = (active: boolean) =>
     cn('shrink-0', sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4', active && 'text-blue-600');
@@ -76,8 +76,6 @@ export function GlassmorphismShell({
         currentPage === 'individual-update' ||
         currentPage === 'individual-insert',
     },
-
-    { label: 'Customer Type', page: 'customer-type', active: currentPage === 'customer-type' },
   ];
 
   return (
@@ -167,7 +165,7 @@ export function GlassmorphismShell({
                   {!sidebarCollapsed && <span>Customer 360</span>}
                 </button>
 
-                {/* Customer: expandable group (List, Create, Customer Type) */}
+                {/* Customer: expandable group (List) */}
                 <button
                   id="glass-nav-customer"
                   type="button"
@@ -223,6 +221,27 @@ export function GlassmorphismShell({
                     ))}
                   </div>
                 )}
+
+                {/* Sale Pipeline */}
+                <button
+                  id="glass-nav-sale-pipeline"
+                  type="button"
+                  onClick={() => onNavigate('customer-type')}
+                  className={cn(
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
+                    currentPage === 'customer-type'
+                      ? sidebarCollapsed
+                        ? ACTIVE_TILE
+                        : ACTIVE_ROW
+                      : IDLE_ROW
+                  )}
+                  title="Sale Pipeline"
+                >
+                  {currentPage === 'customer-type' && !sidebarCollapsed && <span className={ACTIVE_BAR} />}
+                  <Workflow className={navIcon(currentPage === 'customer-type')} />
+                  {!sidebarCollapsed && <span>Sale Pipeline</span>}
+                </button>
               </div>
             </div>
 

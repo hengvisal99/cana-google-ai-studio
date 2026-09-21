@@ -47,9 +47,9 @@ export const DEFAULT_CUSTOMER_PRODUCTS: ProductPortfolioItem[] = [
     id: 'PROD-01',
     productName: 'CSX Screen',
     productId: 'CSX-000012',
-    validFrom: '07 Dec 2025',
-    validTo: '07 Dec 2026',
-    expiryDays: '89 days',
+    validFrom: '14 Sep 2025',
+    validTo: '14 Sep 2026',
+    expiryDays: '5 days',
     status: 'Active',
   },
   {

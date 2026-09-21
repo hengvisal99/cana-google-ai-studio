@@ -32,6 +32,12 @@ interface Customer360ProfileHeaderProps {
   onPrint: () => void;
   onCopy: (text: string, key: string) => void;
   copiedKey: string | null;
+  /** Recommended typography: labels medium, values regular, semibold for the name only. */
+  refined?: boolean;
+  /** Rendered before the avatar (e.g. a sidebar toggle). */
+  leading?: React.ReactNode;
+  /** Extra actions rendered before Print. */
+  actions?: React.ReactNode;
 }
 
 const FALLBACK_AVATAR =
@@ -137,6 +143,7 @@ function DenseField({
   copiedKey,
   href,
   linkTitle,
+  refined,
 }: {
   icon: React.ElementType;
   label: string;
@@ -148,12 +155,14 @@ function DenseField({
   clamp?: boolean;
   onCopy: (text: string, key: string) => void;
   copiedKey: string | null;
+  refined?: boolean;
 }) {
+  const valueCls = cn('text-[13px]', refined ? 'font-normal text-slate-700' : 'font-semibold text-slate-900');
   return (
     <div className="group min-w-0 rounded-lg px-2 py-1.5 transition hover:bg-slate-50">
       <div className="flex items-center gap-1.5">
         <Icon className="w-3.5 h-3.5 shrink-0 text-slate-500" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</span>
+        <span className={cn('text-[10px] uppercase tracking-wider text-slate-500', refined ? 'font-medium' : 'font-semibold')}>{label}</span>
         {copyKey && (
           <button
             type="button"
@@ -173,7 +182,8 @@ function DenseField({
         <a
           href={href}
           className={cn(
-            'mt-0.5 block text-[13px] font-semibold text-slate-900 hover:text-blue-600 hover:underline',
+            'mt-0.5 block hover:text-blue-600 hover:underline',
+            valueCls,
             mono && 'font-mono',
             clamp ? 'line-clamp-2 break-words' : 'truncate'
           )}
@@ -184,7 +194,8 @@ function DenseField({
       ) : (
         <span
           className={cn(
-            'mt-0.5 block text-[13px] font-semibold text-slate-900',
+            'mt-0.5 block',
+            valueCls,
             mono && 'font-mono',
             clamp ? 'line-clamp-2 break-words' : 'truncate'
           )}
@@ -213,6 +224,9 @@ export function Customer360ProfileHeader({
   onPrint,
   onCopy,
   copiedKey,
+  refined,
+  leading,
+  actions,
 }: Customer360ProfileHeaderProps) {
   // The sidebar avatars carry this same dot, so the vocabulary is already
   // learned by the time anyone reaches the profile. The white border is the only
@@ -276,8 +290,9 @@ export function Customer360ProfileHeader({
       )}
 
       {/* Profile row: photo, names, CID, badges, print */}
-      <div className="flex flex-col justify-between gap-5 border-b border-slate-100 pb-4 md:flex-row md:items-center">
+      <div className="flex flex-col justify-between gap-5 pb-4 md:flex-row md:items-center">
         <div className="flex items-start gap-4 sm:items-center">
+          {leading}
           <div className="relative shrink-0">
             <Image
               src={avatarUrl || FALLBACK_AVATAR}
@@ -318,8 +333,13 @@ export function Customer360ProfileHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 self-start md:self-center">{printButton}</div>
+        <div className="flex shrink-0 items-center gap-3 self-start md:self-center">
+          {actions}
+          {printButton}
+        </div>
       </div>
+
+      <hr className="border-slate-100" />
 
       {/* Contact row */}
       <div className="grid grid-cols-1 gap-x-5 gap-y-1 pt-3 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,1.15fr)_minmax(0,1.35fr)]">
@@ -329,6 +349,7 @@ export function Customer360ProfileHeader({
           value={occupation}
           onCopy={onCopy}
           copiedKey={copiedKey}
+          refined={refined}
         />
         <DenseField
           icon={Phone}
@@ -338,6 +359,7 @@ export function Customer360ProfileHeader({
           mono
           onCopy={onCopy}
           copiedKey={copiedKey}
+          refined={refined}
         />
         <DenseField
           icon={Mail}
@@ -348,6 +370,7 @@ export function Customer360ProfileHeader({
           linkTitle={'Send email to ' + email}
           onCopy={onCopy}
           copiedKey={copiedKey}
+          refined={refined}
         />
         <DenseField
           icon={MapPin}
@@ -357,6 +380,7 @@ export function Customer360ProfileHeader({
           clamp
           onCopy={onCopy}
           copiedKey={copiedKey}
+          refined={refined}
         />
       </div>
     </section>
