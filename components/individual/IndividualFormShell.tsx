@@ -124,7 +124,7 @@ export function IndividualFormShell<K extends string>({
         {children}
 
         {/* Footer navigation: sticks to the viewport bottom so Next / Submit stay reachable on long steps */}
-        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-8 flex items-center justify-between gap-4 rounded-b-2xl border-t border-slate-100 bg-white px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7">
+        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-8 flex items-center justify-between gap-4 rounded-b-2xl bg-white px-5 py-4 sm:-mx-7 sm:-mb-7 sm:px-7">
           <button
             type="button"
             onClick={() => {

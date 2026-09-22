@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { format } from 'date-fns';
 import { motion } from 'motion/react';
 import {
@@ -16,7 +15,6 @@ import {
   Search,
   Trash2,
   X,
-  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CheckBadge, LIFTED_ACTIVE, MENU_SURFACE, Popover } from '@/components/individual/DirectoryControls';
@@ -26,9 +24,11 @@ import {
   decide,
   nextStageLabel,
   requestClose,
+  reviewerRole,
   type ApprovalAction,
 } from '@/lib/customer-type-approval';
-import type { CustomerTypeApproval, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
+import type { CustomerTypeApproval, CustomerTypeId, CustomerTypeRecord, Individual, RequestStatus } from '@/types';
+import { STATUS_TABS } from '@/components/individual/IndividualListScreen';
 import { ApproveDialogAuroraGlass } from '@/components/shared/ApproveDialogVariants';
 import { DecisionDialogMatchedMark } from '@/components/shared/DecisionDialogVariants';
 import { ApprovalStatus, CloseAccountDialog } from './CustomerTypeApproval';
@@ -36,6 +36,9 @@ import { FieldValue, customerName } from './CustomerTypeForm';
 import { CustomerTypePickerDialog } from './CustomerTypePickerDialog';
 import { CustomerTypeRecordDialog } from './CustomerTypeRecordDialog';
 import { CustomerTypeViewDialog } from './CustomerTypeViewDialog';
+import { RowActionMenu, useRowActionMenu, type RowAction } from '@/components/shared/RowActionMenu';
+import { SortableHeader, sortRows, useTableSort, type SortValue } from '@/components/shared/SortableHeader';
+import { BulkApproveBar, BulkApproveDialog, ROW_CHECKBOX } from '@/components/shared/BulkApprove';
 
 interface CustomerTypeScreenProps {
   records: CustomerTypeRecord[];
@@ -58,7 +61,6 @@ const SEARCH_FIELD_OPTIONS: { id: SearchByField; label: string }[] = [
 ];
 
 const CARD = 'rounded-[20px] border border-slate-200/60 bg-white shadow-[0_10px_40px_-28px_rgba(15,23,42,0.35)]';
-const ICON_BUTTON = 'grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition';
 
 /** One list page for every customer type: a tab per type, columns from that type's config */
 export function CustomerTypeScreen({
@@ -70,6 +72,8 @@ export function CustomerTypeScreen({
   const [activeTypeId, setActiveTypeId] = useState<CustomerTypeId>(CUSTOMER_TYPES[0].id);
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState<SearchByField>('all');
+  // Request-status filter, only on types with an approval workflow
+  const [statusTab, setStatusTab] = useState<'ALL' | RequestStatus>('ALL');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<CustomerTypeRecord | null>(null);
@@ -97,10 +101,23 @@ export function CustomerTypeScreen({
     return result;
   }, [records]);
 
+  const statusCounts = useMemo(() => {
+    const result: Record<'ALL' | RequestStatus, number> = { ALL: 0, Pending: 0, Resubmit: 0, Approved: 0, Rejected: 0 };
+    records.forEach((record) => {
+      if (record.typeId !== activeTypeId) return;
+      result.ALL += 1;
+      if (record.approval) result[record.approval.requestStatus] += 1;
+    });
+    return result;
+  }, [records, activeTypeId]);
+
+  const { sort, toggle: toggleSort } = useTableSort();
+
   const rows = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return records
+    const filtered = records
       .filter((record) => record.typeId === activeTypeId)
+      .filter((record) => !activeType.requiresApproval || statusTab === 'ALL' || record.approval?.requestStatus === statusTab)
       .filter((record) => {
         if (!query) return true;
         const customer = customersById.get(record.customerId);
@@ -118,7 +135,24 @@ export function CustomerTypeScreen({
         return haystack.join(' ').toLowerCase().includes(query);
       })
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  }, [records, activeTypeId, search, searchBy, customersById, listFields]);
+
+    // Newest first until a column is sorted; a sort on a column the new tab lacks is ignored
+    const fieldsByKey = new Map(listFields.map((field) => [field.key, field]));
+    const known = sort && (['customerId', 'customerName', 'request', 'updatedAt'].includes(sort.key) || fieldsByKey.has(sort.key));
+    return sortRows(filtered, known ? sort : null, (record, key): SortValue => {
+      const customer = customersById.get(record.customerId);
+      if (key === 'customerId') return customer?.customerId ?? record.customerId;
+      if (key === 'customerName') return customer ? customerName(customer) : null;
+      if (key === 'request') return record.approval?.requestStatus;
+      if (key === 'updatedAt') return record.updatedAt;
+      const field = fieldsByKey.get(key)!;
+      const value = record.values[key];
+      if (value === undefined || value === '') return null;
+      if (field.type === 'number' || field.type === 'computed') return Number(value);
+      // ISO dates already sort as text; everything else sorts by what the cell shows
+      return field.type === 'date' ? String(value) : formatFieldValue(field, value);
+    });
+  }, [records, activeTypeId, activeType, statusTab, search, searchBy, customersById, listFields, sort]);
 
   const activeSearchField = SEARCH_FIELD_OPTIONS.find((option) => option.id === searchBy) ?? SEARCH_FIELD_OPTIONS[0];
 
@@ -167,15 +201,46 @@ export function CustomerTypeScreen({
     );
   };
 
-  /** Row menu items for the record's current workflow step (approve / resubmit / reject live in the view dialog) */
-  const approvalMenuItems = (record: CustomerTypeRecord): RowMenuItem[] => {
-    const approval = record.approval;
-    if (!approval) return [];
-    if (canRequestClose(approval)) {
-      return [{ label: 'Close Account', icon: CalendarX2, tone: 'rose', onSelect: () => setClosingRecord(record) }];
-    }
-    return [];
+  // Bulk approve (approval types only): only pending requests at a review stage can be ticked
+  const canBulkApprove = Boolean(activeType.requiresApproval);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
+  const approvableRows = useMemo(() => (canBulkApprove ? rows.filter(isApprovable) : []), [rows, canBulkApprove]);
+  // Rows filtered out or already moved on drop out of the selection
+  const selectedRows = approvableRows.filter((record) => selectedIds.has(record.id));
+  const allSelected = approvableRows.length > 0 && selectedRows.length === approvableRows.length;
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleSelectAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(approvableRows.map((record) => record.id)));
+
+  const handleBulkApprove = () => {
+    const now = new Date().toISOString();
+    selectedRows.forEach((record) => onSaveRecord({ ...record, approval: decide(record.approval!, 'authorize'), updatedAt: now }));
+    showToast(`${selectedRows.length} ${selectedRows.length === 1 ? 'record' : 'records'} approved.`);
+    setSelectedIds(new Set());
+    setBulkApproving(false);
   };
+
+  const rowMenu = useRowActionMenu();
+  const menuRecord = rowMenu.menu ? rows.find((record) => record.id === rowMenu.menu!.rowId) : undefined;
+
+  /** Approve / resubmit / reject live in the view dialog; the menu only offers the next workflow request */
+  const rowActions = (record: CustomerTypeRecord): RowAction[] => [
+    { id: 'view', label: 'View', icon: Eye, iconClassName: 'text-slate-500', shortcut: 'V', group: 0, onSelect: () => setDialog({ mode: 'view', record }) },
+    { id: 'edit', label: 'Edit', icon: Edit3, iconClassName: 'text-slate-500', shortcut: 'E', group: 0, onSelect: () => setDialog({ mode: 'edit', record }) },
+    ...(record.approval && canRequestClose(record.approval)
+      ? [{ id: 'close', label: 'Close Account', icon: CalendarX2, iconClassName: 'text-slate-500', shortcut: 'C', group: 1, onSelect: () => setClosingRecord(record) }]
+      : []),
+    { id: 'delete', label: 'Delete', icon: Trash2, iconClassName: 'text-rose-500', shortcut: 'D', danger: true, group: 2, onSelect: () => setDeletingRecord(record) },
+  ];
 
   const decisionCustomer = decision ? customersById.get(decision.record.customerId) : undefined;
   const closingCustomer = closingRecord ? customersById.get(closingRecord.customerId) : undefined;
@@ -228,7 +293,11 @@ export function CustomerTypeScreen({
                   ref={isActive ? activeTabRef : undefined}
                   id={`tab-customer-type-${type.id}`}
                   type="button"
-                  onClick={() => setActiveTypeId(type.id)}
+                  onClick={() => {
+                    setActiveTypeId(type.id);
+                    setStatusTab('ALL');
+                    setSelectedIds(new Set());
+                  }}
                   className={cn(
                     'group relative inline-flex h-[34px] shrink-0 cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[13px] transition-colors',
                     isActive ? 'font-semibold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900'
@@ -337,6 +406,57 @@ export function CustomerTypeScreen({
             </button>
           </div>
         </div>
+
+        {/* Row 3: request-status tabs, same as the customer directory */}
+        {activeType.requiresApproval && (
+          <div
+            id="customer-type-status-tabs"
+            className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl border border-slate-200/60 bg-slate-50 p-1"
+          >
+            {STATUS_TABS.map((tab) => {
+              const isActive = statusTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  id={`tab-customer-type-status-${tab.id.toLowerCase()}`}
+                  onClick={() => setStatusTab(tab.id)}
+                  className={cn(
+                    'group relative inline-flex h-[30px] cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[13px] transition-colors',
+                    isActive ? 'font-semibold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900'
+                  )}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="customer-type-status-tab"
+                      className={cn('absolute inset-0 rounded-lg', LIFTED_ACTIVE)}
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                    />
+                  )}
+                  <Icon
+                    className={cn(
+                      'relative h-4 w-4 shrink-0 stroke-[2.2] transition-colors',
+                      // Status icons always carry their colour; the neutral "All" icon only turns blue when active
+                      isActive || tab.id !== 'ALL' ? tab.iconColor : 'text-slate-400 group-hover:text-slate-600'
+                    )}
+                  />
+                  <span className="relative">{tab.label}</span>
+                  <span
+                    className={cn(
+                      'relative min-w-[22px] rounded-full px-1.5 py-[3px] text-center text-[11px] font-semibold tabular-nums leading-none transition-colors',
+                      isActive
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'bg-slate-200/60 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700'
+                    )}
+                  >
+                    {statusCounts[tab.id]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -345,22 +465,42 @@ export function CustomerTypeScreen({
           <table id="customer-type-table" className="w-full border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                <th className="w-12 px-3 py-3 text-center">No</th>
-                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700">Customer ID</th>
-                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700">Customer Name</th>
+                {canBulkApprove && (
+                  <th className="w-10 py-3 pl-4 pr-1">
+                    <input
+                      id="checkbox-customer-type-select-all"
+                      type="checkbox"
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = selectedRows.length > 0 && !allSelected;
+                      }}
+                      onChange={toggleSelectAll}
+                      disabled={approvableRows.length === 0}
+                      aria-label="Select all pending requests"
+                      title="Select all pending requests"
+                      className={ROW_CHECKBOX}
+                    />
+                  </th>
+                )}
+                <SortableHeader label="Customer ID" sortKey="customerId" sort={sort} onSort={toggleSort} className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700" />
+                <SortableHeader label="Customer Name" sortKey="customerName" sort={sort} onSort={toggleSort} className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700" />
                 {listFields.map((field) => (
-                  <th
+                  <SortableHeader
                     key={field.key}
+                    label={field.label}
+                    sortKey={field.key}
+                    sort={sort}
+                    onSort={toggleSort}
                     className={cn(
                       'whitespace-nowrap px-4 py-3',
                       (field.type === 'number' || field.type === 'computed') && 'text-right'
                     )}
-                  >
-                    {field.label}
-                  </th>
+                  />
                 ))}
-                {activeType.requiresApproval && <th className="min-w-[160px] whitespace-nowrap px-4 py-3 font-semibold text-slate-700">Request</th>}
-                <th className="whitespace-nowrap px-4 py-3">Last Updated</th>
+                {activeType.requiresApproval && (
+                  <SortableHeader label="Request" sortKey="request" sort={sort} onSort={toggleSort} className="min-w-[160px] whitespace-nowrap px-4 py-3 font-semibold text-slate-700" />
+                )}
+                <SortableHeader label="Last Updated" sortKey="updatedAt" sort={sort} onSort={toggleSort} className="whitespace-nowrap px-4 py-3" />
                 {/* Pinned so actions stay reachable when a type has many columns */}
                 <th className="sticky right-0 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.25)]">
                   Action
@@ -370,7 +510,7 @@ export function CustomerTypeScreen({
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={listFields.length + (activeType.requiresApproval ? 6 : 5)} className="py-14 text-center">
+                  <td colSpan={listFields.length + (activeType.requiresApproval ? 6 : 4)} className="py-14 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <span className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 text-slate-400">
                         <ActiveIcon className="h-5 w-5" />
@@ -380,19 +520,34 @@ export function CustomerTypeScreen({
                   </td>
                 </tr>
               ) : (
-                rows.map((record, index) => {
+                rows.map((record) => {
                   const customer = customersById.get(record.customerId);
                   return (
-                    <tr key={record.id} id={`customer-type-row-${record.id}`} className="group transition-colors hover:bg-slate-50">
-                      <td className="px-3 py-3.5 text-center font-mono text-[11px] text-slate-400">{index + 1}</td>
-                      <td className="whitespace-nowrap px-4 py-3.5 font-mono font-semibold text-blue-600">
-                        <button
-                          type="button"
-                          onClick={() => setDialog({ mode: 'view', record })}
-                          className="cursor-pointer hover:underline"
-                        >
-                          {customer?.customerId ?? record.customerId}
-                        </button>
+                    <tr
+                      key={record.id}
+                      id={`customer-type-row-${record.id}`}
+                      onContextMenu={(e) => rowMenu.openFromContextMenu(record.id, e)}
+                      className={cn(
+                        'group transition-[background-color] hover:bg-slate-50',
+                        (rowMenu.menu?.rowId === record.id || selectedIds.has(record.id)) && 'bg-slate-50'
+                      )}
+                    >
+                      {canBulkApprove && (
+                        <td className="py-3.5 pl-4 pr-1">
+                          <input
+                            id={`checkbox-customer-type-${record.id}`}
+                            type="checkbox"
+                            checked={selectedIds.has(record.id)}
+                            onChange={() => toggleSelected(record.id)}
+                            disabled={!isApprovable(record)}
+                            aria-label={`Select ${record.id}`}
+                            title={isApprovable(record) ? undefined : 'Only pending requests can be approved'}
+                            className={ROW_CHECKBOX}
+                          />
+                        </td>
+                      )}
+                      <td className="whitespace-nowrap px-4 py-3.5 font-mono font-semibold text-slate-700">
+                        {customer?.customerId ?? record.customerId}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3.5 font-semibold text-slate-900">
                         {customer ? customerName(customer) : <span className="text-slate-400">Unknown customer</span>}
@@ -419,15 +574,26 @@ export function CustomerTypeScreen({
                       <td className="whitespace-nowrap px-4 py-3.5 text-slate-500">
                         {format(new Date(record.updatedAt), 'dd MMM yyyy')}
                       </td>
-                      <td className="sticky right-0 bg-white px-4 py-3.5 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-slate-50">
+                      <td
+                        className={cn(
+                          'sticky right-0 bg-white px-4 py-3.5 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-slate-50',
+                          (rowMenu.menu?.rowId === record.id || selectedIds.has(record.id)) && 'bg-slate-50'
+                        )}
+                      >
                         <div className="flex items-center justify-end">
-                          <RowActionsMenu
-                            recordId={record.id}
-                            onView={() => setDialog({ mode: 'view', record })}
-                            onEdit={() => setDialog({ mode: 'edit', record })}
-                            onDelete={() => setDeletingRecord(record)}
-                            extraItems={approvalMenuItems(record)}
-                          />
+                          <button
+                            id={`btn-customer-type-actions-${record.id}`}
+                            type="button"
+                            {...rowMenu.triggerProps(record.id)}
+                            aria-label={`Actions for ${record.id}`}
+                            title="Actions (or right-click the row)"
+                            className={cn(
+                              'cursor-pointer rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900',
+                              rowMenu.menu?.rowId === record.id && 'bg-slate-100 text-slate-900'
+                            )}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -438,6 +604,29 @@ export function CustomerTypeScreen({
           </table>
         </div>
       </div>
+
+      {rowMenu.menu && menuRecord && (
+        <RowActionMenu anchor={rowMenu.menu.anchor} actions={rowActions(menuRecord)} onClose={rowMenu.close} />
+      )}
+
+      {selectedRows.length > 0 && !bulkApproving && (
+        <BulkApproveBar
+          idPrefix="customer-type"
+          count={selectedRows.length}
+          onClear={() => setSelectedIds(new Set())}
+          onApprove={() => setBulkApproving(true)}
+        />
+      )}
+
+      {bulkApproving && selectedRows.length > 0 && (
+        <BulkApproveDialog
+          idPrefix="customer-type"
+          count={selectedRows.length}
+          noun={['record', 'records']}
+          onCancel={() => setBulkApproving(false)}
+          onConfirm={handleBulkApprove}
+        />
+      )}
 
       {picking && (
         <CustomerTypePickerDialog
@@ -543,165 +732,6 @@ export function CustomerTypeScreen({
   );
 }
 
-const ROW_MENU_HEIGHT = 132;
-const ROW_MENU_ITEM_HEIGHT = 34;
-const ROW_MENU_ITEM = 'flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium transition';
-
-/** Workflow actions shown above View / Edit / Delete */
-interface RowMenuItem {
-  label: string;
-  icon: LucideIcon;
-  tone: 'emerald' | 'amber' | 'rose';
-  onSelect: () => void;
+function isApprovable(record: CustomerTypeRecord) {
+  return record.approval?.requestStatus === 'Pending' && reviewerRole(record.approval.currentWorkflowStage) !== null;
 }
-
-const ROW_MENU_TONE: Record<RowMenuItem['tone'], string> = {
-  emerald: 'text-emerald-600',
-  amber: 'text-amber-600',
-  rose: 'text-rose-500',
-};
-
-type MenuAnchor = { top: number; right: number; up: boolean };
-
-/**
- * Three-dot row menu. Portaled to <body>: each sticky Action cell is its own stacking context,
- * so a menu rendered inside one gets painted over by the next row's cell.
- */
-function RowActionsMenu({
-  recordId,
-  onView,
-  onEdit,
-  onDelete,
-  extraItems = [],
-}: {
-  recordId: string;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  extraItems?: RowMenuItem[];
-}) {
-  const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const open = anchor !== null;
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setAnchor(null);
-    const onPointerDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (!menuRef.current?.contains(target) && !triggerRef.current?.contains(target)) close();
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    // A fixed menu would drift away from its row, so close it on any scroll or resize
-    window.addEventListener('scroll', close, true);
-    window.addEventListener('resize', close);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('scroll', close, true);
-      window.removeEventListener('resize', close);
-    };
-  }, [open]);
-
-  const toggle = () => {
-    if (open || !triggerRef.current) {
-      setAnchor(null);
-      return;
-    }
-    const rect = triggerRef.current.getBoundingClientRect();
-    const menuHeight = ROW_MENU_HEIGHT + (extraItems.length ? extraItems.length * ROW_MENU_ITEM_HEIGHT + 9 : 0);
-    const up = window.innerHeight - rect.bottom < menuHeight + 16;
-    setAnchor({ top: up ? rect.top - 4 : rect.bottom + 4, right: window.innerWidth - rect.right, up });
-  };
-
-  const run = (action: () => void) => () => {
-    setAnchor(null);
-    action();
-  };
-
-  return (
-    <>
-      <button
-        ref={triggerRef}
-        id={`btn-customer-type-actions-${recordId}`}
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={`Actions for ${recordId}`}
-        title="Actions"
-        className={cn(ICON_BUTTON, 'cursor-pointer hover:bg-slate-100 hover:text-slate-700', open && 'bg-slate-100 text-slate-700')}
-      >
-        <MoreVertical className="h-4 w-4" />
-      </button>
-      {anchor && createPortal(
-        <RowActionsPanel
-          ref={menuRef}
-          anchor={anchor}
-          run={run}
-          onView={onView}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          extraItems={extraItems}
-        />,
-        document.body
-      )}
-    </>
-  );
-}
-
-const RowActionsPanel = React.forwardRef<
-  HTMLDivElement,
-  {
-    anchor: MenuAnchor;
-    run: (action: () => void) => () => void;
-    onView: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
-    extraItems: RowMenuItem[];
-  }
->(function RowActionsPanel({ anchor, run, onView, onEdit, onDelete, extraItems }, ref) {
-  return (
-    <div
-      ref={ref}
-      role="menu"
-      style={{ right: anchor.right, ...(anchor.up ? { bottom: window.innerHeight - anchor.top } : { top: anchor.top }) }}
-      className={cn('fixed z-[60] w-40 animate-in fade-in zoom-in-95', MENU_SURFACE)}
-    >
-      {extraItems.map((item) => {
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.label}
-            type="button"
-            role="menuitem"
-            onClick={run(item.onSelect)}
-            className={cn(ROW_MENU_ITEM, 'text-slate-700 hover:bg-slate-50')}
-          >
-            <Icon className={cn('h-3.5 w-3.5', ROW_MENU_TONE[item.tone])} />
-            {item.label}
-          </button>
-        );
-      })}
-      {extraItems.length > 0 && <div className="my-1 border-t border-slate-100" />}
-      <button type="button" role="menuitem" onClick={run(onView)} className={cn(ROW_MENU_ITEM, 'text-slate-700 hover:bg-slate-50')}>
-        <Eye className="h-3.5 w-3.5 text-blue-600" />
-        View
-      </button>
-      <button type="button" role="menuitem" onClick={run(onEdit)} className={cn(ROW_MENU_ITEM, 'text-slate-700 hover:bg-slate-50')}>
-        <Edit3 className="h-3.5 w-3.5 text-amber-600" />
-        Edit
-      </button>
-      <div className="my-1 border-t border-slate-100" />
-      <button type="button" role="menuitem" onClick={run(onDelete)} className={cn(ROW_MENU_ITEM, 'text-rose-600 hover:bg-rose-50')}>
-        <Trash2 className="h-3.5 w-3.5 text-rose-500" />
-        Delete
-      </button>
-    </div>
-  );
-});

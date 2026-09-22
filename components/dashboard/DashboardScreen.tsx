@@ -2,7 +2,7 @@
 
 import React, { useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
-import { Individual, DesignTheme, CustomerType, CustomerTypeRecord } from '@/types';
+import { Individual, CustomerType, CustomerTypeRecord } from '@/types';
 import {
   Users,
   DollarSign,
@@ -73,7 +73,6 @@ interface DashboardScreenProps {
   onNavigateToCustomer360: (individual?: Individual) => void;
   onViewIndividual: (individual: Individual) => void;
   onNavigateToUpdate: (individual: Individual) => void;
-  theme: DesignTheme;
   customerTypeRecords: CustomerTypeRecord[];
 }
 
@@ -334,7 +333,6 @@ const subscribeNoop = () => () => {};
 export function DashboardScreen({
   individuals,
   onNavigateToList,
-  theme,
   customerTypeRecords,
 }: DashboardScreenProps) {
   const isMounted = useSyncExternalStore(
@@ -626,9 +624,7 @@ export function DashboardScreen({
           className={cn(
             slot('growth'),
             'p-5 bg-white border border-slate-200 flex flex-col',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-sm'
           )}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
@@ -723,9 +719,7 @@ export function DashboardScreen({
           className={cn(
             slot('age'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-sm'
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -802,9 +796,7 @@ export function DashboardScreen({
           className={cn(
             slot('risk'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-sm'
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -873,9 +865,7 @@ export function DashboardScreen({
           className={cn(
             slot('account'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-sm'
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -903,9 +893,7 @@ export function DashboardScreen({
           className={cn(
             slot('investment'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-sm'
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -950,7 +938,6 @@ export function DashboardScreen({
             customEndDate={customEndDate}
             periodLabel={formattedDateRange}
             isMounted={isMounted}
-            theme={theme}
           />
         </div>
       </div>
@@ -962,9 +949,7 @@ export function DashboardScreen({
           id="table-top-customers"
           className={cn(
             'xl:col-span-2 bg-white border border-slate-200 overflow-hidden flex flex-col',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-md'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-md'
           )}
         >
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -1078,9 +1063,7 @@ export function DashboardScreen({
           id="table-customer-segment"
           className={cn(
             'xl:col-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-md'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-md'
           )}
         >
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -1143,9 +1126,7 @@ export function DashboardScreen({
           id="table-top-ipos"
           className={cn(
             'xl:col-span-1 bg-white border border-slate-200 overflow-hidden flex flex-col',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 border-white/80 shadow-md'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 border-white/80 shadow-md'
           )}
         >
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">

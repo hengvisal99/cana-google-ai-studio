@@ -103,6 +103,33 @@ export const ipoName = (id: string) => IPO_LIST.find((ipo) => ipo.id === id)?.na
  */
 export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
   {
+    id: 'personal-representative',
+    idPrefix: 'PR',
+    label: 'PR Customer',
+    description: 'Acts on the customer\'s behalf; needs approval.',
+    icon: UserCheck,
+    requiresApproval: true,
+    fields: [
+      CUSTOMER_FIELD,
+      {
+        key: 'accountCheckedBy',
+        label: 'Assigned Reviewer',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. Dara Vong (SR)',
+        showInList: true,
+      },
+      {
+        key: 'accountApprovedBy',
+        label: 'Approved By',
+        type: 'text',
+        required: true,
+        placeholder: 'e.g. Vannak Lim (Manager)',
+        showInList: true,
+      },
+    ],
+  },
+  {
     id: 'csx-screen',
     idPrefix: 'CSX',
     label: 'CSX Screen',
@@ -229,33 +256,6 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
         required: true,
         showInList: true,
         group: 'Subscription',
-      },
-    ],
-  },
-  {
-    id: 'personal-representative',
-    idPrefix: 'PR',
-    label: 'PR Customer',
-    description: 'Acts on the customer\'s behalf; needs approval.',
-    icon: UserCheck,
-    requiresApproval: true,
-    fields: [
-      CUSTOMER_FIELD,
-      {
-        key: 'accountCheckedBy',
-        label: 'Account Checked By',
-        type: 'text',
-        required: true,
-        placeholder: 'e.g. Dara Vong (SR)',
-        showInList: true,
-      },
-      {
-        key: 'accountApprovedBy',
-        label: 'Account Approved By',
-        type: 'text',
-        required: true,
-        placeholder: 'e.g. Vannak Lim (Manager)',
-        showInList: true,
       },
     ],
   },

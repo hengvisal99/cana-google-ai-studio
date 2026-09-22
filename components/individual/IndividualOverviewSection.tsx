@@ -4,12 +4,11 @@ import React from 'react';
 import { Check, Copy, Gauge, Landmark, ShieldAlert, ShieldCheck, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Individual, DesignTheme } from '@/types';
+import { Individual } from '@/types';
 import { Field } from '@/components/shared/DossierCard';
 
 interface IndividualOverviewSectionProps {
   individual: Individual;
-  theme?: DesignTheme;
   className?: string;
 }
 
@@ -245,7 +244,7 @@ export function IndividualOverviewSection({
          ---------------------------------------------------------------- */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <FocusTile
-          label="Customer Status"
+          label="Profile Status"
           value={individual.profileStatus}
           icon={isIncomplete ? ShieldAlert : ShieldCheck}
           tone={isIncomplete ? 'warn' : 'good'}
@@ -280,7 +279,7 @@ export function IndividualOverviewSection({
          ---------------------------------------------------------------- */}
       <section className="bg-white rounded-xl shadow-2xs p-5 space-y-5">
         <FieldGroup title="Personal Information">
-          <Field label="Full Name KH" value={fullNameKH} valueClassName="font-khmer" />
+          <Field label="Full Name KH" value={fullNameKH} />
           <Field label="Date of Birth" value={individual.dateOfBirth} />
           <Field label="Gender" value={individual.gender} />
           <Field label="Marital Status" value={individual.maritalStatus} />

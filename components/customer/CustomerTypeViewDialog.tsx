@@ -329,7 +329,7 @@ export function CustomerTypeViewDialog(props: CustomerTypeViewProps) {
                 {name}
               </h2>
               <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                {customer?.fullNameKH && <span className="font-khmer text-[13px] text-slate-500">{customer.fullNameKH}</span>}
+                {customer?.fullNameKH && <span className="text-[13px] text-slate-500">{customer.fullNameKH}</span>}
                 <span className="rounded-md bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-blue-600">
                   {customer?.customerId ?? props.record.customerId}
                 </span>

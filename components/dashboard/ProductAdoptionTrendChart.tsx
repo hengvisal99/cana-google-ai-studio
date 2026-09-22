@@ -22,7 +22,7 @@ import {
   TooltipContentProps,
 } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { CustomerTypeId, CustomerTypeRecord, DesignTheme } from '@/types';
+import { CustomerTypeId, CustomerTypeRecord } from '@/types';
 import { CUSTOMER_TYPES } from '@/lib/customer-types';
 import { cn } from '@/lib/utils';
 import { DATA_END, customersHolding, customersJoining, toHoldings } from '@/lib/product-holdings';
@@ -104,7 +104,6 @@ interface ProductAdoptionTrendChartProps {
   customEndDate: string;
   periodLabel: string;
   isMounted: boolean;
-  theme: DesignTheme;
 }
 
 export function ProductAdoptionTrendChart({
@@ -114,7 +113,6 @@ export function ProductAdoptionTrendChart({
   customEndDate,
   periodLabel,
   isMounted,
-  theme,
 }: ProductAdoptionTrendChartProps) {
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
@@ -169,9 +167,7 @@ export function ProductAdoptionTrendChart({
       id="chart-product-adoption-trend"
       className={cn(
         'h-full p-5 bg-white border border-slate-200 flex flex-col',
-        theme === 'glassmorphism'
-          ? 'rounded-2xl bg-white/85 border-white/80 shadow-sm'
-          : 'rounded-xl shadow-xs'
+        'rounded-2xl bg-white/85 border-white/80 shadow-sm'
       )}
     >
       <div className="pb-3 border-b border-slate-100">

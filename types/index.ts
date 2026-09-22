@@ -1,4 +1,3 @@
-export type DesignTheme = 'soft-fintech' | 'glassmorphism' | 'aurora';
 
 export type NavigationPage = 
   | 'dashboard'
@@ -7,7 +6,8 @@ export type NavigationPage =
   | 'individual-insert'
   | 'individual-update'
   | 'customer-type'
-  | 'form-fields';
+  | 'form-fields'
+  | 'master-data';
 
 export type KYCStatus = 'verified' | 'pending' | 'under_review' | 'rejected';
 export type RiskRating = 'low' | 'moderate' | 'high';

@@ -2,22 +2,24 @@
 @import "tw-animate-css";
 
 @theme {
-  --font-sans: var(--font-geist-sans), "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Kantumruy Pro", "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-khmer: "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
-}
-
-body {
-  font-family: var(--font-geist-sans), "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Kantumruy Pro", "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-.font-khmer,
-[lang="km"],
-:lang(km) {
-  font-family: "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Kantumruy Pro", "Noto Sans Khmer", sans-serif !important;
+  /* Geist has no Khmer glyphs, so Khmer characters fall through to the Khmer OS
+     fonts automatically — no font-khmer class needed. */
+  --font-sans: var(--font-geist-sans), "Khmer OS", "Khmer OS Content", "Khmer OS Battambang", "Khmer OS Siemreap", "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Typography: keep weights light — semibold is the heaviest weight in the UI. */
 strong,
 b {
   font-weight: 600;
+}
+
+/* Customer 360: thin scrollbars. The customer list always shows its bar; the
+   content panels only show theirs on hover. */
+.c360-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.c360-scroll:hover,
+.c360-scroll-sidebar {
+  scrollbar-color: rgb(148 163 184 / 0.7) transparent;
 }

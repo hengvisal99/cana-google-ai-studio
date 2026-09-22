@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { 
   Individual, 
-  DesignTheme, 
   AuthorizationTimelineItem,
   SupportingDocument
 } from '@/types';
@@ -212,7 +211,6 @@ interface ViewIndividualDialogProps {
     reason: string,
     processedBy: string
   ) => void;
-  theme: DesignTheme;
 }
 
 type DialogTab = 'overview' | 'identification' | 'employment' | 'family' | 'account' | 'authorization';
@@ -225,7 +223,6 @@ export function ViewIndividualDialog({
   onNavigateToCustomer360,
   onAuthorizeIndividual,
   onCloseAccountIndividual,
-  theme,
 }: ViewIndividualDialogProps) {
   const [activeTab, setActiveTab] = useState<DialogTab>('overview');
 
@@ -238,17 +235,8 @@ export function ViewIndividualDialog({
 
   if (!isOpen || !individual) return null;
 
-  const modalContainerClasses = () => {
-    switch (theme) {
-      case 'glassmorphism':
-        return 'bg-white/95 backdrop-blur-2xl border border-white/80 shadow-2xl shadow-blue-950/15 rounded-3xl';
-      case 'aurora':
-        return 'bg-white border-2 border-slate-100 shadow-2xl rounded-2xl overflow-hidden ring-1 ring-blue-500/10';
-      case 'soft-fintech':
-      default:
-        return 'bg-white border border-slate-200 shadow-xl rounded-xl';
-    }
-  };
+  const modalContainerClasses = () =>
+    'bg-white/95 backdrop-blur-2xl border border-white/80 shadow-2xl shadow-blue-950/15 rounded-3xl';
 
   const handleOpenAuthDialog = (action: 'authorize' | 'resubmit' | 'reject') => {
     setAuthAction(action);
@@ -377,7 +365,7 @@ export function ViewIndividualDialog({
               </h2>
               <div className="flex items-center gap-2.5 mt-1 flex-wrap">
                 {individual.fullNameKH && (
-                  <span className="text-sm text-slate-500 font-khmer">{individual.fullNameKH}</span>
+                  <span className="text-sm text-slate-500">{individual.fullNameKH}</span>
                 )}
                 <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-xs font-semibold font-mono">
                   {individual.customerId || individual.id}
@@ -455,7 +443,6 @@ export function ViewIndividualDialog({
           {activeTab === 'overview' && (
             <IndividualOverviewSection 
               individual={individual} 
-              theme={theme} 
             />
           )}
 
@@ -529,7 +516,7 @@ export function ViewIndividualDialog({
                   valueClassName="uppercase"
                 />
 
-                <Field label="Saving Account Type" value={individual.banking?.savingAccount} />
+                <Field label="Account Type" value={individual.banking?.savingAccount} />
                 <Field
                   label="Bank Account Number"
                   value={individual.banking?.accountNumber}
@@ -628,7 +615,7 @@ export function ViewIndividualDialog({
                   valueClassName="font-mono"
                 />
 
-                <Field label="Customer Status" value={individual.investorIdInfo?.customerStatus} />
+                <Field label="Profile Status" value={individual.investorIdInfo?.customerStatus} />
                 <Field
                   label="Investor ID Expired Date"
                   value={individual.investorIdInfo?.investorIdExpiredDate}
@@ -649,11 +636,11 @@ export function ViewIndividualDialog({
                 />
 
                 <Field
-                  label="Account Checked By (SR)"
+                  label="Assigned Reviewer"
                   value={individual.tradingAccountInfo?.accountCheckedBy}
                 />
                 <Field
-                  label="Account Approved By (Manager)"
+                  label="Approved By"
                   value={individual.tradingAccountInfo?.accountApprovedBy}
                 />
 

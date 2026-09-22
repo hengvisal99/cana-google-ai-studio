@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Individual, DesignTheme } from '@/types';
+import { Individual } from '@/types';
 import { getCustomer360Details } from '@/lib/customer360Service';
 import { 
   Search, 
@@ -48,15 +48,14 @@ const isActiveAccount = (ind: Individual) =>
 const isClosedAccount = (ind: Individual) =>
   ind.accountStatus === 'Closed' || ind.requestType === 'Close Account';
 
-// Remaining-days tone: green when comfortably valid, neutral in the normal
-// range, amber when renewal is due, rose when it is about to lapse.
+// Remaining-days tone: rose when about to lapse, amber when renewal is due,
+// green when comfortably valid.
 const remainingTone = (expiryDays: string) => {
   const days = parseInt(expiryDays, 10);
   if (Number.isNaN(days)) return 'text-slate-800';
   if (days <= 7) return 'text-rose-600';
   if (days <= 30) return 'text-amber-600';
-  if (days >= 90) return 'text-emerald-600';
-  return 'text-slate-800';
+  return 'text-emerald-600';
 };
 
 // Product icon by name; the status pill already carries the state colour.
@@ -73,7 +72,6 @@ interface Customer360ScreenProps {
   onSelectCustomer: (id: string) => void;
   onViewIndividual: (individual: Individual) => void;
   onNavigateToUpdate: (individual: Individual) => void;
-  theme: DesignTheme;
 }
 
 export function Customer360Screen({
@@ -82,34 +80,11 @@ export function Customer360Screen({
   onSelectCustomer,
   onViewIndividual,
   onNavigateToUpdate,
-  theme,
 }: Customer360ScreenProps) {
   // Left Sidebar State
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [customerTab, setCustomerTab] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // Temporary A/B toggle: compare the current typography against the
-  // recommended hierarchy (3 weights, semibold reserved for emphasis).
-  const [refined, setRefined] = useState(false);
-  const sectionTitle = cn('text-sm font-semibold', refined ? 'text-slate-600' : 'text-slate-900');
-
-  // Temporary A/B toggle: where "show customer list" sits once the sidebar is hidden.
-  const [togglePlacement, setTogglePlacement] = useState<'current' | 'cardEdge' | 'besidePrint' | 'rail'>('current');
-  const sidebarClosedOn = (p: typeof togglePlacement) => !sidebarOpen && togglePlacement === p;
-  const iconToggle = (
-    <button
-      type="button"
-      onClick={() => setSidebarOpen(true)}
-      aria-expanded={false}
-      aria-controls="customer-360-left-sidebar"
-      title="Show customer list"
-      aria-label="Show customer list"
-      className="hidden lg:grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition cursor-pointer hover:border-blue-300 hover:text-blue-600 print:hidden"
-    >
-      <PanelLeftOpen className="w-4 h-4" />
-    </button>
-  );
 
   // Transaction History Filters (Dropdown layout)
   const [selectedIpoFilter, setSelectedIpoFilter] = useState<string>('ALL');
@@ -282,7 +257,7 @@ export function Customer360Screen({
   const displayNameKH = activeIndividual.fullNameKH || `${activeIndividual.surnameKH || 'គឹម'} ${activeIndividual.givenNameKH || 'សុផល'}`;
   const displayNameEN = activeIndividual.fullNameEN || `${activeIndividual.firstName} ${activeIndividual.lastName}`;
   const displayCID = activeIndividual.customerId || activeIndividual.id;
-  const displayOccupation = activeIndividual.employment?.occupation || activeIndividual.occupation || 'Senior Securities Investor';
+  const displayBankName = activeIndividual.banking?.bankName || '—';
   const displayPhone = activeIndividual.mobile || activeIndividual.phone || activeIndividual.tradingAccountInfo?.phoneNumber || '+855 12 892 340';
   const displayEmail = activeIndividual.email || activeIndividual.tradingAccountInfo?.email || 'customer@nexus-securities.com.kh';
   const displayAddress = activeIndividual.employment?.organizationAddress || activeIndividual.residency || 'Street 214, Sangkat Boeung Raing, Phnom Penh';
@@ -299,7 +274,6 @@ export function Customer360Screen({
           #customer-360-left-sidebar,
           nav,
           header,
-          #theme-switcher-button,
           button:not(#c360-print-btn) {
             display: none !important;
           }
@@ -316,91 +290,11 @@ export function Customer360Screen({
         }
       `}</style>
 
-      {/* Temporary sidebar-toggle placement comparison - remove once one is chosen. */}
-      <div className="fixed bottom-17 right-5 z-40 flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur print:hidden">
-        <span className="px-2 text-[11px] font-medium text-slate-500">List toggle</span>
-        {([['Current', 'current'], ['Card edge', 'cardEdge'], ['Beside Print', 'besidePrint'], ['Rail', 'rail']] as const).map(([label, value]) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => {
-              setTogglePlacement(value);
-              setSidebarOpen(false);
-            }}
-            aria-pressed={togglePlacement === value}
-            className={cn(
-              'rounded-full px-3 py-1.5 text-xs font-semibold transition cursor-pointer',
-              togglePlacement === value ? 'bg-blue-500 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Temporary typography comparison toggle - remove once a style is chosen. */}
-      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur print:hidden">
-        <span className="px-2 text-[11px] font-medium text-slate-500">Typography</span>
-        {([['Current', false], ['Recommended', true]] as const).map(([label, value]) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setRefined(value)}
-            aria-pressed={refined === value}
-            className={cn(
-              'rounded-full px-3 py-1.5 text-xs font-semibold transition cursor-pointer',
-              refined === value ? 'bg-blue-500 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       {/* Main 2-Column Layout */}
       <div className={cn(
         'grid grid-cols-1 gap-5 items-start lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-hidden print:block print:overflow-visible',
-        sidebarOpen && 'lg:grid-cols-12',
-        sidebarClosedOn('rail') && 'lg:grid-cols-[56px_minmax(0,1fr)]'
+        sidebarOpen && 'lg:grid-cols-12'
       )}>
-        {/* Option: slim rail in place of the hidden sidebar - toggle on top, customers below */}
-        {sidebarClosedOn('rail') && (
-          <nav
-            aria-label="Customers"
-            className="hidden lg:flex lg:h-full lg:min-h-0 flex-col items-center gap-2.5 rounded-xl border border-slate-200 bg-white py-3 shadow-xs print:hidden"
-          >
-            {iconToggle}
-            <span className="h-px w-6 shrink-0 bg-slate-100" />
-            <div className="flex min-h-0 flex-1 flex-col items-center gap-2.5 overflow-y-auto px-2 py-0.5">
-              {filteredCustomers.map((ind) => {
-                const isSelected = ind.id === activeIndividual.id;
-                return (
-                  <button
-                    key={ind.id}
-                    type="button"
-                    onClick={() => onSelectCustomer(ind.id)}
-                    title={ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
-                    className="shrink-0 cursor-pointer rounded-xl"
-                  >
-                    <Image
-                      src={ind.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                      alt={ind.firstName}
-                      width={36}
-                      height={36}
-                      className={cn(
-                        'h-9 w-9 rounded-xl border object-cover transition',
-                        isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200 opacity-80 hover:opacity-100'
-                      )}
-                      referrerPolicy="no-referrer"
-                      unoptimized
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
-        )}
-
         {/* =========================================================================
             1. LEFT SIDEBAR: CUSTOMER LIST
            ========================================================================= */}
@@ -410,11 +304,7 @@ export function Customer360Screen({
           className={cn(
             'lg:col-span-4 xl:col-span-3 bg-white border border-slate-200 overflow-hidden flex flex-col lg:min-h-0 lg:h-full print:hidden',
             !sidebarOpen && 'lg:hidden',
-            theme === 'glassmorphism'
-              ? 'rounded-2xl bg-white/85 backdrop-blur-xl border-white/80 shadow-md'
-              : theme === 'aurora'
-              ? 'rounded-2xl border-slate-200 shadow-md ring-1 ring-blue-500/10'
-              : 'rounded-xl shadow-xs'
+            'rounded-2xl bg-white/85 backdrop-blur-xl border-white/80 shadow-md'
           )}
         >
           {/* Sidebar Header & Search Group */}
@@ -467,7 +357,7 @@ export function Customer360Screen({
                 onClick={() => setCustomerTab('ALL')}
                 className={cn(
                   'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
-                  refined && customerTab !== 'ALL' ? 'font-medium' : 'font-semibold',
+                  'font-semibold',
                   customerTab === 'ALL'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -475,7 +365,7 @@ export function Customer360Screen({
               >
                 <span>All</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full', refined ? 'font-medium' : 'font-semibold',
+                  'text-[10px] px-1.5 py-0.2 rounded-full', 'font-semibold',
                   customerTab === 'ALL' ? 'bg-slate-100 text-slate-700' : 'bg-slate-300/60 text-slate-600'
                 )}>
                   {countAll}
@@ -488,7 +378,7 @@ export function Customer360Screen({
                 onClick={() => setCustomerTab('ACTIVE')}
                 className={cn(
                   'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
-                  refined && customerTab !== 'ACTIVE' ? 'font-medium' : 'font-semibold',
+                  'font-semibold',
                   customerTab === 'ACTIVE'
                     ? 'bg-white text-emerald-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -496,7 +386,7 @@ export function Customer360Screen({
               >
                 <span>Active</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full', refined ? 'font-medium' : 'font-semibold',
+                  'text-[10px] px-1.5 py-0.2 rounded-full', 'font-semibold',
                   customerTab === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/60 text-slate-600'
                 )}>
                   {countActive}
@@ -509,7 +399,7 @@ export function Customer360Screen({
                 onClick={() => setCustomerTab('CLOSED')}
                 className={cn(
                   'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
-                  refined && customerTab !== 'CLOSED' ? 'font-medium' : 'font-semibold',
+                  'font-semibold',
                   customerTab === 'CLOSED'
                     ? 'bg-white text-rose-700 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -517,7 +407,7 @@ export function Customer360Screen({
               >
                 <span>Closed</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full', refined ? 'font-medium' : 'font-semibold',
+                  'text-[10px] px-1.5 py-0.2 rounded-full', 'font-semibold',
                   customerTab === 'CLOSED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-300/60 text-slate-600'
                 )}>
                   {countClosed}
@@ -532,7 +422,7 @@ export function Customer360Screen({
               No matching customer found.
             </div>
           ) : (
-            <div className="p-2.5 space-y-2.5 bg-slate-50/50 max-h-[calc(100vh-290px)] min-h-[460px] lg:max-h-none lg:min-h-0 lg:flex-1 overflow-y-auto">
+            <div className="p-2.5 space-y-2.5 bg-slate-50/50 max-h-[calc(100vh-290px)] min-h-[460px] lg:max-h-none lg:min-h-0 lg:flex-1 overflow-y-auto c360-scroll c360-scroll-sidebar">
               {filteredCustomers.map((ind) => {
                 const isSelected = ind.id === activeIndividual.id;
                 const status = ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
@@ -582,7 +472,7 @@ export function Customer360Screen({
                             {ind.fullNameEN || `${ind.firstName} ${ind.lastName}`}
                           </span>
                           <span className={cn(
-                            'text-[11px] px-2 py-0.5 rounded-md shrink-0', refined ? 'font-medium' : 'font-semibold',
+                            'text-[11px] px-2 py-0.5 rounded-md shrink-0', 'font-semibold',
                             status === 'Active'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : status === 'Closed'
@@ -593,7 +483,7 @@ export function Customer360Screen({
                           </span>
                         </div>
 
-                        <p lang="km" className="text-[12px] leading-relaxed text-slate-600 truncate mt-0.5 font-khmer">
+                        <p lang="km" className="text-[12px] leading-relaxed text-slate-600 truncate mt-0.5">
                           {ind.fullNameKH || `${ind.surnameKH || ''} ${ind.givenNameKH || ''}`}
                         </p>
                       </div>
@@ -601,12 +491,12 @@ export function Customer360Screen({
 
                     {/* Bento Card Footer Micro-Bar */}
                     <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[11px]">
-                      <span className={cn('font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200', refined ? 'font-normal' : 'font-medium')}>
+                      <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-medium">
                         {ind.customerId || ind.id}
                       </span>
                       <div className="flex items-center gap-1">
-                        <span className={cn('text-slate-500 text-[11px]', refined ? 'font-normal' : 'font-medium')}>Total IPO:</span>
-                        <span className={cn('font-mono text-xs text-slate-800', refined ? 'font-medium' : 'font-semibold')}>
+                        <span className="text-slate-500 text-[11px] font-medium">Total IPO:</span>
+                        <span className="font-mono text-xs text-slate-800 font-semibold">
                           ${portVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -629,7 +519,7 @@ export function Customer360Screen({
               2. CUSTOMER 360 HEADER
              ======================================================================= */}
           {/* Back button: the way back to the hidden customer list, above the profile. */}
-          {sidebarClosedOn('current') && (
+          {!sidebarOpen && (
             <div className="hidden lg:flex lg:shrink-0 items-center -mb-2 print:hidden">
               <button
                 type="button"
@@ -653,49 +543,27 @@ export function Customer360Screen({
               risk={activeIndividual.riskCategory || 'Moderate'}
               customerType={activeIndividual.customerType || 'High Net Worth'}
               accountStatus={activeIndividual.accountStatus || (isActiveAccount(activeIndividual) ? 'Active' : 'Not Opened')}
-              occupation={displayOccupation}
+              bankName={displayBankName}
               phone={displayPhone}
               email={displayEmail}
               address={displayAddress}
-              theme={theme}
               onPrint={handlePrint}
               onCopy={handleCopy}
               copiedKey={copiedKey}
-              refined={refined}
-              leading={sidebarClosedOn('cardEdge') ? (
-                <>
-                  {iconToggle}
-                  <span className="hidden lg:block h-10 w-px shrink-0 bg-slate-200 print:hidden" />
-                </>
-              ) : undefined}
-              actions={sidebarClosedOn('besidePrint') ? (
-                <button
-                  type="button"
-                  onClick={() => setSidebarOpen(true)}
-                  aria-expanded={false}
-                  aria-controls="customer-360-left-sidebar"
-                  className="group hidden lg:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition cursor-pointer hover:border-blue-300 hover:text-blue-600 print:hidden"
-                >
-                  <PanelLeftOpen className="w-4 h-4 text-slate-500 transition group-hover:text-blue-600" />
-                  <span>Customer list</span>
-                </button>
-              ) : undefined}
             />
           </div>
 
           {/* Scrolling body: the profile above stays pinned, so only the
               sections below move. min-h-0 lets this flex child shrink
               below its content height and actually own the overflow. */}
-          <div className="space-y-8 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1.5 [scrollbar-gutter:stable] print:overflow-visible print:pr-0">
+          <div className="space-y-8 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1.5 [scrollbar-gutter:stable] c360-scroll print:overflow-visible print:pr-0">
 
             {/* =======================================================================
                 3. SUMMARY: 3-VERSION KPI CARDS WITH IN-CARD TOGGLE
                ======================================================================= */}
             <Customer360SummarySection 
               kpis={customer360Data.kpis} 
-              theme={theme} 
               customerName={displayNameEN}
-              refined={refined} 
             />
 
             {/* =======================================================================
@@ -706,7 +574,7 @@ export function Customer360Screen({
             <section id="c360-product-section" className="space-y-3">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-blue-600" />
-                <h3 className={sectionTitle}>Product Portfolio</h3>
+                <h3 className="text-sm font-semibold text-slate-600">Product Portfolio</h3>
               </div>
 
               {/* One Row One Card Layout */}
@@ -714,9 +582,7 @@ export function Customer360Screen({
                 {customer360Data.products.map((prod) => (
                   <div
                     key={prod.id}
-                    className={cn(
-                      'relative overflow-hidden p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/70 hover:border-blue-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs'
-                    )}
+                    className="relative overflow-hidden p-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50/70 hover:border-blue-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs"
                   >
                     {/* Left: Product Icon, Name & ID */}
                     <div className="min-w-[240px] flex items-center gap-3">
@@ -732,37 +598,37 @@ export function Customer360Screen({
                         <div className="text-sm font-semibold text-slate-900">
                           {prod.productName}
                         </div>
-                        <div className={cn('font-mono text-xs text-slate-500 mt-0.5', refined ? 'font-normal' : 'font-medium')}>
+                        <div className="font-mono text-xs text-slate-500 mt-0.5 font-normal">
                           {prod.productId}
                         </div>
                       </div>
                     </div>
 
                     {/* Right: Valid From, Valid To, Expiry, Status */}
-                    <div className={cn('flex items-center flex-wrap md:flex-nowrap justify-between md:justify-end text-xs', refined ? 'gap-6 sm:gap-10' : 'gap-5 sm:gap-7')}>
+                    <div className="flex items-center flex-wrap md:flex-nowrap justify-between md:justify-end text-xs gap-6 sm:gap-10">
                       <div>
-                        <span className={cn('text-[11px] uppercase text-slate-500 tracking-wider block', refined ? 'font-normal' : 'font-medium')}>
+                        <span className="text-[11px] uppercase text-slate-500 tracking-wider block font-normal">
                           Valid From
                         </span>
-                        <span className={cn('text-slate-700 block whitespace-nowrap', refined ? 'mt-1 font-medium' : 'mt-0.5 font-semibold')}>
+                        <span className="text-slate-700 block whitespace-nowrap mt-1 font-medium">
                           {prod.validFrom}
                         </span>
                       </div>
 
                       <div>
-                        <span className={cn('text-[11px] uppercase text-slate-500 tracking-wider block', refined ? 'font-normal' : 'font-medium')}>
+                        <span className="text-[11px] uppercase text-slate-500 tracking-wider block font-normal">
                           Valid To
                         </span>
-                        <span className={cn('text-slate-700 block whitespace-nowrap', refined ? 'mt-1 font-medium' : 'mt-0.5 font-semibold')}>
+                        <span className="text-slate-700 block whitespace-nowrap mt-1 font-medium">
                           {prod.validTo}
                         </span>
                       </div>
 
                       <div className="min-w-[65px] text-left md:text-right">
-                        <span className={cn('text-[11px] uppercase text-slate-500 tracking-wider block', refined ? 'font-normal' : 'font-medium')}>
+                        <span className="text-[11px] uppercase text-slate-500 tracking-wider block font-normal">
                           Remaining
                         </span>
-                        <span className={cn('block whitespace-nowrap', refined ? cn('mt-1 font-medium', remainingTone(prod.expiryDays)) : 'mt-0.5 font-semibold text-slate-800')}>
+                        <span className={cn('block whitespace-nowrap', 'mt-1 font-medium', remainingTone(prod.expiryDays))}>
                           {prod.expiryDays}
                         </span>
                       </div>
@@ -805,7 +671,7 @@ export function Customer360Screen({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 xl:h-8 xl:shrink-0">
                     <div className="flex items-center gap-2">
                       <History className="w-4 h-4 text-blue-600" />
-                      <h3 className={sectionTitle}>Transaction History</h3>
+                      <h3 className="text-sm font-semibold text-slate-600">Transaction History</h3>
                     </div>
 
                     {/* Filter Trigger & Dropdown Popover */}
@@ -920,11 +786,11 @@ export function Customer360Screen({
                       columns line up. */}
                   <div className="flex flex-col overflow-x-auto xl:flex-1 xl:min-h-0 border border-slate-200 rounded-xl bg-white">
                     <div className="flex flex-1 min-h-0 min-w-[520px] flex-col">
-                      <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
+                      <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] c360-scroll">
                         <table className="w-full table-fixed text-left text-xs border-collapse">
                           {txColGroup}
                           <thead>
-                            <tr className={cn('bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider', refined ? '[&>th]:font-medium text-slate-600' : '[&>th]:font-semibold text-slate-600')}>
+                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider [&>th]:font-medium text-slate-600">
                               <th className="py-2.5 px-3">Date & Time</th>
                               <th className="py-2.5 px-3">IPO Name</th>
                               <th className="py-2.5 px-3 text-right">Quantity</th>
@@ -945,19 +811,19 @@ export function Customer360Screen({
                             ) : (
                               filteredTransactions.map((tx) => (
                                 <tr key={tx.id} className="hover:bg-slate-50/70 transition-colors">
-                                  <td className={cn('py-2.5 px-3 whitespace-nowrap', refined ? 'font-normal text-xs text-slate-600' : 'font-medium text-[11px] text-slate-700')}>
+                                  <td className="py-2.5 px-3 whitespace-nowrap font-normal text-xs text-slate-600">
                                     {tx.dateTime}
                                   </td>
-                                  <td className={cn('py-2.5 px-3 truncate', refined ? 'font-normal text-slate-800' : 'font-medium text-slate-900')}>
+                                  <td className="py-2.5 px-3 truncate font-normal text-slate-800">
                                     {ipoTicker(tx.ipoName)}
                                   </td>
-                                  <td className={cn('py-2.5 px-3 text-right font-mono', refined ? 'font-normal text-slate-700' : 'font-semibold text-slate-800')}>
+                                  <td className="py-2.5 px-3 text-right font-mono font-normal text-slate-700">
                                     {tx.quantity.toLocaleString()}
                                   </td>
-                                  <td className={cn('py-2.5 px-3 text-right font-mono', refined ? 'text-slate-500' : 'text-slate-600')}>
+                                  <td className="py-2.5 px-3 text-right font-mono text-slate-500">
                                     ${tx.price.toFixed(2)}
                                   </td>
-                                  <td className={cn('py-2.5 px-3 text-right font-mono text-slate-900', refined ? 'font-medium' : 'font-semibold')}>
+                                  <td className="py-2.5 px-3 text-right font-mono text-slate-900 font-medium">
                                     ${tx.tradingValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                 </tr>
@@ -1004,7 +870,7 @@ export function Customer360Screen({
                 <div className="flex items-center justify-between gap-3 xl:h-8 xl:shrink-0">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-600" />
-                    <h3 className={sectionTitle}>Activity Timeline</h3>
+                    <h3 className="text-sm font-semibold text-slate-600">Activity Timeline</h3>
                   </div>
                 </div>
 
@@ -1014,7 +880,7 @@ export function Customer360Screen({
                     a scroll container resolves top/bottom against the visible
                     padding box, so it would span one viewport and scroll away
                     from the dots instead of connecting them. */}
-                <div className="border border-slate-200 rounded-xl bg-slate-50/50 p-3 max-h-[440px] xl:max-h-none xl:flex-1 xl:min-h-0 overflow-y-auto">
+                <div className="border border-slate-200 rounded-xl bg-slate-50/50 p-3 max-h-[440px] xl:max-h-none xl:flex-1 xl:min-h-0 overflow-y-auto c360-scroll">
                   {/* Rail lives on the content wrapper, so it is sized by the full
                       list height. left-[6px] centres it on the dots: the dots start
                       at x=0 (pl-6 offset, then -left-6) and are 14px wide, so both
@@ -1027,14 +893,14 @@ export function Customer360Screen({
 
                         {/* Right Side Card UI */}
                         <div className="bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl p-3 transition-all shadow-2xs hover:shadow-xs hover:border-blue-200">
-                          <span className={cn('block', refined ? 'text-xs font-normal text-slate-500' : 'text-[11px] font-medium text-slate-500')}>
+                          <span className="block text-xs font-normal text-slate-500">
                             {act.dateTime}
                           </span>
 
                           {/* Activity, then its qualifier inline: the reference id
                               for product registrations, or the approver's role for
                               the onboarding steps, which carry no reference. */}
-                          <h4 className={cn('mt-0.5', refined ? 'text-[13px] font-medium text-slate-900' : 'text-xs font-semibold text-slate-900')}>
+                          <h4 className="mt-0.5 text-[13px] font-medium text-slate-900">
                             {act.activity}
                             {(act.referenceId || act.role) && (
                               <span className="font-normal text-slate-500">

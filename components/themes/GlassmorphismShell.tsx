@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { NavigationPage, DesignTheme, SupportedLanguage, EnterpriseApp } from '@/types';
+import { NavigationPage, SupportedLanguage, EnterpriseApp } from '@/types';
 import {
   LayoutDashboard,
   LayoutList,
@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Compass,
   Workflow,
+  Settings,
 } from 'lucide-react';
 import { HeaderActions } from '@/components/shared/HeaderActions';
 import { useScrollbarWidth } from '@/hooks/use-scrollbar-width';
@@ -32,8 +33,6 @@ const ACTIVE_BAR = 'absolute left-0 h-5 w-[3px] rounded-full bg-blue-600';
 interface ShellProps {
   currentPage: NavigationPage;
   onNavigate: (page: NavigationPage) => void;
-  currentTheme: DesignTheme;
-  onThemeChange: (theme: DesignTheme) => void;
   currentLanguage: SupportedLanguage;
   onLanguageChange: (lang: SupportedLanguage) => void;
   currentApp: EnterpriseApp;
@@ -46,7 +45,6 @@ interface ShellProps {
 export function GlassmorphismShell({
   currentPage,
   onNavigate,
-  currentTheme,
   currentLanguage,
   onLanguageChange,
   currentApp,
@@ -56,6 +54,7 @@ export function GlassmorphismShell({
   children,
 }: ShellProps) {
   const [customerMenuOpen, setCustomerMenuOpen] = useState(true);
+  const [settingsMenuOpen, setSettingsMenuOpen] = useState(true);
   const mainRef = useRef<HTMLElement>(null);
   const scrollbarWidth = useScrollbarWidth(mainRef);
 
@@ -76,6 +75,11 @@ export function GlassmorphismShell({
         currentPage === 'individual-update' ||
         currentPage === 'individual-insert',
     },
+  ];
+
+  const isSettingsPage = currentPage === 'master-data';
+  const settingsSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
+    { label: 'Master Data', page: 'master-data', active: currentPage === 'master-data' },
   ];
 
   return (
@@ -242,6 +246,63 @@ export function GlassmorphismShell({
                   <Workflow className={navIcon(currentPage === 'customer-type')} />
                   {!sidebarCollapsed && <span>Sale Pipeline</span>}
                 </button>
+
+                {/* Settings: expandable group (Master Data) */}
+                <button
+                  id="glass-nav-settings"
+                  type="button"
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('master-data') : setSettingsMenuOpen(!settingsMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && settingsMenuOpen}
+                  className={cn(
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
+                    isSettingsPage
+                      ? sidebarCollapsed
+                        ? ACTIVE_TILE
+                        : settingsMenuOpen
+                          ? ACTIVE_PARENT
+                          : ACTIVE_ROW
+                      : IDLE_ROW
+                  )}
+                  title="Settings"
+                >
+                  {isSettingsPage && !sidebarCollapsed && !settingsMenuOpen && <span className={ACTIVE_BAR} />}
+                  <Settings className={navIcon(isSettingsPage)} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Settings</span>
+                      <ChevronDown
+                        className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !settingsMenuOpen && '-rotate-90')}
+                      />
+                    </>
+                  )}
+                </button>
+
+                {!sidebarCollapsed && settingsMenuOpen && (
+                  <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
+                    {settingsSubItems.map((item) => (
+                      <button
+                        key={item.page}
+                        id={`glass-nav-settings-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'relative w-full flex items-center px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          item.active
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
+                        )}
+                      >
+                        {item.active && (
+                          <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />
+                        )}
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -283,7 +344,7 @@ export function GlassmorphismShell({
              ========================================================================= */}
           <header
             id="glassmorphism-header"
-            className="bg-white/80 backdrop-blur-2xl border border-white/90 shadow-lg shadow-slate-300/30 rounded-2xl px-4 sm:px-6 py-3 mr-[calc(0.75rem_+_var(--sbw,0px))] sm:mr-[calc(1.25rem_+_var(--sbw,0px))] flex items-center justify-between gap-4 shrink-0"
+            className="relative z-40 bg-white/80 backdrop-blur-2xl border border-white/90 shadow-lg shadow-slate-300/30 rounded-2xl px-4 sm:px-6 py-3 mr-[calc(0.75rem_+_var(--sbw,0px))] sm:mr-[calc(1.25rem_+_var(--sbw,0px))] flex items-center justify-between gap-4 shrink-0"
           >
             {/* Left: Sidebar Toggle */}
             <div className="flex items-center gap-3 min-w-0">
@@ -301,7 +362,6 @@ export function GlassmorphismShell({
 
             {/* Right: App icon + Language icon + Theme icon + Profile with name */}
             <HeaderActions
-              currentTheme={currentTheme}
               currentLanguage={currentLanguage}
               onLanguageChange={onLanguageChange}
               currentApp={currentApp}

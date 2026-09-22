@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Individual, DesignTheme, SupportingDocument } from '@/types';
+import { Individual, SupportingDocument } from '@/types';
 import { User, ShieldCheck, Briefcase, Users, CreditCard } from 'lucide-react';
 import { formatAddressParts } from '@/components/ui/form';
 import { IndividualFormShell } from '@/components/individual/IndividualFormShell';
@@ -15,7 +15,6 @@ interface IndividualUpdateScreenProps {
   individual: Individual;
   onCancel: () => void;
   onSubmitSuccess: (updated: Individual) => void;
-  theme: DesignTheme;
 }
 
 type TabKey = 'personal' | 'identification' | 'employment' | 'family' | 'account';
@@ -24,7 +23,6 @@ export function IndividualUpdateScreen({
   individual,
   onCancel,
   onSubmitSuccess,
-  theme,
 }: IndividualUpdateScreenProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('personal');
   const [isSubmitting, setIsSubmitting] = useState(false);

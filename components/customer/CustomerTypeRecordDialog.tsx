@@ -12,7 +12,7 @@ import {
 } from '@/lib/customer-types';
 import { newRegistration, resubmitted } from '@/lib/customer-type-approval';
 import type { CustomerTypeFieldValue, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
-import { BTN_PRIMARY, BTN_SECONDARY, CustomerTypeForm, DialogShell, customerName } from './CustomerTypeForm';
+import { BTN_PRIMARY, BTN_SECONDARY, CustomerTypeForm, DialogShell } from './CustomerTypeForm';
 
 export type RecordDialogMode = 'insert' | 'edit';
 
@@ -51,18 +51,7 @@ export function CustomerTypeRecordDialog({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   const customerId = record?.customerId ?? (customerKey ? String(values[customerKey] ?? '') : lockedCustomerId ?? '');
-  const customer = customers.find((item) => item.id === customerId);
   const isEdit = mode === 'edit' && !!record;
-
-  const subtitle = customer ? (
-    <>
-      <span className="font-mono font-medium">{customer.customerId}</span>
-      <span className="mx-1 text-slate-400">·</span>
-      <span className="font-medium text-slate-600">{customerName(customer)}</span>
-    </>
-  ) : (
-    type.description
-  );
 
   const setValue = (key: string, value: CustomerTypeFieldValue) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -98,7 +87,6 @@ export function CustomerTypeRecordDialog({
   return (
     <DialogShell
       title={`${isEdit ? 'Edit' : 'Add'} ${type.label}`}
-      subtitle={subtitle}
       icon={type.icon}
       onClose={onClose}
       footer={

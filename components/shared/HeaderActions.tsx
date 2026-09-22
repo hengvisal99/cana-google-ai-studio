@@ -2,15 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { DesignTheme, SupportedLanguage, EnterpriseApp } from '@/types';
+import { SupportedLanguage, EnterpriseApp } from '@/types';
 import { LayoutGrid, Globe, Sun, Moon, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type MenuKey = 'app' | 'lang' | 'appearance' | 'user';
 
 interface HeaderActionsProps {
-  /** Active design system — drives this cluster's visual skin */
-  currentTheme: DesignTheme;
   currentLanguage: SupportedLanguage;
   onLanguageChange: (lang: SupportedLanguage) => void;
   currentApp: EnterpriseApp;
@@ -47,69 +45,21 @@ const USER = {
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
 };
 
-/** Per-theme visual tokens so one header behaves identically across all three design systems */
-const SKIN: Record<
-  DesignTheme,
-  {
-    iconBtn: string;
-    iconBtnOpen: string;
-    profileBtn: string;
-    profileBtnOpen: string;
-    panel: string;
-    item: string;
-    itemActive: string;
-    itemIdle: string;
-    checkActive: string;
-    badge: string;
-    avatarRing: string;
-    divider: string;
-  }
-> = {
-  'soft-fintech': {
-    iconBtn: 'rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900',
-    iconBtnOpen: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
-    profileBtn: 'rounded-lg bg-slate-100 hover:bg-slate-200/80',
-    profileBtnOpen: 'bg-blue-50 ring-1 ring-blue-200',
-    panel: 'bg-white border border-slate-200 rounded-xl shadow-xl',
-    item: 'rounded-lg',
-    itemActive: 'bg-blue-50 text-blue-700 font-semibold',
-    itemIdle: 'text-slate-700 hover:bg-slate-50',
-    checkActive: 'text-blue-600',
-    badge: 'bg-blue-600 text-white',
-    avatarRing: 'border border-slate-300',
-    divider: 'border-slate-100',
-  },
-  glassmorphism: {
-    iconBtn:
-      'rounded-full bg-white/70 border border-white/80 text-slate-600 shadow-xs hover:bg-white hover:text-slate-900',
-    iconBtnOpen: 'bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30',
-    profileBtn: 'rounded-full bg-white/70 border border-white/80 shadow-xs hover:bg-white',
-    profileBtnOpen: 'bg-white ring-2 ring-blue-500/20',
-    panel:
-      'bg-white/95 backdrop-blur-xl border border-white/90 rounded-2xl shadow-2xl shadow-slate-400/20',
-    item: 'rounded-xl',
-    itemActive: 'bg-blue-500 text-white font-semibold',
-    itemIdle: 'text-slate-700 hover:bg-slate-100',
-    checkActive: 'text-white',
-    badge: 'bg-blue-500 text-white',
-    avatarRing: 'ring-2 ring-blue-500/20',
-    divider: 'border-slate-100',
-  },
-  aurora: {
-    iconBtn: 'rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900',
-    iconBtnOpen:
-      'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md shadow-blue-500/25',
-    profileBtn: 'rounded-xl bg-slate-100 hover:bg-slate-200/80',
-    profileBtnOpen: 'bg-blue-50 ring-1 ring-blue-200',
-    panel: 'bg-white border border-slate-200 rounded-2xl shadow-2xl',
-    item: 'rounded-xl',
-    itemActive: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold',
-    itemIdle: 'text-slate-700 hover:bg-slate-100',
-    checkActive: 'text-white',
-    badge: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white',
-    avatarRing: 'ring-2 ring-blue-500',
-    divider: 'border-slate-100',
-  },
+/** Glassmorphism visual tokens for the header cluster */
+const skin = {
+  iconBtn:
+    'rounded-full bg-white/70 border border-white/80 text-slate-600 shadow-xs hover:bg-white hover:text-slate-900',
+  iconBtnOpen: 'bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/30',
+  profileBtn: 'rounded-full bg-white/70 border border-white/80 shadow-xs hover:bg-white',
+  profileBtnOpen: 'bg-white ring-2 ring-blue-500/20',
+  panel: 'bg-white border border-slate-200 rounded-2xl shadow-2xl shadow-slate-400/20',
+  item: 'rounded-xl',
+  itemActive: 'bg-blue-500 text-white font-semibold',
+  itemIdle: 'text-slate-700 hover:bg-slate-100',
+  checkActive: 'text-white',
+  badge: 'bg-blue-500 text-white',
+  avatarRing: 'ring-2 ring-blue-500/20',
+  divider: 'border-slate-100',
 };
 
 /**
@@ -117,7 +67,6 @@ const SKIN: Record<
  * followed by the profile chip showing the signed-in name.
  */
 export function HeaderActions({
-  currentTheme,
   currentLanguage,
   onLanguageChange,
   currentApp,
@@ -125,7 +74,6 @@ export function HeaderActions({
 }: HeaderActionsProps) {
   const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const skin = SKIN[currentTheme];
 
   // Close on outside click / Escape so the icon menus never stay stacked open
   useEffect(() => {

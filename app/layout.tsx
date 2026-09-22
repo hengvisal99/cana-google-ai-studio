@@ -4,16 +4,16 @@ import './globals.css'; // Global styles
 
 export const metadata: Metadata = {
   title: 'Nexus 360 Management System',
-  description: 'Professional modern enterprise management system with Customer 360, Individual records management, and three distinct design theme templates.',
+  description: 'Professional modern enterprise management system with Customer 360 and Individual records management.',
   openGraph: {
     title: 'Nexus 360 Management System',
-    description: 'Professional modern enterprise management system with Customer 360, Individual records management, and three distinct design theme templates.',
+    description: 'Professional modern enterprise management system with Customer 360 and Individual records management.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Nexus 360 Management System',
-    description: 'Professional modern enterprise management system with Customer 360, Individual records management, and three distinct design theme templates.',
+    description: 'Professional modern enterprise management system with Customer 360 and Individual records management.',
   },
 };
 
@@ -23,7 +23,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   // the element it sits on, so both roots need it.
   return (
     <html lang="en" className={geistSans.variable} suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`} suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>

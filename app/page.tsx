@@ -2,7 +2,6 @@
 
 import React, { useState, useSyncExternalStore } from 'react';
 import { 
-  DesignTheme, 
   NavigationPage, 
   SupportedLanguage, 
   EnterpriseApp, 
@@ -11,6 +10,7 @@ import {
 import type { CustomerTypeRecord } from '@/types';
 import { INITIAL_INDIVIDUALS } from '@/lib/data';
 import { INITIAL_CUSTOMER_TYPE_RECORDS } from '@/lib/customer-type-records';
+import { INITIAL_MASTER_DATA, type MasterDataItem } from '@/lib/master-data';
 
 /** Below this width the sidebar starts collapsed, leaving the dashboard's chart grid more room. */
 const SIDEBAR_AUTO_COLLAPSE_QUERY = '(max-width: 1399.98px)';
@@ -22,10 +22,8 @@ const subscribeToNarrowScreen = (onChange: () => void) => {
 };
 const isNarrowScreen = () => window.matchMedia(SIDEBAR_AUTO_COLLAPSE_QUERY).matches;
 
-// Theme Shells
-import { SoftFintechShell } from '@/components/themes/SoftFintechShell';
+// Shell
 import { GlassmorphismShell } from '@/components/themes/GlassmorphismShell';
-import { AuroraShell } from '@/components/themes/AuroraShell';
 
 // Screens
 import { DashboardScreen } from '@/components/dashboard/DashboardScreen';
@@ -35,14 +33,12 @@ import { IndividualInsertScreen } from '@/components/individual/IndividualInsert
 import { IndividualUpdateScreen } from '@/components/individual/IndividualUpdateScreen';
 import { CustomerTypeScreen } from '@/components/customer/CustomerTypeScreen';
 import { FormFieldsScreen } from '@/components/form-fields/FormFieldsScreen';
+import { MasterDataScreen } from '@/components/settings/MasterDataScreen';
 
 // Dialog Modal
 import { ViewIndividualDialog } from '@/components/shared/ViewIndividualDialog';
 
 export default function Home() {
-  // Global Design Theme State (Glassmorphism)
-  const [currentTheme, setCurrentTheme] = useState<DesignTheme>('glassmorphism');
-
   // Navigation State (Dashboard, Customer 360, Individual: List, Insert, Update)
   const [currentPage, setCurrentPage] = useState<NavigationPage>('dashboard');
 
@@ -61,6 +57,9 @@ export default function Home() {
 
   // Customer Type records (many per customer, several per type allowed)
   const [customerTypeRecords, setCustomerTypeRecords] = useState<CustomerTypeRecord[]>(INITIAL_CUSTOMER_TYPE_RECORDS);
+
+  // Settings → Master Data reference lists
+  const [masterData, setMasterData] = useState<MasterDataItem[]>(INITIAL_MASTER_DATA);
 
   // Active customer in Customer 360
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(INITIAL_INDIVIDUALS[0].id);
@@ -288,7 +287,6 @@ export default function Home() {
             onNavigateToCustomer360={handleNavigateToCustomer360}
             onViewIndividual={handleViewIndividual}
             onNavigateToUpdate={handleNavigateToUpdate}
-            theme={currentTheme}
             customerTypeRecords={customerTypeRecords}
           />
         );
@@ -301,7 +299,6 @@ export default function Home() {
             onSelectCustomer={setSelectedCustomerId}
             onViewIndividual={handleViewIndividual}
             onNavigateToUpdate={handleNavigateToUpdate}
-            theme={currentTheme}
           />
         );
 
@@ -319,7 +316,6 @@ export default function Home() {
             onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
             customerTypeRecordIds={customerTypeRecords.map((record) => record.id)}
             onReload={handleReload}
-            theme={currentTheme}
           />
         );
 
@@ -328,7 +324,6 @@ export default function Home() {
           <IndividualInsertScreen
             onCancel={() => setCurrentPage('individual-list')}
             onSubmitSuccess={handleInsertSuccess}
-            theme={currentTheme}
           />
         );
 
@@ -341,7 +336,6 @@ export default function Home() {
               setCurrentPage('individual-list');
             }}
             onSubmitSuccess={handleUpdateSuccess}
-            theme={currentTheme}
           />
         ) : (
           <IndividualListScreen
@@ -356,7 +350,6 @@ export default function Home() {
             onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
             customerTypeRecordIds={customerTypeRecords.map((record) => record.id)}
             onReload={handleReload}
-            theme={currentTheme}
           />
         );
 
@@ -372,15 +365,15 @@ export default function Home() {
 
       case 'form-fields':
         return <FormFieldsScreen />;
+
+      case 'master-data':
+        return <MasterDataScreen items={masterData} setItems={setMasterData} />;
     }
   };
 
-  // Shell Props common to all 3 themes
   const shellProps = {
     currentPage,
     onNavigate: handleNavigate,
-    currentTheme,
-    onThemeChange: setCurrentTheme,
     currentLanguage,
     onLanguageChange: setCurrentLanguage,
     currentApp,
@@ -390,23 +383,9 @@ export default function Home() {
     children: renderActiveScreen(),
   };
 
-  // Render the distinct Shell template for the selected theme
-  const renderThemeTemplate = () => {
-    switch (currentTheme) {
-      case 'glassmorphism':
-        return <GlassmorphismShell {...shellProps} />;
-      case 'aurora':
-        return <AuroraShell {...shellProps} />;
-      case 'soft-fintech':
-      default:
-        return <SoftFintechShell {...shellProps} />;
-    }
-  };
-
   return (
     <>
-      {/* Active Distinct Theme Layout & Template */}
-      {renderThemeTemplate()}
+      <GlassmorphismShell {...shellProps} />
 
       {/* Individual: View → Dedicated Dialog Modal */}
       <ViewIndividualDialog
@@ -417,7 +396,6 @@ export default function Home() {
         onNavigateToCustomer360={handleNavigateToCustomer360}
         onAuthorizeIndividual={handleAuthorizeIndividual}
         onCloseAccountIndividual={handleCloseAccountIndividual}
-        theme={currentTheme}
       />
     </>
   );

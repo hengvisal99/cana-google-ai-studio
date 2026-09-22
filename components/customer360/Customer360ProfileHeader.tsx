@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import {
   Printer,
-  Briefcase,
+  Landmark,
   Phone,
   Mail,
   MapPin,
@@ -14,7 +14,6 @@ import {
   Copy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DesignTheme } from '@/types';
 
 interface Customer360ProfileHeaderProps {
   avatarUrl?: string;
@@ -24,20 +23,13 @@ interface Customer360ProfileHeaderProps {
   risk: string;
   customerType: string;
   accountStatus: string;
-  occupation: string;
+  bankName: string;
   phone: string;
   email: string;
   address: string;
-  theme: DesignTheme;
   onPrint: () => void;
   onCopy: (text: string, key: string) => void;
   copiedKey: string | null;
-  /** Recommended typography: labels medium, values regular, semibold for the name only. */
-  refined?: boolean;
-  /** Rendered before the avatar (e.g. a sidebar toggle). */
-  leading?: React.ReactNode;
-  /** Extra actions rendered before Print. */
-  actions?: React.ReactNode;
 }
 
 const FALLBACK_AVATAR =
@@ -143,7 +135,6 @@ function DenseField({
   copiedKey,
   href,
   linkTitle,
-  refined,
 }: {
   icon: React.ElementType;
   label: string;
@@ -155,14 +146,13 @@ function DenseField({
   clamp?: boolean;
   onCopy: (text: string, key: string) => void;
   copiedKey: string | null;
-  refined?: boolean;
 }) {
-  const valueCls = cn('text-[13px]', refined ? 'font-normal text-slate-700' : 'font-semibold text-slate-900');
+  const valueCls = 'text-[13px] font-normal text-slate-700';
   return (
     <div className="group min-w-0 rounded-lg px-2 py-1.5 transition hover:bg-slate-50">
       <div className="flex items-center gap-1.5">
         <Icon className="w-3.5 h-3.5 shrink-0 text-slate-500" />
-        <span className={cn('text-[10px] uppercase tracking-wider text-slate-500', refined ? 'font-medium' : 'font-semibold')}>{label}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{label}</span>
         {copyKey && (
           <button
             type="button"
@@ -216,17 +206,13 @@ export function Customer360ProfileHeader({
   risk,
   customerType,
   accountStatus,
-  occupation,
+  bankName,
   phone,
   email,
   address,
-  theme,
   onPrint,
   onCopy,
   copiedKey,
-  refined,
-  leading,
-  actions,
 }: Customer360ProfileHeaderProps) {
   // The sidebar avatars carry this same dot, so the vocabulary is already
   // learned by the time anyone reaches the profile. The white border is the only
@@ -241,7 +227,7 @@ export function Customer360ProfileHeader({
       : 'bg-amber-500';
 
   const khmerName = (
-    <span lang="km" className="font-khmer text-[15px] font-medium text-slate-500">
+    <span lang="km" className="text-[15px] font-medium text-slate-500">
       {nameKH}
     </span>
   );
@@ -278,21 +264,13 @@ export function Customer360ProfileHeader({
       id="c360-profile-header-section"
       className={cn(
         'relative overflow-hidden border border-slate-200 bg-white p-5',
-        theme === 'glassmorphism'
-          ? 'rounded-2xl border-white/80 bg-white/85 shadow-md backdrop-blur-xl'
-          : theme === 'aurora'
-          ? 'rounded-2xl border-slate-200 shadow-md'
-          : 'rounded-xl shadow-xs'
+        'rounded-2xl border-white/80 bg-white/85 shadow-md backdrop-blur-xl'
       )}
     >
-      {theme === 'aurora' && (
-        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500" />
-      )}
 
       {/* Profile row: photo, names, CID, badges, print */}
       <div className="flex flex-col justify-between gap-5 pb-4 md:flex-row md:items-center">
         <div className="flex items-start gap-4 sm:items-center">
-          {leading}
           <div className="relative shrink-0">
             <Image
               src={avatarUrl || FALLBACK_AVATAR}
@@ -333,10 +311,7 @@ export function Customer360ProfileHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 self-start md:self-center">
-          {actions}
-          {printButton}
-        </div>
+        <div className="flex shrink-0 items-center gap-3 self-start md:self-center">{printButton}</div>
       </div>
 
       <hr className="border-slate-100" />
@@ -344,12 +319,11 @@ export function Customer360ProfileHeader({
       {/* Contact row */}
       <div className="grid grid-cols-1 gap-x-5 gap-y-1 pt-3 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)_minmax(0,1.15fr)_minmax(0,1.35fr)]">
         <DenseField
-          icon={Briefcase}
-          label="Occupation"
-          value={occupation}
+          icon={Landmark}
+          label="Bank Name"
+          value={bankName}
           onCopy={onCopy}
           copiedKey={copiedKey}
-          refined={refined}
         />
         <DenseField
           icon={Phone}
@@ -359,7 +333,6 @@ export function Customer360ProfileHeader({
           mono
           onCopy={onCopy}
           copiedKey={copiedKey}
-          refined={refined}
         />
         <DenseField
           icon={Mail}
@@ -370,7 +343,6 @@ export function Customer360ProfileHeader({
           linkTitle={'Send email to ' + email}
           onCopy={onCopy}
           copiedKey={copiedKey}
-          refined={refined}
         />
         <DenseField
           icon={MapPin}
@@ -380,7 +352,6 @@ export function Customer360ProfileHeader({
           clamp
           onCopy={onCopy}
           copiedKey={copiedKey}
-          refined={refined}
         />
       </div>
     </section>

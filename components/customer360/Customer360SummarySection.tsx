@@ -9,21 +9,16 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Customer360SummaryKPI } from '@/lib/customer360Service';
-import { DesignTheme } from '@/types';
 
 interface Customer360SummarySectionProps {
   kpis: Customer360SummaryKPI;
-  theme?: DesignTheme;
   customerName?: string;
   className?: string;
-  /** Recommended typography: a softer section title colour. */
-  refined?: boolean;
 }
 
 export function Customer360SummarySection({
   kpis,
   className,
-  refined,
 }: Customer360SummarySectionProps) {
   // Exact data from user's image with dynamic fallback
   const portfolioValue = kpis?.portfolioValue?.formatted || '$1,404,807';
@@ -40,15 +35,6 @@ export function Customer360SummarySection({
       aria-label="Summary KPIs" 
       className={cn('space-y-3', className)}
     >
-      {/* Section Title Header: dropped in the recommended layout, where the
-          labelled cards directly under the profile explain themselves. */}
-      {!refined && (
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-blue-600" />
-          <h3 className="text-sm font-semibold text-slate-900">Summary Overview</h3>
-        </div>
-      )}
-
       {/* =======================================================================
           ULTRA GLASS SUMMARY CARDS
          ======================================================================= */}

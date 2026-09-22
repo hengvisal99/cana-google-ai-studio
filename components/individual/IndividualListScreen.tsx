@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { 
   Individual, 
-  DesignTheme, 
   RequestStatus, 
   RequestType, 
   WorkflowStage, 
@@ -39,8 +38,6 @@ import {
   Check,
   UserCheck,
   ChevronRight,
-  Sparkles,
-  Sliders,
   Layers,
   SlidersHorizontal,
   Globe,
@@ -57,6 +54,9 @@ import { CustomerTypePickerDialog } from '@/components/customer/CustomerTypePick
 import { ResendEmailDialog } from '@/components/shared/ApproveDialogVariants';
 import type { CustomerTypeRecord } from '@/types';
 import { FormDatePicker } from '@/components/ui/form';
+import { RowActionMenu, useRowActionMenu, type RowAction } from '@/components/shared/RowActionMenu';
+import { SortableHeader, sortRows, useTableSort, type SortValue } from '@/components/shared/SortableHeader';
+import { BulkApproveBar, BulkApproveDialog, ROW_CHECKBOX } from '@/components/shared/BulkApprove';
 
 interface IndividualListScreenProps {
   individuals: Individual[];
@@ -84,7 +84,6 @@ interface IndividualListScreenProps {
     processedBy: string
   ) => void;
   onReload?: () => void;
-  theme: DesignTheme;
 }
 
 type SearchByField = 'all' | 'customerName' | 'accountNo' | 'roName' | 'roId';
@@ -98,7 +97,7 @@ const SEARCH_FIELD_OPTIONS: { id: SearchByField; label: string; placeholder: str
 ];
 
 /** Request-status tabs in lifecycle order (open → closed); the icon carries the status colour. */
-const STATUS_TABS: { id: 'ALL' | RequestStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
+export const STATUS_TABS: { id: 'ALL' | RequestStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
   { id: 'ALL', label: 'All', icon: LayoutList, iconColor: 'text-blue-600' },
   { id: 'Pending', label: 'Pending', icon: Clock, iconColor: 'text-yellow-500' },
   { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, iconColor: 'text-orange-600' },
@@ -136,7 +135,6 @@ export function IndividualListScreen({
   onAuthorizeIndividual,
   onCloseAccountIndividual,
   onReload,
-  theme,
 }: IndividualListScreenProps) {
   // Status Tab filter: Approved | Resubmit | Pending | Rejected | All
   const [statusTab, setStatusTab] = useState<'ALL' | RequestStatus>('ALL');
@@ -160,7 +158,6 @@ export function IndividualListScreen({
   const hasActiveFilters = activeFilterCount > 0;
 
   // Three-dot action menu tracking
-  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   // Customize Columns modal state
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
@@ -289,6 +286,46 @@ export function IndividualListScreen({
     requestTypeFilter,
   ]);
 
+  const { sort, toggle: toggleSort } = useTableSort();
+  // Table and export follow the sorted column; unsorted keeps the source order
+  const sortedData = useMemo(() => {
+    // Hiding the sorted column drops its sort too
+    const hidden = sort && columns.some((col) => col.id === sort.key && !col.visible);
+    return sortRows(filteredData, hidden ? null : sort, sortValue);
+  }, [filteredData, sort, columns]);
+
+  // Bulk approve: only pending requests at a review stage can be ticked
+  const canBulkApprove = Boolean(onAuthorizeIndividual);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
+  const approvableRows = useMemo(() => sortedData.filter(isApprovable), [sortedData]);
+  // Rows filtered out or already moved on drop out of the selection
+  const selectedRows = approvableRows.filter((item) => selectedIds.has(item.id));
+  const allSelected = approvableRows.length > 0 && selectedRows.length === approvableRows.length;
+
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleSelectAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(approvableRows.map((item) => item.id)));
+
+  const handleBulkApprove = () => {
+    if (!onAuthorizeIndividual) return;
+    selectedRows.forEach((item) => {
+      const role = item.currentWorkflowStage as ReviewStage;
+      const officer = STAGE_OFFICER[role];
+      onAuthorizeIndividual(item.id, 'authorize', role, officer, `Bulk approved by ${officer}`, '');
+    });
+    triggerToast(`${selectedRows.length} ${selectedRows.length === 1 ? 'application' : 'applications'} approved.`);
+    setSelectedIds(new Set());
+    setBulkApproving(false);
+  };
+
   // Column toggle helper
   const isColVisible = (colId: string) => {
     const col = columns.find((c) => c.id === colId);
@@ -304,9 +341,8 @@ export function IndividualListScreen({
   // Export action
   const handleExport = (format: 'csv' | 'json') => {
     if (format === 'csv') {
-      const headers = ['No', 'Customer ID', 'Full Name EN', 'Full Name KH', 'Gender', 'Nationality', 'Profile Status', 'Account Status', 'Request Type', 'Request Status', 'Workflow Stage'];
-      const rows = filteredData.map((item, idx) => [
-        idx + 1,
+      const headers = ['Customer ID', 'Full Name EN', 'Full Name KH', 'Gender', 'Nationality', 'Profile Status', 'Account Status', 'Request Type', 'Request Status', 'Workflow Stage'];
+      const rows = sortedData.map((item) => [
         item.customerId || item.id,
         `"${item.fullNameEN || `${item.firstName} ${item.lastName}`}"`,
         `"${item.fullNameKH || ''}"`,
@@ -330,7 +366,7 @@ export function IndividualListScreen({
       document.body.removeChild(link);
       triggerToast(`Exported ${filteredData.length} records to CSV successfully.`);
     } else {
-      const jsonStr = JSON.stringify(filteredData, null, 2);
+      const jsonStr = JSON.stringify(sortedData, null, 2);
       const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -548,6 +584,45 @@ export function IndividualListScreen({
       </div>
     );
   };
+
+  const rowMenu = useRowActionMenu();
+  const menuItem = rowMenu.menu ? filteredData.find((item) => item.id === rowMenu.menu!.rowId) : undefined;
+
+  const rowActions = (item: Individual): RowAction[] => [
+    { id: 'view', label: 'View', icon: Eye, iconClassName: 'text-slate-500', shortcut: 'V', group: 0, onSelect: () => onViewIndividual(item) },
+    { id: 'edit', label: 'Edit', icon: Edit3, iconClassName: 'text-slate-500', shortcut: 'E', group: 0, onSelect: () => onNavigateToUpdate(item) },
+    { id: 'customer-type', label: 'Customer Type', icon: Tags, iconClassName: 'text-slate-500', shortcut: 'T', group: 1, onSelect: () => setCustomerTypeIndividualId(item.id) },
+    {
+      // No mail backend yet, so the result is a toast
+      id: 'resend-email',
+      label: 'Resend Email',
+      icon: Mail,
+      iconClassName: 'text-slate-500',
+      shortcut: 'M',
+      group: 1,
+      onSelect: () => (item.email ? setResendEmailId(item.id) : triggerToast('No email address on file.')),
+    },
+    ...(item.accountStatus === 'Active'
+      ? [
+          {
+            id: 'close-account',
+            label: 'Close Account',
+            icon: Lock,
+            iconClassName: 'text-slate-500',
+            shortcut: 'C',
+            group: 1,
+            onSelect: () => {
+              setCloseAccountModalIndividual(item);
+              setCloseAccountName(item.tradingAccountInfo?.tradingAccountNumber || 'Primary Account');
+              setCloseReason('');
+              setCloseDelinkCsx(false);
+              setCloseDelinkBankAc(false);
+            },
+          },
+        ]
+      : []),
+    { id: 'delete', label: 'Delete', icon: Trash2, iconClassName: 'text-rose-500', shortcut: 'D', danger: true, group: 2, onSelect: () => setDeletingId(item.id) },
+  ];
 
   return (
     <div id="individual-list-screen" className="space-y-5">
@@ -848,49 +923,42 @@ export function IndividualListScreen({
           <table id="individual-data-table" className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                {/* Default Column: No */}
-                <th className="py-3 px-3 w-12 text-center">No</th>
+                {canBulkApprove && (
+                  <th className="w-10 py-3 pl-4 pr-1">
+                    <input
+                      id="checkbox-individual-select-all"
+                      type="checkbox"
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = selectedRows.length > 0 && !allSelected;
+                      }}
+                      onChange={toggleSelectAll}
+                      disabled={approvableRows.length === 0}
+                      aria-label="Select all pending requests"
+                      title="Select all pending requests"
+                      className={ROW_CHECKBOX}
+                    />
+                  </th>
+                )}
 
-                {/* Default Column: Customer ID */}
-                <th className="py-3 px-4 font-semibold text-slate-700 text-left">
-                  Customer ID
-                </th>
-
-                {/* Default Column: Full Name */}
-                <th className="py-3 px-4 font-semibold text-slate-700 text-left">
-                  Full Name (EN / KH)
-                </th>
+                <SortableHeader label="Customer ID" sortKey="customerId" sort={sort} onSort={toggleSort} className="py-3 px-4 font-semibold text-slate-700 text-left" />
+                <SortableHeader label="Full Name (EN / KH)" sortKey="name" sort={sort} onSort={toggleSort} className="py-3 px-4 font-semibold text-slate-700 text-left" />
 
                 {/* Optional Columns (if enabled) */}
-                {isColVisible('gender') && <th className="py-3 px-3">Gender</th>}
-                {isColVisible('maritalStatus') && <th className="py-3 px-3">Marital</th>}
-                {isColVisible('nationality') && <th className="py-3 px-3">Nationality</th>}
-                {isColVisible('dob') && <th className="py-3 px-3">Date of Birth</th>}
-                {isColVisible('email') && <th className="py-3 px-3">Email</th>}
-                {isColVisible('mobile') && <th className="py-3 px-3">Mobile</th>}
-                {isColVisible('residency') && <th className="py-3 px-3">Residency</th>}
-                {isColVisible('idNumber') && <th className="py-3 px-3">ID Number</th>}
-                {isColVisible('taxpayerId') && <th className="py-3 px-3">Taxpayer ID</th>}
-                {isColVisible('riskCategory') && <th className="py-3 px-3">Risk Rating</th>}
-                {isColVisible('securitiesKnowledge') && <th className="py-3 px-3">Knowledge</th>}
+                {OPTIONAL_SORT_COLUMNS.filter((col) => isColVisible(col.id)).map((col) => (
+                  <SortableHeader key={col.id} label={col.label} sortKey={col.id} sort={sort} onSort={toggleSort} className="py-3 px-3" />
+                ))}
 
-                {/* Default Column: Profile Status */}
-                <th className="py-3 px-4">Profile Status</th>
-
-                {/* Default Column: Account Status */}
-                <th className="py-3 px-4">Account Status</th>
-
-                {/* Default Column: Request */}
-                <th className="py-3 px-4 min-w-[160px] font-semibold text-slate-700 text-left">
-                  Request
-                </th>
+                <SortableHeader label="Profile Status" sortKey="profileStatus" sort={sort} onSort={toggleSort} className="py-3 px-4" />
+                <SortableHeader label="Account Status" sortKey="accountStatus" sort={sort} onSort={toggleSort} className="py-3 px-4" />
+                <SortableHeader label="Request" sortKey="request" sort={sort} onSort={toggleSort} className="py-3 px-4 min-w-[160px] font-semibold text-slate-700 text-left" />
 
                 {/* Default Column: Action */}
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredData.length === 0 ? (
+              {sortedData.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -900,25 +968,31 @@ export function IndividualListScreen({
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item, index) => (
+                sortedData.map((item) => (
                   <tr
                     key={item.id}
                     id={`individual-row-${item.id}`}
-                    className="hover:bg-slate-50/75 transition-colors group"
+                    onContextMenu={(e) => rowMenu.openFromContextMenu(item.id, e)}
+                    className={cn('hover:bg-slate-50/75 transition-[background-color] group', (rowMenu.menu?.rowId === item.id || selectedIds.has(item.id)) && 'bg-slate-50/75')}
                   >
-                    {/* No */}
-                    <td className="py-3.5 px-3 text-center text-slate-400 font-mono text-[11px]">
-                      {index + 1}
-                    </td>
+                    {canBulkApprove && (
+                      <td className="py-3.5 pl-4 pr-1">
+                        <input
+                          id={`checkbox-individual-${item.id}`}
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelected(item.id)}
+                          disabled={!isApprovable(item)}
+                          aria-label={`Select ${item.customerId || item.id}`}
+                          title={isApprovable(item) ? undefined : 'Only pending requests can be approved'}
+                          className={ROW_CHECKBOX}
+                        />
+                      </td>
+                    )}
 
                     {/* Customer ID */}
                     <td className="py-3.5 px-4 font-mono font-semibold text-slate-700">
-                      <span
-                        onClick={() => onViewIndividual(item)}
-                        className="cursor-pointer hover:underline"
-                      >
-                        {item.customerId || item.id}
-                      </span>
+                      {item.customerId || item.id}
                     </td>
 
                     {/* Full Name (EN & KH + Avatar) */}
@@ -937,7 +1011,7 @@ export function IndividualListScreen({
                           <div className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                             <span>{item.fullNameEN || `${item.firstName} ${item.lastName}`}</span>
                           </div>
-                          <div className="text-[11px] text-slate-500 font-medium font-khmer">
+                          <div className="text-[11px] text-slate-500 font-medium">
                             {item.fullNameKH || 'ឈ្មោះខ្មែរ'}
                           </div>
                         </div>
@@ -972,115 +1046,20 @@ export function IndividualListScreen({
                       {renderRequestBadge(item)}
                     </td>
 
-                    {/* Action: Three-dot menu */}
+                    {/* Action: three-dot menu; right-clicking the row opens the same menu */}
                     <td className="py-3.5 px-4 text-right">
-                      <div className="relative inline-block text-left">
-                        <button
-                          id={`btn-action-menu-${item.id}`}
-                          onClick={() => setOpenActionMenuId(openActionMenuId === item.id ? null : item.id)}
-                          className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition"
-                          title="Actions"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-
-                        {/* Three-dot dropdown */}
-                        {openActionMenuId === item.id && (
-                          <div
-                            className="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-30 py-1.5 text-xs text-slate-700 animate-in fade-in zoom-in-95"
-                            onMouseLeave={() => setOpenActionMenuId(null)}
-                          >
-                            {/* View: opens the dialog */}
-                            <button
-                              id={`action-view-${item.id}`}
-                              onClick={() => {
-                                setOpenActionMenuId(null);
-                                onViewIndividual(item);
-                              }}
-                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-slate-500" />
-                              <span>View</span>
-                            </button>
-
-                            {/* Edit: opens the update screen */}
-                            <button
-                              id={`action-edit-${item.id}`}
-                              onClick={() => {
-                                setOpenActionMenuId(null);
-                                onNavigateToUpdate(item);
-                              }}
-                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
-                            >
-                              <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Edit</span>
-                            </button>
-
-                            <div className="border-t border-slate-100 my-1" />
-
-                            {/* Customer Type */}
-                            <button
-                              id={`action-customer-type-${item.id}`}
-                              onClick={() => {
-                                setOpenActionMenuId(null);
-                                setCustomerTypeIndividualId(item.id);
-                              }}
-                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
-                            >
-                              <Tags className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Customer Type</span>
-                            </button>
-
-                            {/* Resend Email: confirm first; no mail backend yet, so the result is a toast */}
-                            <button
-                              id={`action-resend-email-${item.id}`}
-                              onClick={() => {
-                                setOpenActionMenuId(null);
-                                if (item.email) setResendEmailId(item.id);
-                                else triggerToast('No email address on file.');
-                              }}
-                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
-                            >
-                              <Mail className="w-3.5 h-3.5 text-slate-500" />
-                              <span>Resend Email</span>
-                            </button>
-
-                            {/* Close Account (Only if Active) */}
-                            {item.accountStatus === 'Active' && (
-                              <button
-                                id={`action-close-account-${item.id}`}
-                                onClick={() => {
-                                  setOpenActionMenuId(null);
-                                  setCloseAccountModalIndividual(item);
-                                  setCloseAccountName(item.tradingAccountInfo?.tradingAccountNumber || 'Primary Account');
-                                  setCloseReason('');
-                                  setCloseDelinkCsx(false);
-                                  setCloseDelinkBankAc(false);
-                                }}
-                                className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-800 font-medium"
-                              >
-                                <Lock className="w-3.5 h-3.5 text-slate-500" />
-                                <span>Close Account</span>
-                              </button>
-                            )}
-
-                            <div className="border-t border-slate-100 my-1" />
-
-                            {/* Delete */}
-                            <button
-                              id={`action-delete-${item.id}`}
-                              onClick={() => {
-                                setOpenActionMenuId(null);
-                                setDeletingId(item.id);
-                              }}
-                              className="w-full flex items-center gap-2 px-3.5 py-2 hover:bg-rose-50 text-rose-600 font-medium"
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                              <span>Delete</span>
-                            </button>
-                          </div>
+                      <button
+                        id={`btn-action-menu-${item.id}`}
+                        type="button"
+                        {...rowMenu.triggerProps(item.id)}
+                        className={cn(
+                          'p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition',
+                          rowMenu.menu?.rowId === item.id && 'bg-slate-100 text-slate-900'
                         )}
-                      </div>
+                        title="Actions (or right-click the row)"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -1090,11 +1069,32 @@ export function IndividualListScreen({
         </div>
       </div>
 
-      {/* Customize Columns Modal - Tailored uniquely for each design theme */}
+      {rowMenu.menu && menuItem && (
+        <RowActionMenu anchor={rowMenu.menu.anchor} actions={rowActions(menuItem)} onClose={rowMenu.close} />
+      )}
+
+      {selectedRows.length > 0 && !bulkApproving && (
+        <BulkApproveBar
+          idPrefix="individual"
+          count={selectedRows.length}
+          onClear={() => setSelectedIds(new Set())}
+          onApprove={() => setBulkApproving(true)}
+        />
+      )}
+
+      {bulkApproving && selectedRows.length > 0 && (
+        <BulkApproveDialog
+          idPrefix="individual"
+          count={selectedRows.length}
+          noun={['application', 'applications']}
+          onCancel={() => setBulkApproving(false)}
+          onConfirm={handleBulkApprove}
+        />
+      )}
+
+      {/* Customize Columns Modal */}
       {showCustomizeModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          {/* THEME 1: GLASSMORPHISM - Crisp Luminous Island Studio */}
-          {theme === 'glassmorphism' && (
             <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 animate-in fade-in zoom-in-95">
               {/* Header */}
               <div className="flex items-start justify-between gap-4 px-6 pt-6">
@@ -1226,284 +1226,6 @@ export function IndividualListScreen({
                 </button>
               </div>
             </div>
-          )}
-
-          {/* THEME 2: AURORA - Radiant cosmic console in pristine light mode with spectral accents */}
-          {theme === 'aurora' && (
-            <div className="bg-white rounded-3xl max-w-xl w-full p-6 border border-indigo-200 shadow-2xl shadow-indigo-500/10 space-y-4 text-slate-900 relative overflow-hidden animate-in fade-in zoom-in-95">
-              {/* Radiant Ambient Soft Glow Orbs */}
-              <div className="absolute -top-24 -right-24 w-52 h-52 bg-indigo-50 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -left-24 w-52 h-52 bg-cyan-50 rounded-full blur-3xl pointer-events-none" />
-
-              {/* Aurora Header */}
-              <div className="flex items-center justify-between border-b border-indigo-100 pb-4 relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-base bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
-                      Customize Columns
-                    </h3>
-                    <p className="text-[11px] font-medium text-slate-500">Configure visible telemetry fields</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-mono font-semibold text-indigo-700 shadow-2xs">
-                    {columns.filter((c) => c.visible).length} / {columns.length} ON
-                  </span>
-                  <button
-                    onClick={() => {
-                      setShowCustomizeModal(false);
-                      setColumnSearch('');
-                    }}
-                    className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Aurora Telemetry Search & Batch Control Console */}
-              <div className="flex items-center justify-between gap-3 p-1.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 relative z-10 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
-                <div className="relative flex-1 flex items-center min-w-0">
-                  <Search className="w-3.5 h-3.5 text-indigo-400 absolute left-3 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={columnSearch}
-                    onChange={(e) => setColumnSearch(e.target.value)}
-                    placeholder="Filter attributes..."
-                    className="w-full h-8 pl-8 pr-7 bg-transparent text-xs font-mono font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                  />
-                  {columnSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setColumnSearch('')}
-                      className="absolute right-2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full transition cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Sleek Dual Toggle Capsule */}
-                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-indigo-100 shadow-2xs shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: true })))}
-                    className="px-3 py-1 rounded-lg text-xs font-semibold text-indigo-700 hover:bg-indigo-50 transition cursor-pointer"
-                  >
-                    Enable All
-                  </button>
-                  <div className="w-px h-3.5 bg-indigo-100" />
-                  <button
-                    type="button"
-                    onClick={() => setColumns((prev) => prev.map((col) => ({ ...col, visible: false })))}
-                    className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition cursor-pointer"
-                  >
-                    Disable All
-                  </button>
-                </div>
-              </div>
-
-              {/* Aurora Cards Grid */}
-              <div className="grid grid-cols-2 gap-2.5 max-h-72 overflow-y-auto p-1 text-xs relative z-10">
-                {columns
-                  .filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase()))
-                  .map((col) => (
-                    <div
-                      key={col.id}
-                      onClick={() => handleToggleColumn(col.id)}
-                      className={cn(
-                        'p-3 rounded-2xl border transition-all cursor-pointer select-none flex items-center justify-between gap-2.5 relative overflow-hidden',
-                        col.visible
-                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-500 text-indigo-950 font-semibold shadow-xs'
-                          : 'bg-slate-50/80 border-slate-200 text-slate-700 font-semibold hover:border-indigo-200 hover:bg-indigo-50/30'
-                      )}
-                    >
-                      <span className="text-xs font-semibold truncate">{col.label}</span>
-
-                      {/* Radiant Neon Switch */}
-                      <div className={cn(
-                        "w-8 h-4.5 rounded-full transition-all flex items-center px-0.5 shrink-0",
-                        col.visible ? "bg-gradient-to-r from-indigo-600 to-cyan-500 justify-end shadow-xs shadow-indigo-400/50" : "bg-slate-300 justify-start"
-                      )}>
-                        <div className="w-3.5 h-3.5 rounded-full bg-white shadow-xs" />
-                      </div>
-                    </div>
-                  ))}
-              </div>
-
-              {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
-                <div className="p-8 text-center bg-indigo-50/40 rounded-2xl border border-indigo-100 relative z-10">
-                  <p className="text-xs font-mono text-slate-500">No telemetry fields match &quot;{columnSearch}&quot;</p>
-                  <button
-                    type="button"
-                    onClick={() => setColumnSearch('')}
-                    className="mt-2 text-xs font-semibold text-indigo-600 hover:underline cursor-pointer"
-                  >
-                    Reset Filter
-                  </button>
-                </div>
-              )}
-
-              {/* Aurora Footer */}
-              <div className="flex items-center justify-between border-t border-indigo-100 pt-4 relative z-10">
-                <button
-                  onClick={() => setColumns((prev) => prev.map((c) => ({ ...c, visible: false })))}
-                  className="text-xs font-semibold text-slate-500 hover:text-indigo-600 transition cursor-pointer"
-                >
-                  Reset Defaults
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCustomizeModal(false);
-                    setColumnSearch('');
-                    triggerToast('Column preferences saved.');
-                  }}
-                  className="px-6 py-2.5 rounded-xl font-semibold text-xs text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:opacity-95 shadow-lg shadow-indigo-500/20 transition cursor-pointer"
-                >
-                  Save Layout
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* THEME 3: SOFT-FINTECH - Structured corporate data settings with crisp toggle switches */}
-          {theme !== 'glassmorphism' && theme !== 'aurora' && (
-            <div className="bg-white rounded-2xl max-w-xl w-full p-6 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-              {/* Corporate Fintech Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 shrink-0">
-                    <Sliders className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 text-sm">Customize Columns</h3>
-                    <p className="text-[11px] text-slate-500">Configure visible table fields</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowCustomizeModal(false);
-                    setColumnSearch('');
-                  }}
-                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Corporate Action Bar with Search */}
-              <div className="flex items-center justify-between gap-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="relative flex-1 flex items-center min-w-0">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={columnSearch}
-                    onChange={(e) => setColumnSearch(e.target.value)}
-                    placeholder="Search columns..."
-                    className="w-full h-7 pl-7 pr-6 bg-transparent text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                  />
-                  {columnSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setColumnSearch('')}
-                      className="absolute right-1.5 p-0.5 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      id="checkbox-customize-columns-select-all"
-                      checked={columns.length > 0 && columns.every((c) => c.visible)}
-                      ref={(el) => {
-                        if (el) {
-                          el.indeterminate = columns.some((c) => c.visible) && !columns.every((c) => c.visible);
-                        }
-                      }}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setColumns((prev) => prev.map((col) => ({ ...col, visible: checked })));
-                      }}
-                      className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
-                    />
-                    <span className="text-xs font-semibold text-slate-800">
-                      Select All
-                    </span>
-                  </label>
-                  <span className="text-[11px] font-mono text-slate-500">
-                    {columns.filter((c) => c.visible).length}/{columns.length}
-                  </span>
-                </div>
-              </div>
-
-              {/* Structured 2-column list with sleek switches */}
-              <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto p-1 text-xs">
-                {columns
-                  .filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase()))
-                  .map((col) => (
-                    <div
-                      key={col.id}
-                      onClick={() => handleToggleColumn(col.id)}
-                      className={cn(
-                        'flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition select-none',
-                        col.visible
-                          ? 'bg-blue-50/80 border-2 border-blue-500 text-blue-950 font-semibold'
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                      )}
-                    >
-                      <span className="truncate">{col.label}</span>
-
-                      {/* Clean Switch Toggle */}
-                      <div className={cn(
-                        "w-7.5 h-4 rounded-full transition-colors flex items-center px-0.5 shrink-0",
-                        col.visible ? "bg-blue-500 justify-end" : "bg-slate-300 justify-start"
-                      )}>
-                        <div className="w-3 h-3 rounded-full bg-white shadow-2xs" />
-                      </div>
-                    </div>
-                  ))}
-              </div>
-
-              {columns.filter((c) => c.label.toLowerCase().includes(columnSearch.toLowerCase())).length === 0 && (
-                <div className="p-6 text-center bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="text-xs text-slate-500">No columns match &quot;{columnSearch}&quot;</p>
-                  <button
-                    type="button"
-                    onClick={() => setColumnSearch('')}
-                    className="mt-1 text-xs font-semibold text-blue-600 hover:underline cursor-pointer"
-                  >
-                    Clear Search
-                  </button>
-                </div>
-              )}
-
-              {/* Corporate Footer */}
-              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                <button
-                  onClick={() => setColumns((prev) => prev.map((c) => ({ ...c, visible: false })))}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 cursor-pointer"
-                >
-                  Reset to Default
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCustomizeModal(false);
-                    setColumnSearch('');
-                    triggerToast('Column preferences saved.');
-                  }}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600 shadow-xs transition cursor-pointer"
-                >
-                  Apply Changes
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -1843,4 +1565,55 @@ export function IndividualListScreen({
       )}
     </div>
   );
+}
+
+/** Header order matches the optional body cells */
+const OPTIONAL_SORT_COLUMNS = [
+  { id: 'gender', label: 'Gender' },
+  { id: 'maritalStatus', label: 'Marital' },
+  { id: 'nationality', label: 'Nationality' },
+  { id: 'dob', label: 'Date of Birth' },
+  { id: 'email', label: 'Email' },
+  { id: 'mobile', label: 'Mobile' },
+  { id: 'residency', label: 'Residency' },
+  { id: 'idNumber', label: 'ID Number' },
+  { id: 'taxpayerId', label: 'Taxpayer ID' },
+  { id: 'riskCategory', label: 'Risk Rating' },
+  { id: 'securitiesKnowledge', label: 'Knowledge' },
+];
+
+function sortValue(item: Individual, key: string): SortValue {
+  switch (key) {
+    case 'customerId': return item.customerId || item.id;
+    case 'name': return item.fullNameEN || `${item.firstName} ${item.lastName}`;
+    case 'gender': return item.gender;
+    case 'maritalStatus': return item.maritalStatus;
+    case 'nationality': return item.nationality;
+    case 'dob': return item.dateOfBirth;
+    case 'email': return item.email;
+    case 'mobile': return item.mobile || item.phone;
+    case 'residency': return item.residency;
+    case 'idNumber': return item.idNumber;
+    case 'taxpayerId': return item.taxpayerIdNumber;
+    case 'riskCategory': return item.riskCategory;
+    case 'securitiesKnowledge': return item.securitiesKnowledge;
+    case 'profileStatus': return item.profileStatus;
+    case 'accountStatus': return item.accountStatus || 'Not Opened';
+    case 'request': return item.requestStatus;
+    default: return null;
+  }
+}
+
+
+type ReviewStage = 'CSO' | 'SR' | 'Manager';
+
+/** Same reviewer the view dialog signs an approval with at each stage */
+const STAGE_OFFICER: Record<ReviewStage, string> = {
+  CSO: 'Sophea Keo (CSO)',
+  SR: 'Dara Vong (SR)',
+  Manager: 'Vannak Lim (Manager)',
+};
+
+function isApprovable(item: Individual) {
+  return item.requestStatus === 'Pending' && ['CSO', 'SR', 'Manager'].includes(item.currentWorkflowStage);
 }

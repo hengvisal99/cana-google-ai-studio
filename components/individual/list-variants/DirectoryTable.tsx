@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Check, Clock, X, MoreVertical, Eye, Edit3, Lock, Trash2, FileText, Tags, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AccountStatus, Individual } from '@/types';
+import { RowActionMenu, useRowActionMenu, type RowAction } from '@/components/shared/RowActionMenu';
+import { SortableHeader, sortRows, useTableSort, type SortValue } from '@/components/shared/SortableHeader';
 
 export type TableSkin = 'aurora' | 'command' | 'split' | 'bento' | 'editorial' | 'prism';
 
@@ -30,7 +32,7 @@ const SKINS: Record<TableSkin, SkinTokens> = {
     headStrong: 'text-slate-700',
     body: 'divide-y divide-slate-100',
     row: 'hover:bg-blue-50/40',
-    id: 'text-blue-600',
+    id: 'text-slate-700',
     kh: 'text-blue-600/80',
     nameHover: 'group-hover:text-blue-600',
   },
@@ -40,7 +42,7 @@ const SKINS: Record<TableSkin, SkinTokens> = {
     headStrong: 'text-slate-500',
     body: 'divide-y divide-slate-50',
     row: 'hover:bg-slate-50/80',
-    id: 'text-blue-600',
+    id: 'text-slate-700',
     kh: 'text-blue-600/70',
     nameHover: 'group-hover:text-blue-600',
   },
@@ -50,7 +52,7 @@ const SKINS: Record<TableSkin, SkinTokens> = {
     headStrong: 'text-blue-900/80',
     body: 'divide-y divide-blue-50',
     row: 'hover:bg-blue-50/50',
-    id: 'text-blue-700',
+    id: 'text-slate-700',
     kh: 'text-blue-700/80',
     nameHover: 'group-hover:text-blue-700',
   },
@@ -60,7 +62,7 @@ const SKINS: Record<TableSkin, SkinTokens> = {
     headStrong: 'text-slate-600',
     body: 'divide-y divide-slate-100',
     row: 'hover:bg-blue-50/40',
-    id: 'text-blue-600',
+    id: 'text-slate-700',
     kh: 'text-blue-600/80',
     nameHover: 'group-hover:text-blue-700',
   },
@@ -70,7 +72,7 @@ const SKINS: Record<TableSkin, SkinTokens> = {
     headStrong: 'text-slate-900',
     body: 'divide-y divide-slate-200',
     row: 'hover:bg-white',
-    id: 'text-blue-600 underline decoration-blue-200 underline-offset-4',
+    id: 'text-slate-700',
     kh: 'text-blue-600/70',
     nameHover: 'group-hover:text-blue-600',
   },
@@ -80,7 +82,7 @@ const SKINS: Record<TableSkin, SkinTokens> = {
     headStrong: 'text-slate-700',
     body: 'divide-y divide-slate-100',
     row: 'hover:bg-slate-50/70',
-    id: 'text-blue-600',
+    id: 'text-slate-700',
     kh: 'text-blue-600/80',
     nameHover: 'group-hover:text-blue-600',
   },
@@ -94,7 +96,10 @@ export function DirectoryTable({
   skin: TableSkin;
 }) {
   const s = SKINS[skin];
-  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+  const { sort, toggle: toggleSort } = useTableSort();
+  const sortedRows = React.useMemo(() => sortRows(rows, sort, sortValue), [rows, sort]);
+  const rowMenu = useRowActionMenu();
+  const menuItem = rowMenu.menu ? rows.find((item) => item.id === rowMenu.menu!.rowId) : undefined;
 
   return (
     <div className={cn('overflow-hidden', s.container)}>
@@ -102,19 +107,18 @@ export function DirectoryTable({
         <table className="w-full min-w-[900px] border-collapse text-left text-xs">
           <thead>
             <tr className={cn('text-[10px] font-semibold uppercase tracking-wider', s.head)}>
-              <th className="w-12 px-3 py-3 text-center">No</th>
-              <th className={cn('px-4 py-3 text-left font-semibold', s.headStrong)}>Customer ID</th>
-              <th className={cn('px-4 py-3 text-left font-semibold', s.headStrong)}>Full Name (EN / KH)</th>
-              <th className="px-4 py-3">Profile Status</th>
-              <th className="px-4 py-3">Account Status</th>
-              <th className={cn('min-w-[160px] px-4 py-3 text-left font-semibold', s.headStrong)}>Request</th>
+              <SortableHeader label="Customer ID" sortKey="customerId" sort={sort} onSort={toggleSort} className={cn('px-4 py-3 text-left font-semibold', s.headStrong)} />
+              <SortableHeader label="Full Name (EN / KH)" sortKey="name" sort={sort} onSort={toggleSort} className={cn('px-4 py-3 text-left font-semibold', s.headStrong)} />
+              <SortableHeader label="Profile Status" sortKey="profileStatus" sort={sort} onSort={toggleSort} className="px-4 py-3" />
+              <SortableHeader label="Account Status" sortKey="accountStatus" sort={sort} onSort={toggleSort} className="px-4 py-3" />
+              <SortableHeader label="Request" sortKey="request" sort={sort} onSort={toggleSort} className={cn('min-w-[160px] px-4 py-3 text-left font-semibold', s.headStrong)} />
               <th className="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
           <tbody className={s.body}>
-            {rows.length === 0 ? (
+            {sortedRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400">
+                <td colSpan={6} className="py-12 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FileText className="h-8 w-8 text-slate-300" />
                     <p className="font-semibold text-slate-600">No record found</p>
@@ -122,12 +126,15 @@ export function DirectoryTable({
                 </td>
               </tr>
             ) : (
-              rows.map((item, index) => (
-                <tr key={item.id} className={cn('group transition-colors', s.row)}>
-                  <td className="px-3 py-3.5 text-center font-mono text-[11px] text-slate-400">{index + 1}</td>
+              sortedRows.map((item) => (
+                <tr
+                  key={item.id}
+                  onContextMenu={(e) => rowMenu.openFromContextMenu(item.id, e)}
+                  className={cn('group transition-[background-color]', s.row)}
+                >
 
                   <td className={cn('px-4 py-3.5 font-mono font-semibold', s.id)}>
-                    <span className="cursor-pointer hover:underline">{item.customerId || item.id}</span>
+                    {item.customerId || item.id}
                   </td>
 
                   <td className="px-4 py-3.5">
@@ -145,7 +152,7 @@ export function DirectoryTable({
                         <div className={cn('font-semibold text-slate-900 transition-colors', s.nameHover)}>
                           {item.fullNameEN || `${item.firstName} ${item.lastName}`}
                         </div>
-                        <div className={cn('font-khmer text-[11px] font-medium', s.kh)}>
+                        <div className={cn('text-[11px] font-medium', s.kh)}>
                           {item.fullNameKH || 'ឈ្មោះខ្មែរ'}
                         </div>
                       </div>
@@ -165,44 +172,14 @@ export function DirectoryTable({
                   </td>
 
                   <td className="px-4 py-3.5 text-right">
-                    <div className="relative inline-block text-left">
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                        className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                        title="Actions"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-
-                      {openMenuId === item.id && (
-                        <div
-                          className="absolute right-0 z-30 mt-1 w-48 rounded-xl border border-slate-200 bg-white py-1.5 text-xs text-slate-700 shadow-xl"
-                          onMouseLeave={() => setOpenMenuId(null)}
-                        >
-                          <MenuItem icon={Eye} iconClass="text-blue-600" label="View" onClick={() => setOpenMenuId(null)} />
-                          <MenuItem icon={Edit3} iconClass="text-amber-600" label="Edit" onClick={() => setOpenMenuId(null)} />
-                          <MenuItem icon={Tags} iconClass="text-indigo-600" label="Customer Type" onClick={() => setOpenMenuId(null)} />
-                          <MenuItem icon={Mail} iconClass="text-sky-600" label="Resend Email" onClick={() => setOpenMenuId(null)} />
-                          {item.accountStatus === 'Active' && (
-                            <MenuItem
-                              icon={Lock}
-                              iconClass="text-purple-600"
-                              label="Close Account"
-                              className="text-purple-700"
-                              onClick={() => setOpenMenuId(null)}
-                            />
-                          )}
-                          <div className="my-1 border-t border-slate-100" />
-                          <MenuItem
-                            icon={Trash2}
-                            iconClass="text-rose-500"
-                            label="Delete"
-                            className="text-rose-600 hover:bg-rose-50"
-                            onClick={() => setOpenMenuId(null)}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      {...rowMenu.triggerProps(item.id)}
+                      className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                      title="Actions (or right-click the row)"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))
@@ -210,32 +187,37 @@ export function DirectoryTable({
           </tbody>
         </table>
       </div>
+      {rowMenu.menu && menuItem && (
+        <RowActionMenu anchor={rowMenu.menu.anchor} actions={demoActions(menuItem)} onClose={rowMenu.close} />
+      )}
     </div>
   );
 }
 
-function MenuItem({
-  icon: Icon,
-  iconClass,
-  label,
-  className,
-  onClick,
-}: {
-  icon: React.ElementType;
-  iconClass: string;
-  label: string;
-  className?: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn('flex w-full items-center gap-2 px-3.5 py-2 font-medium text-slate-800 hover:bg-slate-50', className)}
-    >
-      <Icon className={cn('h-3.5 w-3.5', iconClass)} />
-      <span>{label}</span>
-    </button>
-  );
+function sortValue(item: Individual, key: string): SortValue {
+  switch (key) {
+    case 'customerId': return item.customerId || item.id;
+    case 'name': return item.fullNameEN || `${item.firstName} ${item.lastName}`;
+    case 'profileStatus': return item.profileStatus;
+    case 'accountStatus': return item.accountStatus || 'Not Opened';
+    case 'request': return item.requestStatus;
+    default: return null;
+  }
+}
+
+/** Design preview only: the actions do nothing */
+function demoActions(item: Individual): RowAction[] {
+  const noop = () => {};
+  return [
+    { id: 'view', label: 'View', icon: Eye, iconClassName: 'text-blue-600', shortcut: 'V', onSelect: noop },
+    { id: 'edit', label: 'Edit', icon: Edit3, iconClassName: 'text-amber-600', shortcut: 'E', onSelect: noop },
+    { id: 'customer-type', label: 'Customer Type', icon: Tags, iconClassName: 'text-indigo-600', shortcut: 'T', onSelect: noop },
+    { id: 'resend-email', label: 'Resend Email', icon: Mail, iconClassName: 'text-sky-600', shortcut: 'M', onSelect: noop },
+    ...(item.accountStatus === 'Active'
+      ? [{ id: 'close-account', label: 'Close Account', icon: Lock, iconClassName: 'text-purple-600', shortcut: 'C', onSelect: noop }]
+      : []),
+    { id: 'delete', label: 'Delete', icon: Trash2, iconClassName: 'text-rose-500', shortcut: 'D', danger: true, group: 1, onSelect: noop },
+  ];
 }
 
 function ProfileStatusBadge({ status }: { status: 'Completed' | 'Incomplete' }) {

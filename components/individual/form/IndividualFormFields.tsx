@@ -703,7 +703,6 @@ export function IndividualFormFields({
                       value={surnameKH}
                       onChange={(e) => setSurnameKH(e.target.value)}
                       placeholder="ត្រកូលជាភាសាខ្មែរ"
-                      className="font-khmer"
                     />
 
                     <FormInput
@@ -711,7 +710,6 @@ export function IndividualFormFields({
                       value={givenNameKH}
                       onChange={(e) => setGivenNameKH(e.target.value)}
                       placeholder="នាមជាភាសាខ្មែរ"
-                      className="font-khmer"
                     />
 
                     <FormDatePicker
@@ -1089,7 +1087,7 @@ export function IndividualFormFields({
                   />
 
                   <FormInput
-                    label="Saving / Account Type"
+                    label="Account Type"
                     value={savingAccount}
                     onChange={(e) => setSavingAccount(e.target.value)}
                     placeholder="Premier Savings"
@@ -1316,7 +1314,7 @@ export function IndividualFormFields({
                   />
 
                   <FormSelect
-                    label="Customer Status"
+                    label="Profile Status"
                     value={investorStatus}
                     onChange={(next) => setInvestorStatus(next as any)}
                     options={['Normal', 'VIP', 'Restricted']}
@@ -1361,13 +1359,13 @@ export function IndividualFormFields({
                   />
 
                   <FormInput
-                    label="Assigned SR"
+                    label="Assigned Reviewer"
                     value={currentAssignedSR}
                     onChange={(e) => setCurrentAssignedSR(e.target.value)}
                   />
 
                   <FormInput
-                    label="Account Approved By"
+                    label="Approved By"
                     value={accountApprovedBy}
                     onChange={(e) => setAccountApprovedBy(e.target.value)}
                     placeholder="e.g. Vannak Lim (Manager)"
