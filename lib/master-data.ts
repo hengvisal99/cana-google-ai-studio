@@ -4,7 +4,6 @@ import {
   Briefcase,
   Building2,
   CreditCard,
-  Flag,
   GraduationCap,
   Heart,
   Home,
@@ -22,7 +21,6 @@ import {
 
 export type MasterDataCategoryId =
   | 'marital-status'
-  | 'nationality'
   | 'residency'
   | 'id-type'
   | 'education-background'
@@ -40,7 +38,7 @@ export type MasterDataCategoryId =
   | 'securities-knowledge'
   | 'investment-experience';
 
-export type MasterDataGroupId = 'personal' | 'employment' | 'banking' | 'relationship-staff' | 'classification';
+export type MasterDataGroupId = 'customer-profile' | 'banking' | 'classification' | 'staff';
 
 export interface MasterDataCategory {
   id: MasterDataCategoryId;
@@ -54,38 +52,48 @@ export interface MasterDataItem {
   categoryId: MasterDataCategoryId;
   name: string;
   nameKh: string;
+  /** Only for the staff categories (assigned reviewer, approved by) */
+  staffId?: string;
   active: boolean;
   updatedAt: string;
 }
 
 export const MASTER_DATA_GROUPS: { id: MasterDataGroupId; label: string }[] = [
-  { id: 'personal', label: 'Personal' },
-  { id: 'employment', label: 'Employment' },
+  // Our own people: these are the lists that carry a staff ID
+  { id: 'staff', label: 'Staff' },
+  // Facts about the customer, however the forms happen to split them across tabs
+  { id: 'customer-profile', label: 'Customer Profile' },
   { id: 'banking', label: 'Banking' },
-  { id: 'relationship-staff', label: 'Relationship & Staff' },
+  // How the firm labels the customer — the lists most likely to move with policy
   { id: 'classification', label: 'Classification' },
 ];
 
 export const MASTER_DATA_CATEGORIES: MasterDataCategory[] = [
-  { id: 'marital-status', groupId: 'personal', label: 'Marital Status', icon: Heart },
-  { id: 'nationality', groupId: 'personal', label: 'Nationality', icon: Flag },
-  { id: 'residency', groupId: 'personal', label: 'Residency', icon: Home },
-  { id: 'id-type', groupId: 'personal', label: 'ID Type', icon: IdCard },
-  { id: 'education-background', groupId: 'personal', label: 'Education Background', icon: GraduationCap },
-  { id: 'occupation', groupId: 'employment', label: 'Occupation', icon: Briefcase },
-  { id: 'level-of-position', groupId: 'employment', label: 'Level of Position', icon: Layers },
-  { id: 'type-of-business', groupId: 'employment', label: 'Type of Business', icon: Store },
+  { id: 'assigned-reviewer', groupId: 'staff', label: 'Assigned Reviewer', icon: UserCheck },
+  { id: 'approved-by', groupId: 'staff', label: 'Approved By', icon: BadgeCheck },
+  { id: 'marital-status', groupId: 'customer-profile', label: 'Marital Status', icon: Heart },
+  { id: 'residency', groupId: 'customer-profile', label: 'Residency', icon: Home },
+  { id: 'id-type', groupId: 'customer-profile', label: 'ID Type', icon: IdCard },
+  { id: 'education-background', groupId: 'customer-profile', label: 'Education Background', icon: GraduationCap },
+  { id: 'relationship', groupId: 'customer-profile', label: 'Relationship', icon: Users },
+  { id: 'occupation', groupId: 'customer-profile', label: 'Occupation', icon: Briefcase },
+  { id: 'level-of-position', groupId: 'customer-profile', label: 'Level of Position', icon: Layers },
+  { id: 'type-of-business', groupId: 'customer-profile', label: 'Type of Business', icon: Store },
   { id: 'bank-name', groupId: 'banking', label: 'Bank Name', icon: Landmark },
   { id: 'account-type', groupId: 'banking', label: 'Account Type', icon: CreditCard },
   { id: 'securities-firm', groupId: 'banking', label: 'Securities Firm', icon: Building2 },
-  { id: 'relationship', groupId: 'relationship-staff', label: 'Relationship', icon: Users },
-  { id: 'assigned-reviewer', groupId: 'relationship-staff', label: 'Assigned Reviewer', icon: UserCheck },
-  { id: 'approved-by', groupId: 'relationship-staff', label: 'Approved By', icon: BadgeCheck },
   { id: 'customer-type', groupId: 'classification', label: 'Customer Type', icon: Tags },
   { id: 'risk-category', groupId: 'classification', label: 'Risk Category', icon: ShieldAlert },
   { id: 'securities-knowledge', groupId: 'classification', label: 'Securities Knowledge', icon: BookOpen },
   { id: 'investment-experience', groupId: 'classification', label: 'Investment Experience', icon: TrendingUp },
 ];
+
+/** The two staff lists: their items carry a staff ID on top of the name */
+export const STAFF_CATEGORY_IDS: MasterDataCategoryId[] = ['assigned-reviewer', 'approved-by'];
+
+export function hasStaffId(id: MasterDataCategoryId) {
+  return STAFF_CATEGORY_IDS.includes(id);
+}
 
 export function getMasterDataCategory(id: MasterDataCategoryId) {
   return MASTER_DATA_CATEGORIES.find((category) => category.id === id) ?? MASTER_DATA_CATEGORIES[0];
@@ -93,13 +101,14 @@ export function getMasterDataCategory(id: MasterDataCategoryId) {
 
 const seed = (
   categoryId: MasterDataCategoryId,
-  rows: [key: string, name: string, nameKh: string, active?: boolean][]
+  rows: [key: string, name: string, nameKh: string, active?: boolean, staffId?: string][]
 ): MasterDataItem[] =>
-  rows.map(([key, name, nameKh, active = true], index) => ({
+  rows.map(([key, name, nameKh, active = true, staffId], index) => ({
     id: `${categoryId}-${key}`,
     categoryId,
     name,
     nameKh,
+    staffId,
     active,
     updatedAt: new Date(Date.UTC(2026, 8, 20 - index)).toISOString(),
   }));
@@ -111,14 +120,6 @@ export const INITIAL_MASTER_DATA: MasterDataItem[] = [
     ['DIV', 'Divorced', 'លែងលះ'],
     ['WID', 'Widowed', 'មេម៉ាយ/ពោះម៉ាយ'],
   ]),
-  ...seed('nationality', [
-    ['KH', 'Cambodian', 'ខ្មែរ'],
-    ['TH', 'Thai', 'ថៃ'],
-    ['VN', 'Vietnamese', 'វៀតណាម'],
-    ['CN', 'Chinese', 'ចិន'],
-    ['US', 'American', 'អាមេរិក'],
-    ['JP', 'Japanese', 'ជប៉ុន', false],
-  ]),
   ...seed('residency', [
     ['RES', 'Resident', 'និវាសនជន'],
     ['NRS', 'Non-Resident', 'អនិវាសនជន'],
@@ -126,10 +127,6 @@ export const INITIAL_MASTER_DATA: MasterDataItem[] = [
   ...seed('id-type', [
     ['NID', 'National ID Card', 'អត្តសញ្ញាណប័ណ្ណ'],
     ['PAS', 'Passport', 'លិខិតឆ្លងដែន'],
-    ['DRL', 'Driver License', 'ប័ណ្ណបើកបរ'],
-    ['GOV', 'Government ID', 'ប័ណ្ណមន្ត្រីរាជការ'],
-    ['TAX', 'Tax ID Document', 'ឯកសារលេខអត្តសញ្ញាណកម្មសារពើពន្ធ'],
-    ['FRC', 'Family Record Book', 'សៀវភៅគ្រួសារ', false],
   ]),
   ...seed('education-background', [
     ['HS', 'High School', 'វិទ្យាល័យ'],
@@ -188,18 +185,18 @@ export const INITIAL_MASTER_DATA: MasterDataItem[] = [
     ['FRD', 'Friend', 'មិត្តភក្តិ'],
   ]),
   ...seed('assigned-reviewer', [
-    ['SR01', 'Dara Vong (SR)', 'វង្ស ដារា'],
-    ['SR02', 'Chan Sophea (SR)', 'ចាន់ សុភា'],
+    ['SR01', 'Dara Vong (SR)', 'វង្ស ដារា', true, 'STF-1042'],
+    ['SR02', 'Chan Sophea (SR)', 'ចាន់ សុភា', true, 'STF-1088'],
   ]),
   ...seed('approved-by', [
-    ['MGR01', 'Vannak Lim (Manager)', 'លឹម វណ្ណៈ'],
-    ['MGR02', 'Sok Dara (Manager)', 'សុខ ដារា'],
+    ['MGR01', 'Vannak Lim (Manager)', 'លឹម វណ្ណៈ', true, 'STF-2011'],
+    ['MGR02', 'Sok Dara (Manager)', 'សុខ ដារា', true, 'STF-2034'],
   ]),
   ...seed('customer-type', [
-    ['RTL', 'Retail Investor', 'វិនិយោគិនរាយ'],
-    ['COF', 'Corporate Officer', 'មន្ត្រីក្រុមហ៊ុន'],
-    ['HNW', 'High Net Worth (HNW)', 'អតិថិជនទ្រព្យសម្បត្តិខ្ពស់'],
-    ['INS', 'Institutional', 'វិនិយោគិនស្ថាប័ន'],
+    ['GEN', 'General', 'ទូទៅ'],
+    ['VIP', 'VIP', 'វីអាយភី'],
+    ['POT', 'Potential', 'សក្ដានុពល'],
+    ['EMP', 'Employee', 'បុគ្គលិក'],
   ]),
   ...seed('risk-category', [
     ['LOW', 'Low Risk (Capital Preservation)', 'ហានិភ័យទាប'],
@@ -214,9 +211,10 @@ export const INITIAL_MASTER_DATA: MasterDataItem[] = [
     ['PRO', 'Professional', 'អ្នកជំនាញ'],
   ]),
   ...seed('investment-experience', [
-    ['LT1', '< 1 year', 'តិចជាង ១ ឆ្នាំ'],
-    ['Y13', '1 - 3 years', '១ - ៣ ឆ្នាំ'],
-    ['Y35', '3 - 5 years', '៣ - ៥ ឆ្នាំ'],
-    ['GT5', '5+ years', 'លើសពី ៥ ឆ្នាំ'],
+    ['TBL', 'TreasuryBill', 'សញ្ញាប័ណ្ណរតនាគារ'],
+    ['STK', 'Stock', 'ភាគហ៊ុន'],
+    ['BND', 'Bond', 'សញ្ញាប័ណ្ណ'],
+    ['OTH', 'Other Securities', 'មូលបត្រផ្សេងៗ'],
+    ['NON', 'Nothing', 'គ្មាន'],
   ]),
 ];

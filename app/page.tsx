@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { 
   NavigationPage, 
   SupportedLanguage, 
@@ -70,6 +70,19 @@ export default function Home() {
 
   // Updating Individual (Update -> dedicated screen)
   const [updatingIndividual, setUpdatingIndividual] = useState<Individual | null>(null);
+
+  // Dev only: the seed files live outside this Fast Refresh boundary, so editing one re-evaluates
+  // this module while React keeps the state a `useState` initializer already produced — the screen
+  // then shows the previous data until a full reload. Re-seeding on the new module identity keeps
+  // hot refresh honest. In-session edits are dropped when a seed file changes, which is the point.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    setIndividuals(INITIAL_INDIVIDUALS);
+    setCustomerTypeRecords(INITIAL_CUSTOMER_TYPE_RECORDS);
+    setMasterData(INITIAL_MASTER_DATA);
+    setSelectedCustomerId((id) => (INITIAL_INDIVIDUALS.some((i) => i.id === id) ? id : INITIAL_INDIVIDUALS[0].id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- module identity is the signal here
+  }, [INITIAL_INDIVIDUALS, INITIAL_CUSTOMER_TYPE_RECORDS, INITIAL_MASTER_DATA]);
 
   // Navigation Handlers
   const handleNavigate = (page: NavigationPage) => {

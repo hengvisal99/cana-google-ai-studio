@@ -27,7 +27,7 @@ const TONE = {
   reject: {
     Icon: AlertTriangle,
     title: 'Reject application',
-    lede: 'The application will be rejected and returned to the originator.',
+    lede: 'The application will be rejected and cannot proceed to the next stage.',
     short: 'Reject',
     placeholder: 'Explain why this application is being rejected…',
     error: 'Please provide a reason for rejection.',
@@ -145,13 +145,13 @@ export function DecisionDialogMatchedMark({
   return (
     <Frame onCancel={onCancel} embedded={embedded}>
       <div
-        className="relative w-full max-w-[29rem] overflow-hidden rounded-[26px] bg-white shadow-[0_24px_60px_-20px_rgba(15,23,42,0.3)] ring-1 ring-slate-900/10 animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
+        className="relative w-full max-w-[33rem] overflow-hidden rounded-[26px] bg-white shadow-[0_24px_60px_-20px_rgba(15,23,42,0.3)] ring-1 ring-slate-900/10 animate-in zoom-in-95 slide-in-from-bottom-2 duration-200"
       >
         <CloseButton onCancel={onCancel} className="right-4 top-4 z-10" />
 
         <div className="px-7 pb-7 pt-7">
           {/* Mark and heading share the left edge with the field below */}
-          <div className="flex items-start gap-4 pr-8">
+          <div className="flex items-start gap-3.5 pr-6">
             <div
               className={cn(
                 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
@@ -164,7 +164,7 @@ export function DecisionDialogMatchedMark({
               <h3 className="text-[18px] font-semibold leading-tight tracking-tight text-slate-900">
                 {tone.title}
               </h3>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">{tone.lede}</p>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-slate-500">{tone.lede}</p>
             </div>
           </div>
 
@@ -179,12 +179,7 @@ export function DecisionDialogMatchedMark({
               error ? 'border-rose-400 ring-4 ring-rose-500/10' : cn('border-slate-200', tone.focus)
             )}
           />
-          <div className="mt-1.5 flex items-center justify-between gap-3">
-            {error ? <ErrorLine message={error} /> : <span aria-hidden />}
-            <span className="shrink-0 font-mono text-[10px] text-slate-400">
-              {reason.length}/{MAX_REASON}
-            </span>
-          </div>
+          {error ? <ErrorLine message={error} /> : null}
 
           <div className="mt-5 flex items-center justify-end gap-2.5">
             <button
@@ -246,11 +241,6 @@ export function DecisionDialogBannerHead({
         </div>
 
         <div className="px-6 py-5">
-          <div className="flex justify-end">
-            <span className="font-mono text-[10px] text-slate-400">
-              {reason.length}/{MAX_REASON}
-            </span>
-          </div>
           <textarea
             rows={5}
             value={reason}

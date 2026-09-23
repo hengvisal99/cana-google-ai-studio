@@ -8,6 +8,7 @@ import {
   MASTER_DATA_CATEGORIES,
   MASTER_DATA_GROUPS,
   getMasterDataCategory,
+  hasStaffId,
   type MasterDataCategoryId,
   type MasterDataItem,
 } from '@/lib/master-data';
@@ -16,7 +17,7 @@ const CARD = 'rounded-[20px] border border-slate-200/60 bg-white shadow-[0_10px_
 const INPUT =
   'h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 placeholder:text-slate-400 transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10';
 
-type Draft = Pick<MasterDataItem, 'name' | 'nameKh' | 'active'>;
+type Draft = Pick<MasterDataItem, 'name' | 'nameKh' | 'staffId' | 'active'>;
 
 interface MasterDataScreenProps {
   items: MasterDataItem[];
@@ -35,6 +36,8 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
 
   const activeCategory = getMasterDataCategory(activeCategoryId);
   const ActiveIcon = activeCategory.icon;
+  // Assigned Reviewer / Approved By hold staff, so they carry a Staff ID on top of the name
+  const showStaffId = hasStaffId(activeCategoryId);
 
   const counts = useMemo(() => {
     const result: Partial<Record<MasterDataCategoryId, number>> = {};
@@ -63,7 +66,9 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
     const query = search.trim().toLowerCase();
     return items
       .filter((item) => item.categoryId === activeCategoryId)
-      .filter((item) => !query || [item.name, item.nameKh].join(' ').toLowerCase().includes(query))
+      .filter(
+        (item) => !query || [item.name, item.nameKh, item.staffId ?? ''].join(' ').toLowerCase().includes(query)
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [items, activeCategoryId, search]);
 
@@ -74,13 +79,14 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
 
   const handleSave = (draft: Draft) => {
     const now = new Date().toISOString();
+    const next = { ...draft, staffId: showStaffId ? draft.staffId : undefined };
     if (editing === 'new') {
       setItems((prev) => [
-        { ...draft, id: `${activeCategoryId}-${Date.now()}`, categoryId: activeCategoryId, updatedAt: now },
+        { ...next, id: `${activeCategoryId}-${Date.now()}`, categoryId: activeCategoryId, updatedAt: now },
         ...prev,
       ]);
     } else if (editing) {
-      setItems((prev) => prev.map((item) => (item.id === editing.id ? { ...item, ...draft, updatedAt: now } : item)));
+      setItems((prev) => prev.map((item) => (item.id === editing.id ? { ...item, ...next, updatedAt: now } : item)));
     }
     setEditing(null);
   };
@@ -241,6 +247,7 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
             <table id="master-data-table" className="w-full border-collapse text-left text-xs">
               <thead className="lg:sticky lg:top-0 lg:z-10">
                 <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  {showStaffId && <th className="whitespace-nowrap px-4 py-3">Staff ID</th>}
                   <th className="whitespace-nowrap px-4 py-3">Name (EN)</th>
                   <th className="whitespace-nowrap px-4 py-3">Name (KH)</th>
                   <th className="whitespace-nowrap px-4 py-3">Status</th>
@@ -251,7 +258,7 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
               <tbody className="divide-y divide-slate-100">
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-14 text-center">
+                    <td colSpan={showStaffId ? 6 : 5} className="py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <span className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 text-slate-400">
                           <ActiveIcon className="h-5 w-5" />
@@ -263,6 +270,11 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
                 ) : (
                   rows.map((item) => (
                     <tr key={item.id} id={`master-data-row-${item.id}`} className="transition-[background-color] hover:bg-slate-50">
+                      {showStaffId && (
+                        <td className="whitespace-nowrap px-4 py-3.5 font-mono font-medium text-slate-600">
+                          {item.staffId || '—'}
+                        </td>
+                      )}
                       <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-900">{item.name}</td>
                       <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-900">{item.nameKh}</td>
                       <td className="whitespace-nowrap px-4 py-3.5">
@@ -324,10 +336,15 @@ export function MasterDataScreen({ items, setItems }: MasterDataScreenProps) {
         <MasterDataDialog
           key={editing === 'new' ? 'new' : editing.id}
           title={`${editing === 'new' ? 'Add' : 'Edit'} ${activeCategory.label}`}
-          initial={editing === 'new' ? { name: '', nameKh: '', active: true } : editing}
+          initial={editing === 'new' ? { name: '', nameKh: '', staffId: '', active: true } : editing}
+          showStaffId={showStaffId}
           takenNames={items
             .filter((item) => item.categoryId === activeCategoryId && (editing === 'new' || item.id !== editing.id))
             .map((item) => item.name.trim().toLowerCase())}
+          takenStaffIds={items
+            .filter((item) => item.categoryId === activeCategoryId && (editing === 'new' || item.id !== editing.id))
+            .map((item) => (item.staffId ?? '').trim().toLowerCase())
+            .filter(Boolean)}
           onCancel={() => setEditing(null)}
           onSave={handleSave}
         />
@@ -380,41 +397,65 @@ function Overlay({ onClose, children }: { onClose: () => void; children: React.R
 function MasterDataDialog({
   title,
   initial,
+  showStaffId,
   takenNames,
+  takenStaffIds,
   onCancel,
   onSave,
 }: {
   title: string;
   initial: Draft;
+  showStaffId: boolean;
   takenNames: string[];
+  takenStaffIds: string[];
   onCancel: () => void;
   onSave: (draft: Draft) => void;
 }) {
   const [draft, setDraft] = useState<Draft>({
     name: initial.name,
     nameKh: initial.nameKh,
+    staffId: initial.staffId ?? '',
     active: initial.active,
   });
   const name = draft.name.trim();
   const nameTaken = takenNames.includes(name.toLowerCase());
-  const canSave = name !== '' && !nameTaken;
+  const staffId = (draft.staffId ?? '').trim();
+  const staffIdTaken = showStaffId && staffId !== '' && takenStaffIds.includes(staffId.toLowerCase());
+  const canSave = name !== '' && !nameTaken && (!showStaffId || (staffId !== '' && !staffIdTaken));
 
   return (
     <Overlay onClose={onCancel}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (canSave) onSave({ ...draft, name, nameKh: draft.nameKh.trim() });
+          if (canSave) onSave({ ...draft, name, nameKh: draft.nameKh.trim(), staffId });
         }}
       >
         <h2 className="text-base font-semibold text-slate-900">{title}</h2>
         <div className="mt-5 space-y-4">
+          {showStaffId && (
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-semibold text-slate-600">
+                Staff ID <span className="text-rose-500">*</span>
+              </span>
+              <input
+                autoFocus
+                value={draft.staffId ?? ''}
+                onChange={(e) => setDraft({ ...draft, staffId: e.target.value })}
+                placeholder="e.g. STF-1042"
+                className={cn(INPUT, 'font-mono', staffIdTaken && 'border-rose-400')}
+              />
+              {staffIdTaken && (
+                <span className="mt-1 block text-[11px] text-rose-600">This staff ID already exists.</span>
+              )}
+            </label>
+          )}
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold text-slate-600">
               Name (EN) <span className="text-rose-500">*</span>
             </span>
             <input
-              autoFocus
+              autoFocus={!showStaffId}
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               className={cn(INPUT, nameTaken && 'border-rose-400')}
