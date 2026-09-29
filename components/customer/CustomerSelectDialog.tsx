@@ -97,35 +97,35 @@ export function CustomerSelectDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm animate-in fade-in sm:items-center"
+      className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm animate-in fade-in sm:items-center"
 
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95"
+        className="flex w-full max-w-4xl flex-col overflow-hidden rounded-[24px] border border-white/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-indigo-900/10 animate-in fade-in zoom-in-95"
       >
-        <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600">
-            <Users className="h-4 w-4" />
-          </span>
-          <h3 id={titleId} className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
+        <div className="flex shrink-0 items-center gap-3 border-b border-slate-200/60 px-6 py-5 bg-white/50">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/20">
+            <Users className="h-5 w-5" />
+          </div>
+          <h3 id={titleId} className="min-w-0 flex-1 text-lg font-bold text-slate-900">
             Select Customer
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             title="Close"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="shrink-0 px-5 pt-4">
-          <div className="relative w-full sm:w-72">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <div className="shrink-0 px-6 pt-5">
+          <div className="relative w-full">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               ref={searchRef}
               type="search"
@@ -137,13 +137,13 @@ export function CustomerSelectDialog({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && rows.length === 1) onSelect(rows[0].id);
               }}
-              placeholder="Search ID, name, phone or email"
-              className="h-9 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              placeholder="Search ID, name, phone or email..."
+              className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-11 pr-4 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
             />
           </div>
         </div>
 
-        <div className="mx-5 mb-5 mt-3 overflow-x-auto rounded-xl border border-slate-200">
+        <div className="mx-6 mb-6 mt-5 overflow-x-auto rounded-[16px] border border-slate-200 shadow-sm bg-white">
           <table className="w-full min-w-[560px] text-xs">
             <thead className="bg-slate-50">
               <tr className="border-b border-slate-200">
@@ -176,8 +176,8 @@ export function CustomerSelectDialog({
                         }
                       }}
                       className={cn(
-                        'cursor-pointer outline-none transition focus-visible:bg-blue-50',
-                        selected ? 'bg-blue-50/70' : 'hover:bg-slate-50'
+                        'cursor-pointer outline-none transition-colors focus-visible:bg-indigo-50/50',
+                        selected ? 'bg-indigo-50/80 ring-1 ring-inset ring-indigo-200' : 'hover:bg-indigo-50/40'
                       )}
                     >
                       <td className="whitespace-nowrap px-3 py-2.5 font-mono font-semibold text-slate-700">
@@ -207,7 +207,7 @@ export function CustomerSelectDialog({
         </div>
 
         {pageCount > 1 && (
-          <nav aria-label="Pages" className="-mt-2 mb-4 flex items-center justify-end gap-1 px-5">
+          <nav aria-label="Pages" className="-mt-3 mb-6 flex items-center justify-end gap-1 px-6">
             <button
               type="button"
               onClick={() => setPage((prev) => prev - 1)}
@@ -225,7 +225,7 @@ export function CustomerSelectDialog({
                 aria-current={index === page ? 'page' : undefined}
                 className={cn(
                   PAGE_BTN,
-                  index === page ? 'bg-blue-500 text-white shadow-sm shadow-blue-500/25' : 'text-slate-600 hover:bg-slate-100'
+                  index === page ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/25' : 'text-slate-600 hover:bg-slate-100'
                 )}
               >
                 {index + 1}

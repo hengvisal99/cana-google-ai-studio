@@ -20,8 +20,10 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
   UserRound,
   Users,
+  LayoutList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,36 +54,63 @@ export interface SidebarGroup {
 
 export const SIDEBAR_NAV: SidebarGroup[] = [
   {
-    label: 'Core Management',
+    label: '',
     items: [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hint: '⌘1' },
-      { id: 'customer-360', label: 'Customer 360', icon: Users, hint: '⌘2' },
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       {
-        id: 'customer',
-        label: 'Customer',
-        icon: UserRound,
-        hint: '⌘3',
+        id: 'crm',
+        label: 'CRM & Sales',
+        icon: Users,
         children: [
-          { id: 'customer-list', label: 'List' },
-          { id: 'customer-type', label: 'Customer Type', badge: '5' },
+          { id: 'pipeline', label: 'Leads Pipeline' },
+          { id: 'individual-list', label: 'Customers' },
+          { id: 'customer-360', label: 'Customer 360' },
         ],
       },
+      {
+        id: 'trading',
+        label: 'Trading & Market',
+        icon: TrendingUp,
+        children: [
+          { id: 'portfolio', label: 'Portfolio' },
+          { id: 'csx-live', label: 'CSX Live Market' },
+          { id: 'ipo-management', label: 'IPO Management' },
+        ],
+      },
+      {
+        id: 'risk',
+        label: 'Risk & Operations',
+        icon: ShieldCheck,
+        children: [
+          { id: 'my-work', label: 'My Work' },
+          { id: 'tasks', label: 'Approval Tasks' },
+          { id: 'cases', label: 'Customer Cases', badge: '5' },
+          { id: 'compliance', label: 'Compliance & AML' },
+        ],
+      },
+      {
+        id: 'analytics',
+        label: 'Reports & Analytics',
+        icon: BarChart3,
+        children: [
+          { id: 'performance', label: 'SR Performance' },
+          { id: 'reports', label: 'Management Reports' },
+        ],
+      },
+      {
+        id: 'settings-group',
+        label: 'Settings',
+        icon: Settings,
+        children: [
+          { id: 'master-data', label: 'Master Data' },
+        ],
+      }
     ],
   },
   {
-    label: 'Operations',
+    label: 'DESIGN SYSTEM',
     items: [
-      { id: 'onboarding', label: 'Onboarding', icon: Sparkles, badge: '12' },
-      { id: 'documents', label: 'Documents', icon: FileText },
-      { id: 'approvals', label: 'Approvals', icon: ShieldCheck, badge: '3' },
-      { id: 'reports', label: 'Reports', icon: BarChart3 },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { id: 'settings', label: 'Settings', icon: Settings },
-      { id: 'support', label: 'Help & Support', icon: LifeBuoy },
+      { id: 'form-fields', label: 'Form Fields', icon: LayoutList },
     ],
   },
 ];

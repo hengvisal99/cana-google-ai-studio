@@ -14,6 +14,7 @@ import {
 interface IndividualInsertScreenProps {
   onCancel: () => void;
   onSubmitSuccess: (newIndividual: Individual) => void;
+  initialLead?: import('@/types').Lead;
 }
 
 type TabKey = 'personal' | 'identification' | 'employment' | 'family' | 'account';
@@ -21,11 +22,27 @@ type TabKey = 'personal' | 'identification' | 'employment' | 'family' | 'account
 export function IndividualInsertScreen({
   onCancel,
   onSubmitSuccess,
+  initialLead,
 }: IndividualInsertScreenProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('personal');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [values, setValues] = useState<IndividualFormValues>(() => createEmptyFormValues());
+  const [values, setValues] = useState<IndividualFormValues>(() => {
+    const base = createEmptyFormValues();
+    if (initialLead) {
+      const parts = initialLead.name.split(' ');
+      const given = parts[0] || '';
+      const sur = parts.slice(1).join(' ') || '';
+      return {
+        ...base,
+        givenNameEN: given,
+        surnameEN: sur,
+        email: initialLead.email || '',
+        mainPhoneNumber: initialLead.phone || '',
+      };
+    }
+    return base;
+  });
 
   function setValue<K extends keyof IndividualFormValues>(key: K, value: IndividualFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));

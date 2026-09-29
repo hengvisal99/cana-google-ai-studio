@@ -5,12 +5,16 @@ import {
   NavigationPage, 
   SupportedLanguage, 
   EnterpriseApp, 
-  Individual 
+  Individual,
+  Task,
+  AppNotification,
 } from '@/types';
 import type { CustomerTypeRecord } from '@/types';
 import { INITIAL_INDIVIDUALS } from '@/lib/data';
 import { INITIAL_CUSTOMER_TYPE_RECORDS } from '@/lib/customer-type-records';
 import { INITIAL_MASTER_DATA, type MasterDataItem } from '@/lib/master-data';
+import { INITIAL_TASKS } from '@/lib/tasks-data';
+import { buildComplianceNotifications } from '@/lib/compliance-service';
 
 /** Below this width the sidebar starts collapsed, leaving the dashboard's chart grid more room. */
 const SIDEBAR_AUTO_COLLAPSE_QUERY = '(max-width: 1399.98px)';
@@ -34,6 +38,20 @@ import { IndividualUpdateScreen } from '@/components/individual/IndividualUpdate
 import { CustomerTypeScreen } from '@/components/customer/CustomerTypeScreen';
 import { FormFieldsScreen } from '@/components/form-fields/FormFieldsScreen';
 import { MasterDataScreen } from '@/components/settings/MasterDataScreen';
+import { ComplianceScreen } from '@/components/compliance/ComplianceScreen';
+import { ReportsScreen } from '@/components/reports/ReportsScreen';
+import { IPOManagementScreen } from '@/components/ipo/IPOManagementScreen';
+import { TasksScreen } from '@/components/tasks/TasksScreen';
+import { PipelineScreen } from '@/components/pipeline/PipelineScreen';
+import { PortfolioScreen } from '@/components/portfolio/PortfolioScreen';
+import { SRPerformanceScreen } from '@/components/admin/SRPerformanceScreen';
+import { CSXLiveScreen } from '@/components/market/CSXLiveScreen';
+import { CasesScreen } from '@/components/cases/CasesScreen';
+import { MyWorkScreen } from '@/components/tasks/MyWorkScreen';
+import { GlobalSearch } from '@/components/shared/GlobalSearch';
+import type { CustomerCase, AppUserRole } from '@/types';
+import { INITIAL_CASES } from '@/lib/cases-data';
+import { INITIAL_LEADS } from '@/lib/pipeline-data';
 
 // Dialog Modal
 import { ViewIndividualDialog } from '@/components/shared/ViewIndividualDialog';
@@ -61,6 +79,23 @@ export default function Home() {
   // Settings → Master Data reference lists
   const [masterData, setMasterData] = useState<MasterDataItem[]>(INITIAL_MASTER_DATA);
 
+  // Tasks & Reminders
+  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+
+  // Customer Service Cases
+  const [cases, setCases] = useState<CustomerCase[]>(INITIAL_CASES);
+
+  // Role-Based UI simulation
+  const [currentRole, setCurrentRole] = useState<AppUserRole>('Relationship Manager');
+
+  // Global Search
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Notifications (derived from compliance + static seed)
+  const [notifications, setNotifications] = useState<AppNotification[]>(() =>
+    buildComplianceNotifications(INITIAL_INDIVIDUALS)
+  );
+
   // Active customer in Customer 360
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(INITIAL_INDIVIDUALS[0].id);
 
@@ -71,6 +106,9 @@ export default function Home() {
   // Updating Individual (Update -> dedicated screen)
   const [updatingIndividual, setUpdatingIndividual] = useState<Individual | null>(null);
 
+  // Converting Lead (Insert -> pre-fills data)
+  const [convertingLead, setConvertingLead] = useState<import('@/types').Lead | undefined>();
+
   // Dev only: the seed files live outside this Fast Refresh boundary, so editing one re-evaluates
   // this module while React keeps the state a `useState` initializer already produced — the screen
   // then shows the previous data until a full reload. Re-seeding on the new module identity keeps
@@ -80,9 +118,56 @@ export default function Home() {
     setIndividuals(INITIAL_INDIVIDUALS);
     setCustomerTypeRecords(INITIAL_CUSTOMER_TYPE_RECORDS);
     setMasterData(INITIAL_MASTER_DATA);
+    setTasks(INITIAL_TASKS);
+    setNotifications(buildComplianceNotifications(INITIAL_INDIVIDUALS));
     setSelectedCustomerId((id) => (INITIAL_INDIVIDUALS.some((i) => i.id === id) ? id : INITIAL_INDIVIDUALS[0].id));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- module identity is the signal here
   }, [INITIAL_INDIVIDUALS, INITIAL_CUSTOMER_TYPE_RECORDS, INITIAL_MASTER_DATA]);
+
+  // Keyboard shortcut: ⌘K / Ctrl+K → open global search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(p => !p);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+
+  // Notification handlers
+  const handleMarkNotificationRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  // Task handlers
+  const handleSaveTask = (task: Task) => {
+    setTasks(prev =>
+      prev.some(t => t.id === task.id)
+        ? prev.map(t => t.id === task.id ? task : t)
+        : [task, ...prev]
+    );
+  };
+  const handleUpdateTask = (id: string, updates: Partial<Task>) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  // Case handlers
+  const handleSaveCase = (c: CustomerCase) => {
+    setCases(prev =>
+      prev.some(x => x.id === c.id)
+        ? prev.map(x => x.id === c.id ? c : x)
+        : [c, ...prev]
+    );
+  };
+  const handleUpdateCase = (id: string, updates: Partial<CustomerCase>) => {
+    setCases(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
 
   // Navigation Handlers
   const handleNavigate = (page: NavigationPage) => {
@@ -94,7 +179,9 @@ export default function Home() {
     setIsViewDialogOpen(true);
   };
 
-  const handleNavigateToInsert = () => {
+  const handleNavigateToInsert = (leadOrEvent?: any) => {
+    const isLead = leadOrEvent && typeof leadOrEvent.name === 'string';
+    setConvertingLead(isLead ? leadOrEvent : undefined);
     setCurrentPage('individual-insert');
   };
 
@@ -301,8 +388,11 @@ export default function Home() {
             onViewIndividual={handleViewIndividual}
             onNavigateToUpdate={handleNavigateToUpdate}
             customerTypeRecords={customerTypeRecords}
+            tasks={tasks}
+            onNavigate={handleNavigate}
           />
         );
+
 
       case 'customer-360':
         return (
@@ -335,8 +425,15 @@ export default function Home() {
       case 'individual-insert':
         return (
           <IndividualInsertScreen
-            onCancel={() => setCurrentPage('individual-list')}
-            onSubmitSuccess={handleInsertSuccess}
+            onCancel={() => {
+              setConvertingLead(undefined);
+              setCurrentPage('individual-list');
+            }}
+            onSubmitSuccess={(newIndividual) => {
+              setConvertingLead(undefined);
+              handleInsertSuccess(newIndividual);
+            }}
+            initialLead={convertingLead}
           />
         );
 
@@ -381,6 +478,74 @@ export default function Home() {
 
       case 'master-data':
         return <MasterDataScreen items={masterData} setItems={setMasterData} />;
+
+      case 'compliance':
+        return <ComplianceScreen individuals={individuals} />;
+
+      case 'reports':
+        return <ReportsScreen individuals={individuals} customerTypeRecords={customerTypeRecords} />;
+
+      case 'ipo-management':
+        return (
+          <IPOManagementScreen
+            customerTypeRecords={customerTypeRecords}
+            individuals={individuals}
+          />
+        );
+
+      case 'tasks':
+        return (
+          <TasksScreen
+            tasks={tasks}
+            onSaveTask={handleSaveTask}
+            onUpdateTask={handleUpdateTask}
+          />
+        );
+        
+      case 'pipeline':
+        return (
+          <PipelineScreen onNavigate={handleNavigate} onConvertLead={handleNavigateToInsert} />
+        );
+        
+      case 'portfolio':
+        return (
+          <PortfolioScreen />
+        );
+
+        
+      case 'performance':
+        return (
+          <SRPerformanceScreen />
+        );
+        
+      case 'csx-live':
+        return (
+          <CSXLiveScreen />
+        );
+
+      case 'cases':
+        return (
+          <CasesScreen
+            cases={cases}
+            onSaveCase={handleSaveCase}
+            onUpdateCase={handleUpdateCase}
+          />
+        );
+
+      case 'my-work':
+        return (
+          <MyWorkScreen
+            tasks={tasks}
+            cases={cases}
+            individuals={individuals}
+            notifications={notifications}
+            onNavigate={handleNavigate}
+            onSelectCustomer={(id) => {
+              setSelectedCustomerId(id);
+            }}
+            currentUserName="Marcus Aurelius"
+          />
+        );
     }
   };
 
@@ -393,12 +558,33 @@ export default function Home() {
     onAppChange: setCurrentApp,
     sidebarCollapsed,
     onToggleSidebar: () => setSidebarOverride({ narrow: isNarrow, collapsed: !sidebarCollapsed }),
+    notifications,
+    onMarkNotificationRead: handleMarkNotificationRead,
+    onMarkAllNotificationsRead: handleMarkAllNotificationsRead,
+    currentRole,
+    onRoleChange: setCurrentRole,
+    onOpenSearch: () => setIsSearchOpen(true),
+    cases,
     children: renderActiveScreen(),
   };
 
   return (
     <>
       <GlassmorphismShell {...shellProps} />
+
+      {/* Global Search Modal */}
+      <GlobalSearch
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        individuals={individuals}
+        leads={INITIAL_LEADS}
+        cases={cases}
+        tasks={tasks}
+        onNavigate={handleNavigate}
+        onSelectCustomer={(id) => {
+          setSelectedCustomerId(id);
+        }}
+      />
 
       {/* Individual: View → Dedicated Dialog Modal */}
       <ViewIndividualDialog

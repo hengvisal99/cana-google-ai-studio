@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { NavigationPage, SupportedLanguage, EnterpriseApp } from '@/types';
+import { NavigationPage, SupportedLanguage, EnterpriseApp, AppNotification, AppUserRole } from '@/types';
+import type { CustomerCase } from '@/types';
 import {
   LayoutDashboard,
   LayoutList,
@@ -12,8 +13,21 @@ import {
   Compass,
   Workflow,
   Settings,
+  ShieldCheck,
+  BarChart3,
+  TrendingUp,
+  CheckSquare,
+  Briefcase,
+  ScanFace,
+  Award,
+  Globe,
+  Search,
+  MessageSquare,
+  Sparkles,
+  ChevronRight,
 } from 'lucide-react';
 import { HeaderActions } from '@/components/shared/HeaderActions';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import { useScrollbarWidth } from '@/hooks/use-scrollbar-width';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +53,13 @@ interface ShellProps {
   onAppChange: (app: EnterpriseApp) => void;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
+  notifications: AppNotification[];
+  onMarkNotificationRead: (id: string) => void;
+  onMarkAllNotificationsRead: () => void;
+  currentRole?: AppUserRole;
+  onRoleChange?: (role: AppUserRole) => void;
+  onOpenSearch?: () => void;
+  cases?: CustomerCase[];
   children: React.ReactNode;
 }
 
@@ -51,43 +72,70 @@ export function GlassmorphismShell({
   onAppChange,
   sidebarCollapsed,
   onToggleSidebar,
+  notifications,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
+  currentRole,
+  onRoleChange,
+  onOpenSearch,
+  cases = [],
   children,
 }: ShellProps) {
-  const [customerMenuOpen, setCustomerMenuOpen] = useState(true);
+  const [crmMenuOpen, setCrmMenuOpen] = useState(true);
+  const [tradingMenuOpen, setTradingMenuOpen] = useState(true);
+  const [riskMenuOpen, setRiskMenuOpen] = useState(true);
+  const [analyticsMenuOpen, setAnalyticsMenuOpen] = useState(true);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(true);
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+
   const mainRef = useRef<HTMLElement>(null);
   const scrollbarWidth = useScrollbarWidth(mainRef);
 
-  const isCustomerPage =
+  const isCrmPage =
+    currentPage === 'pipeline' ||
     currentPage === 'individual-list' ||
     currentPage === 'individual-insert' ||
-    currentPage === 'individual-update';
+    currentPage === 'individual-update' ||
+    currentPage === 'customer-360';
+
+  const isTradingPage =
+    currentPage === 'portfolio' ||
+    currentPage === 'csx-live' ||
+    currentPage === 'ipo-management';
+
+  const isRiskPage =
+    currentPage === 'compliance' ||
+    currentPage === 'tasks' ||
+    currentPage === 'cases' ||
+    currentPage === 'my-work';
+
+  const isAnalyticsPage =
+    currentPage === 'reports' ||
+    currentPage === 'performance';
+
+  const isSettingsPage = currentPage === 'master-data';
+
+  const openCasesCount = cases.filter(c => c.status !== 'Closed' && c.status !== 'Resolved').length;
+  const ROLES: AppUserRole[] = [
+    'Relationship Manager', 'KYC Officer', 'Compliance Officer',
+    'Customer Service', 'Operations', 'Supervisor', 'Management', 'System Administrator'
+  ];
+
   // Icons grow in the collapsed dock and carry the blue in both states.
   const navIcon = (active: boolean) =>
     cn('shrink-0', sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4', active && 'text-blue-600');
 
-  const customerSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
-    {
-      label: 'List',
-      page: 'individual-list',
-      active:
-        currentPage === 'individual-list' ||
-        currentPage === 'individual-update' ||
-        currentPage === 'individual-insert',
-    },
-  ];
-
-  const isSettingsPage = currentPage === 'master-data';
-  const settingsSubItems: { label: string; page: NavigationPage; active: boolean }[] = [
-    { label: 'Master Data', page: 'master-data', active: currentPage === 'master-data' },
-  ];
-
   return (
     <div
       id="glassmorphism-layout"
-      className="h-screen overflow-hidden bg-[#F1F5F9] text-slate-800 flex flex-col antialiased relative selection:bg-blue-100"
+      className="h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/80 via-white to-indigo-50/80 text-slate-800 flex flex-col antialiased relative selection:bg-blue-100"
       style={{ '--sbw': `${scrollbarWidth}px` } as React.CSSProperties}
     >
+      {/* Floating AI Assistant FAB */}
+      <button className="absolute bottom-8 right-8 z-50 w-14 h-14 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-full shadow-xl shadow-indigo-600/40 flex items-center justify-center text-white hover:scale-105 hover:shadow-indigo-600/60 transition-all duration-300 group">
+        <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+      </button>
+
       {/* Right padding lives inside <main> instead, so its scrollbar sits at the window edge */}
       <div className="flex flex-1 min-h-0 overflow-hidden py-3 sm:py-5 pl-3 sm:pl-5 gap-5">
         {/* =========================================================================
@@ -148,106 +196,215 @@ export function GlassmorphismShell({
                   {!sidebarCollapsed && <span>Dashboard</span>}
                 </button>
 
-                {/* Customer 360 */}
+                {/* ── CRM & Sales Group ── */}
                 <button
-                  id="glass-nav-customer-360"
-                  type="button"
-                  onClick={() => onNavigate('customer-360')}
-                  className={cn(
-                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
-                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
-                    currentPage === 'customer-360'
-                      ? sidebarCollapsed
-                        ? ACTIVE_TILE
-                        : ACTIVE_ROW
-                      : IDLE_ROW
-                  )}
-                  title="Customer 360"
-                >
-                  {currentPage === 'customer-360' && !sidebarCollapsed && <span className={ACTIVE_BAR} />}
-                  <Users className={navIcon(currentPage === 'customer-360')} />
-                  {!sidebarCollapsed && <span>Customer 360</span>}
-                </button>
-
-                {/* Customer: expandable group (List) */}
-                <button
-                  id="glass-nav-customer"
+                  id="glass-nav-crm"
                   type="button"
                   onClick={() =>
-                    sidebarCollapsed ? onNavigate('individual-list') : setCustomerMenuOpen(!customerMenuOpen)
+                    sidebarCollapsed ? onNavigate('pipeline') : setCrmMenuOpen(!crmMenuOpen)
                   }
-                  aria-expanded={!sidebarCollapsed && customerMenuOpen}
+                  aria-expanded={!sidebarCollapsed && crmMenuOpen}
                   className={cn(
-                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200 mt-2',
                     sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
-                    isCustomerPage
-                      ? sidebarCollapsed
-                        ? ACTIVE_TILE
-                        : customerMenuOpen
-                          ? ACTIVE_PARENT
-                          : ACTIVE_ROW
-                      : IDLE_ROW
+                    isCrmPage ? sidebarCollapsed ? ACTIVE_TILE : crmMenuOpen ? ACTIVE_PARENT : ACTIVE_ROW : IDLE_ROW
                   )}
-                  title="Customer"
+                  title="CRM & Sales"
                 >
-                  {isCustomerPage && !sidebarCollapsed && !customerMenuOpen && <span className={ACTIVE_BAR} />}
-                  <User className={navIcon(isCustomerPage)} />
+                  {isCrmPage && !sidebarCollapsed && !crmMenuOpen && <span className={ACTIVE_BAR} />}
+                  <Users className={navIcon(isCrmPage)} />
                   {!sidebarCollapsed && (
                     <>
-                      <span className="flex-1 text-left">Customer</span>
-                      <ChevronDown
-                        className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !customerMenuOpen && '-rotate-90')}
-                      />
+                      <span className="flex-1 text-left">CRM & Sales</span>
+                      <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !crmMenuOpen && '-rotate-90')} />
                     </>
                   )}
                 </button>
 
-                {!sidebarCollapsed && customerMenuOpen && (
+                {!sidebarCollapsed && crmMenuOpen && (
                   <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
-                    {customerSubItems.map((item) => (
+                    {[
+                      { label: 'Leads Pipeline', page: 'pipeline' as NavigationPage, icon: Workflow },
+                      { label: 'Customers', page: 'individual-list' as NavigationPage, icon: User },
+                      { label: 'Customer 360', page: 'customer-360' as NavigationPage, icon: Users },
+                    ].map((item) => (
                       <button
                         key={item.page}
-                        id={`glass-nav-customer-${item.page}`}
+                        id={`glass-nav-crm-${item.page}`}
                         type="button"
                         onClick={() => onNavigate(item.page)}
                         className={cn(
-                          'relative w-full flex items-center px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
-                          item.active
+                          'relative w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          (currentPage === item.page || (item.page === 'individual-list' && (currentPage === 'individual-insert' || currentPage === 'individual-update')))
                             ? 'bg-blue-50 text-blue-700'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
                         )}
                       >
-                        {item.active && (
+                        {(currentPage === item.page || (item.page === 'individual-list' && (currentPage === 'individual-insert' || currentPage === 'individual-update'))) && (
                           <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />
                         )}
+                        <item.icon className="w-3.5 h-3.5 shrink-0" />
                         {item.label}
                       </button>
                     ))}
                   </div>
                 )}
 
-                {/* Sale Pipeline */}
+                {/* ── Trading & Market Group ── */}
                 <button
-                  id="glass-nav-sale-pipeline"
+                  id="glass-nav-trading"
                   type="button"
-                  onClick={() => onNavigate('customer-type')}
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('portfolio') : setTradingMenuOpen(!tradingMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && tradingMenuOpen}
                   className={cn(
-                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200 mt-2',
                     sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
-                    currentPage === 'customer-type'
-                      ? sidebarCollapsed
-                        ? ACTIVE_TILE
-                        : ACTIVE_ROW
-                      : IDLE_ROW
+                    isTradingPage ? sidebarCollapsed ? ACTIVE_TILE : tradingMenuOpen ? ACTIVE_PARENT : ACTIVE_ROW : IDLE_ROW
                   )}
-                  title="Sale Pipeline"
+                  title="Trading & Market"
                 >
-                  {currentPage === 'customer-type' && !sidebarCollapsed && <span className={ACTIVE_BAR} />}
-                  <Workflow className={navIcon(currentPage === 'customer-type')} />
-                  {!sidebarCollapsed && <span>Sale Pipeline</span>}
+                  {isTradingPage && !sidebarCollapsed && !tradingMenuOpen && <span className={ACTIVE_BAR} />}
+                  <TrendingUp className={navIcon(isTradingPage)} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Trading & Market</span>
+                      <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !tradingMenuOpen && '-rotate-90')} />
+                    </>
+                  )}
                 </button>
 
-                {/* Settings: expandable group (Master Data) */}
+                {!sidebarCollapsed && tradingMenuOpen && (
+                  <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
+                    {[
+                      { label: 'Portfolio', page: 'portfolio' as NavigationPage, icon: Briefcase },
+                      { label: 'CSX Live Market', page: 'csx-live' as NavigationPage, icon: Globe },
+                      { label: 'IPO Management', page: 'ipo-management' as NavigationPage, icon: TrendingUp },
+                    ].map((item) => (
+                      <button
+                        key={item.page}
+                        id={`glass-nav-trading-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'relative w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          currentPage === item.page ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
+                        )}
+                      >
+                        {currentPage === item.page && <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />}
+                        <item.icon className="w-3.5 h-3.5 shrink-0" />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Risk & Operations Group ── */}
+                <button
+                  id="glass-nav-risk"
+                  type="button"
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('compliance') : setRiskMenuOpen(!riskMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && riskMenuOpen}
+                  className={cn(
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200 mt-2',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
+                    isRiskPage ? sidebarCollapsed ? ACTIVE_TILE : riskMenuOpen ? ACTIVE_PARENT : ACTIVE_ROW : IDLE_ROW
+                  )}
+                  title="Risk & Operations"
+                >
+                  {isRiskPage && !sidebarCollapsed && !riskMenuOpen && <span className={ACTIVE_BAR} />}
+                  <ShieldCheck className={navIcon(isRiskPage)} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Risk & Operations</span>
+                      <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !riskMenuOpen && '-rotate-90')} />
+                    </>
+                  )}
+                </button>
+
+                {!sidebarCollapsed && riskMenuOpen && (
+                  <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
+                    {[
+                      { label: 'My Work', page: 'my-work' as NavigationPage, icon: Sparkles },
+                      { label: 'Approval Tasks', page: 'tasks' as NavigationPage, icon: CheckSquare },
+                      { label: 'Customer Cases', page: 'cases' as NavigationPage, icon: MessageSquare, badge: openCasesCount > 0 ? `${openCasesCount}` : undefined },
+                      { label: 'Compliance & AML', page: 'compliance' as NavigationPage, icon: ShieldCheck },
+                    ].map((item) => (
+                      <button
+                        key={item.page}
+                        id={`glass-nav-risk-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'relative w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          currentPage === item.page ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
+                        )}
+                      >
+                        {currentPage === item.page && <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />}
+                        <item.icon className="w-3.5 h-3.5 shrink-0" />
+                        <span className="flex-1">{item.label}</span>
+                        {'badge' in item && item.badge && (
+                          <span className="text-[10px] font-bold bg-rose-500 text-white rounded-full px-1.5 py-0.5 leading-none">{item.badge}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Reports & Analytics Group ── */}
+                <button
+                  id="glass-nav-analytics"
+                  type="button"
+                  onClick={() =>
+                    sidebarCollapsed ? onNavigate('performance') : setAnalyticsMenuOpen(!analyticsMenuOpen)
+                  }
+                  aria-expanded={!sidebarCollapsed && analyticsMenuOpen}
+                  className={cn(
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200 mt-2',
+                    sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
+                    isAnalyticsPage ? sidebarCollapsed ? ACTIVE_TILE : analyticsMenuOpen ? ACTIVE_PARENT : ACTIVE_ROW : IDLE_ROW
+                  )}
+                  title="Reports & Analytics"
+                >
+                  {isAnalyticsPage && !sidebarCollapsed && !analyticsMenuOpen && <span className={ACTIVE_BAR} />}
+                  <BarChart3 className={navIcon(isAnalyticsPage)} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">Reports & Analytics</span>
+                      <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !analyticsMenuOpen && '-rotate-90')} />
+                    </>
+                  )}
+                </button>
+
+                {!sidebarCollapsed && analyticsMenuOpen && (
+                  <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
+                    {[
+                      { label: 'SR Performance', page: 'performance' as NavigationPage, icon: Award },
+                      { label: 'Management Reports', page: 'reports' as NavigationPage, icon: BarChart3 },
+                    ].map((item) => (
+                      <button
+                        key={item.page}
+                        id={`glass-nav-analytics-${item.page}`}
+                        type="button"
+                        onClick={() => onNavigate(item.page)}
+                        className={cn(
+                          'relative w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          currentPage === item.page ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
+                        )}
+                      >
+                        {currentPage === item.page && <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />}
+                        <item.icon className="w-3.5 h-3.5 shrink-0" />
+                        <span className="flex-1">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+
+                {/* ── Settings Group ── */}
                 <button
                   id="glass-nav-settings"
                   type="button"
@@ -256,15 +413,9 @@ export function GlassmorphismShell({
                   }
                   aria-expanded={!sidebarCollapsed && settingsMenuOpen}
                   className={cn(
-                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-2xl font-semibold transition-all duration-200 mt-2',
                     sidebarCollapsed ? 'h-11 w-11 mx-auto justify-center' : 'w-full px-3.5 py-3',
-                    isSettingsPage
-                      ? sidebarCollapsed
-                        ? ACTIVE_TILE
-                        : settingsMenuOpen
-                          ? ACTIVE_PARENT
-                          : ACTIVE_ROW
-                      : IDLE_ROW
+                    isSettingsPage ? sidebarCollapsed ? ACTIVE_TILE : settingsMenuOpen ? ACTIVE_PARENT : ACTIVE_ROW : IDLE_ROW
                   )}
                   title="Settings"
                 >
@@ -273,31 +424,28 @@ export function GlassmorphismShell({
                   {!sidebarCollapsed && (
                     <>
                       <span className="flex-1 text-left">Settings</span>
-                      <ChevronDown
-                        className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !settingsMenuOpen && '-rotate-90')}
-                      />
+                      <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 transition-transform', !settingsMenuOpen && '-rotate-90')} />
                     </>
                   )}
                 </button>
 
                 {!sidebarCollapsed && settingsMenuOpen && (
                   <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
-                    {settingsSubItems.map((item) => (
+                    {[
+                      { label: 'Master Data', page: 'master-data' as NavigationPage, icon: Settings },
+                    ].map((item) => (
                       <button
                         key={item.page}
                         id={`glass-nav-settings-${item.page}`}
                         type="button"
                         onClick={() => onNavigate(item.page)}
                         className={cn(
-                          'relative w-full flex items-center px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
-                          item.active
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
+                          'relative w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
+                          currentPage === item.page ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
                         )}
                       >
-                        {item.active && (
-                          <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />
-                        )}
+                        {currentPage === item.page && <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />}
+                        <item.icon className="w-3.5 h-3.5 shrink-0" />
                         {item.label}
                       </button>
                     ))}
@@ -358,16 +506,79 @@ export function GlassmorphismShell({
               >
                 <Menu className="w-4 h-4" />
               </button>
+
+              {/* Global Search trigger */}
+              {onOpenSearch && (
+                <button
+                  id="glass-global-search-btn"
+                  type="button"
+                  onClick={onOpenSearch}
+                  className="hidden sm:flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 text-slate-500 hover:text-slate-700 text-xs font-medium transition border border-slate-200/50 w-48 lg:w-64"
+                  title="Search (⌘K)"
+                >
+                  <div className="flex items-center gap-2">
+                    <Search className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Search...</span>
+                  </div>
+                  <kbd className="hidden lg:inline px-1.5 py-0.5 rounded bg-white text-[10px] font-semibold text-slate-400 border border-slate-200">⌘K</kbd>
+                </button>
+              )}
             </div>
 
-            {/* Right: App icon + Language icon + Theme icon + Profile with name */}
-            <HeaderActions
-              currentLanguage={currentLanguage}
-              onLanguageChange={onLanguageChange}
-              currentApp={currentApp}
-              onAppChange={onAppChange}
-            />
+            {/* Right: Search (mobile) + Role + Notifications + Profile */}
+            <div className="flex items-center gap-2">
+              {/* Mobile search icon */}
+              {onOpenSearch && (
+                <button
+                  type="button"
+                  onClick={onOpenSearch}
+                  className="sm:hidden p-2 rounded-xl bg-white/70 border border-white/80 text-slate-600 hover:bg-white shadow-xs transition"
+                  title="Search"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* Role indicator badge */}
+              {currentRole && onRoleChange && !sidebarCollapsed && (
+                <div className="relative hidden lg:block">
+                  <button
+                    onClick={() => setRoleMenuOpen(p => !p)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition"
+                    title="Switch role"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span className="max-w-[120px] truncate">{currentRole}</span>
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', roleMenuOpen && 'rotate-180')} />
+                  </button>
+                  {roleMenuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                      {ROLES.map(r => (
+                        <button key={r} onClick={() => { onRoleChange(r); setRoleMenuOpen(false); }}
+                          className={cn('w-full text-left px-4 py-2.5 text-xs font-medium transition', r === currentRole ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-700 hover:bg-slate-50')}>
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <NotificationBell
+                notifications={notifications}
+                onMarkRead={onMarkNotificationRead}
+                onMarkAllRead={onMarkAllNotificationsRead}
+                onNavigate={onNavigate}
+              />
+              <HeaderActions
+                currentLanguage={currentLanguage}
+                onLanguageChange={onLanguageChange}
+                currentApp={currentApp}
+                onAppChange={onAppChange}
+              />
+            </div>
           </header>
+
 
           {/* Page Canvas Slot — the single scroll region */}
           <main

@@ -591,7 +591,7 @@ export function IndividualListScreen({
   const rowActions = (item: Individual): RowAction[] => [
     { id: 'view', label: 'View', icon: Eye, iconClassName: 'text-slate-500', shortcut: 'V', group: 0, onSelect: () => onViewIndividual(item) },
     { id: 'edit', label: 'Edit', icon: Edit3, iconClassName: 'text-slate-500', shortcut: 'E', group: 0, onSelect: () => onNavigateToUpdate(item) },
-    { id: 'customer-type', label: 'Customer Type', icon: Tags, iconClassName: 'text-slate-500', shortcut: 'T', group: 1, onSelect: () => setCustomerTypeIndividualId(item.id) },
+    { id: 'customer-type', label: 'Assign Products', icon: Tags, iconClassName: 'text-slate-500', shortcut: 'T', group: 1, onSelect: () => setCustomerTypeIndividualId(item.id) },
     {
       // No mail backend yet, so the result is a toast
       id: 'resend-email',

@@ -4,19 +4,10 @@ create url to show me another 4 version dialog ui with the same layout customer 
 
 <!--  -->
 
+redesign ui : csx live market , ipo management
 
-account number or trading account number follow this format
-001-0000347677
-
-customer 360 : 
-    add shortcut key with search customer
-    customer type :
-        - add amount for some product
-
-
-setting : 
-    - add authorization for master data: 1 user can do two level such as sr and manager
-
+header : remove badge
     
+remove button below customer 360 header
 
-
+remove float button

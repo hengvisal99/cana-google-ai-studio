@@ -7,7 +7,31 @@ export type NavigationPage =
   | 'individual-update'
   | 'customer-type'
   | 'form-fields'
-  | 'master-data';
+  | 'master-data'
+  | 'compliance'
+  | 'reports'
+  | 'ipo-management'
+  | 'tasks'
+  | 'notifications'
+  | 'pipeline'
+  | 'portfolio'
+  | 'e-kyc'
+  | 'performance'
+  | 'csx-live'
+  | 'cases'
+  | 'my-work';
+
+// ─── Role-Based UI ────────────────────────────────────────────────────────────
+export type AppUserRole =
+  | 'System Administrator'
+  | 'Relationship Manager'
+  | 'KYC Officer'
+  | 'Compliance Officer'
+  | 'Customer Service'
+  | 'Operations'
+  | 'Supervisor'
+  | 'Management';
+
 
 export type KYCStatus = 'verified' | 'pending' | 'under_review' | 'rejected';
 export type RiskRating = 'low' | 'moderate' | 'high';
@@ -362,3 +386,187 @@ export type EnterpriseApp =
   | 'Nexus Wealth & Asset'
   | 'Risk & AML Gateway'
   | 'Corporate Treasury 360';
+
+// ─── Task & Reminder System ──────────────────────────────────────────────────
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+export type TaskStatus = 'Open' | 'In Progress' | 'Done' | 'Overdue';
+export type TaskCategory = 'KYC Review' | 'IPO' | 'Customer Follow-up' | 'Compliance' | 'Approval' | 'Other';
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  assignedTo: string;
+  assignedRole: 'CSO' | 'SR' | 'Manager';
+  relatedCustomerId?: string;
+  relatedCustomerName?: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  category: TaskCategory;
+  dueDate: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+// ─── In-App Notifications ─────────────────────────────────────────────────────
+export type NotificationType = 'warning' | 'error' | 'info' | 'success';
+export type NotificationCategory =
+  | 'Document Expiry'
+  | 'Investor ID Expiry'
+  | 'KYC'
+  | 'Approval'
+  | 'IPO'
+  | 'Task'
+  | 'System';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  category: NotificationCategory;
+  title: string;
+  message: string;
+  relatedCustomerId?: string;
+  relatedCustomerName?: string;
+  isRead: boolean;
+  createdAt: string;
+  actionLabel?: string;
+  actionPage?: NavigationPage;
+}
+
+// ─── IPO Management ──────────────────────────────────────────────────────────
+export type IpoStatus = 'Upcoming' | 'Open' | 'Closed' | 'Allotted' | 'Listed';
+
+export interface IpoMaster {
+  id: string;
+  name: string;
+  ticker: string;
+  sector: string;
+  openDate: string;
+  closeDate: string;
+  allotmentDate: string;
+  listingDate: string;
+  offerPrice: number;
+  currency: 'USD' | 'KHR';
+  totalShares: number;
+  status: IpoStatus;
+  minSubscription: number;
+  maxSubscription: number;
+  oversubscriptionRate?: number;
+}
+
+// ── Lead / Sales Pipeline ──────────────────────────────────────────────────
+export type LeadStage = string;
+export type LeadSource = 'Walk-in' | 'Referral' | 'Online' | 'Event';
+
+export interface LeadActivity {
+  id: string;
+  type: 'call' | 'meeting' | 'email' | 'note';
+  content: string;
+  timestamp: string;
+}
+
+export interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  source: LeadSource;
+  stage: LeadStage;
+  assignedSR: string;
+  createdAt: string;
+  lastContacted: string;
+  estimatedValue: number;
+  notes: string;
+  score?: number; // 0-100 probability/hotness
+  activities?: LeadActivity[];
+}
+
+// ── Portfolio & Trading Operations ──────────────────────────────────────────
+export interface PortfolioHolding {
+  id: string;
+  customerId: string;
+  customerName: string;
+  ticker: string;
+  sector: string;
+  quantity: number;
+  averageCost: number;
+  currentPrice: number;
+  marketValue: number;
+  unrealizedPnL: number;
+  pnlPercentage: number;
+  currency: 'USD' | 'KHR';
+}
+
+export type TradeStatus = 'Filled' | 'Pending' | 'Cancelled' | 'Settled' | 'Failed';
+
+export interface TradeRecord {
+  id: string;
+  customerId: string;
+  ticker: string;
+  type: 'Buy' | 'Sell' | 'IPO Allocation';
+  quantity: number;
+  price: number;
+  tradeDate: string;
+  settlementDate: string;
+  status: TradeStatus;
+  currency: 'USD' | 'KHR';
+}
+
+// ─── Customer Service Cases ───────────────────────────────────────────────────
+export type CasePriority = 'Critical' | 'High' | 'Medium' | 'Low';
+export type CaseStatus = 'Open' | 'Assigned' | 'In Progress' | 'Pending' | 'Resolved' | 'Closed';
+export type CaseCategory =
+  | 'Account Issue'
+  | 'KYC / Document'
+  | 'Transaction Dispute'
+  | 'IPO / Subscription'
+  | 'Technical Issue'
+  | 'Complaint'
+  | 'Information Request'
+  | 'Other';
+
+export interface CaseActivity {
+  id: string;
+  type: 'created' | 'assigned' | 'status_change' | 'comment' | 'resolved' | 'closed';
+  description: string;
+  performedBy: string;
+  timestamp: string;
+  newStatus?: CaseStatus;
+}
+
+export interface CustomerCase {
+  id: string;
+  caseNumber: string;
+  title: string;
+  description: string;
+  category: CaseCategory;
+  priority: CasePriority;
+  status: CaseStatus;
+  customerId: string;
+  customerName: string;
+  assignedTo?: string;
+  assignedRole?: string;
+  branch: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+  closedAt?: string;
+  slaDeadline: string;
+  /** Is the SLA approaching or breached? */
+  slaBreached?: boolean;
+  activities: CaseActivity[];
+  resolutionNotes?: string;
+}
+
+// ─── Global Search ────────────────────────────────────────────────────────────
+export type SearchResultType = 'customer' | 'lead' | 'case' | 'task';
+
+export interface GlobalSearchResult {
+  id: string;
+  type: SearchResultType;
+  title: string;
+  subtitle: string;
+  badge?: string;
+  navigateTo: NavigationPage;
+  entityId?: string;
+}

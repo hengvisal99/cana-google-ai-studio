@@ -1,8 +1,14 @@
 'use client';
 
-import React, { useState, useSyncExternalStore } from 'react';
+import React, { useState, useSyncExternalStore, useMemo } from 'react';
 import Image from 'next/image';
-import { Individual, CustomerType, CustomerTypeRecord } from '@/types';
+import { Individual, CustomerType, CustomerTypeRecord, Task, NavigationPage } from '@/types';
+import {
+  getDocumentExpiryAlerts,
+  getInvestorIdExpiryAlerts,
+} from '@/lib/compliance-service';
+import { INITIAL_IPOS } from '@/lib/ipo-data';
+import { differenceInDays, parseISO, isValid } from 'date-fns';
 import {
   Users,
   DollarSign,
@@ -36,6 +42,11 @@ import {
   Target,
   Zap,
   BarChart3,
+  AlertTriangle,
+  CheckSquare,
+  ShieldCheck,
+  ChevronRight,
+  BadgeAlert,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -74,6 +85,8 @@ interface DashboardScreenProps {
   onViewIndividual: (individual: Individual) => void;
   onNavigateToUpdate: (individual: Individual) => void;
   customerTypeRecords: CustomerTypeRecord[];
+  tasks: Task[];
+  onNavigate: (page: NavigationPage) => void;
 }
 
 // 1. Data Definitions from specification
@@ -290,24 +303,24 @@ const SUMMARY_CARDS: {
     value: '51',
     change: 18.6,
     icon: Users,
-    outline: 'border-blue-200/90 hover:border-blue-400 hover:shadow-blue-500/10',
-    iconStyle: 'bg-blue-50 text-blue-600',
+    outline: 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300',
+    iconStyle: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20',
   },
   {
     label: 'Active Accounts',
     value: '44',
     change: 22.2,
     icon: UserCheck,
-    outline: 'border-sky-200/90 hover:border-sky-400 hover:shadow-sky-500/10',
-    iconStyle: 'bg-sky-50 text-sky-600',
+    outline: 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300',
+    iconStyle: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20',
   },
   {
     label: 'New Customers',
     value: '8',
     change: 33.3,
     icon: UserPlus,
-    outline: 'border-cyan-200/90 hover:border-cyan-400 hover:shadow-cyan-500/10',
-    iconStyle: 'bg-cyan-50 text-cyan-600',
+    outline: 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-cyan-300 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300',
+    iconStyle: 'bg-gradient-to-br from-cyan-500 to-sky-600 text-white shadow-md shadow-cyan-500/20',
   },
 ];
 
@@ -332,8 +345,11 @@ const subscribeNoop = () => () => {};
 
 export function DashboardScreen({
   individuals,
+  onNavigateToInsert,
   onNavigateToList,
   customerTypeRecords,
+  tasks = [],
+  onNavigate,
 }: DashboardScreenProps) {
   const isMounted = useSyncExternalStore(
     subscribeNoop,
@@ -341,10 +357,46 @@ export function DashboardScreen({
     () => false
   );
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [hoveredAgeGroup, setHoveredAgeGroup] = useState<string | null>('18–24');
+  const [hoveredAgeGroup, setHoveredAgeGroup] = useState<string | null>('18\u201324');
   const [selectedDatePreset, setSelectedDatePreset] = useState<string>('MTD');
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const [customStartDate, setCustomStartDate] = useState('2026-08-01');
+
+  // ── Command Centre data ─────────────────────────────────────────────────────
+  const briefing = useMemo(() => {
+    const pendingApprovals = individuals.filter(
+      (i) => i.requestStatus === 'Pending' && i.currentWorkflowStage !== 'Approved'
+    );
+    const today = new Date();
+    const overdueTasks = tasks.filter((t) => {
+      if (t.status === 'Done') return false;
+      const due = parseISO(t.dueDate);
+      return isValid(due) && differenceInDays(due, today) < 0;
+    });
+    const dueTodayTasks = tasks.filter((t) => {
+      if (t.status === 'Done') return false;
+      const due = parseISO(t.dueDate);
+      return isValid(due) && differenceInDays(due, today) === 0;
+    });
+    const openHighTasks = tasks.filter(
+      (t) => t.status !== 'Done' && t.priority === 'High'
+    );
+    const docExpiries = getDocumentExpiryAlerts(individuals, 30);
+    const idExpiries  = getInvestorIdExpiryAlerts(individuals, 30);
+    const criticalExpiries = [...docExpiries, ...idExpiries].filter((a) => a.severity === 'critical');
+    const openIpos = INITIAL_IPOS.filter((i) => i.status === 'Open').map((ipo) => {
+      const closeDate = parseISO(ipo.closeDate);
+      const daysLeft = isValid(closeDate) ? differenceInDays(closeDate, today) : null;
+      return { ...ipo, daysLeft };
+    });
+    return { pendingApprovals, overdueTasks, dueTodayTasks, openHighTasks, criticalExpiries, openIpos };
+  }, [individuals, tasks]);
+
+  const totalUrgent =
+    briefing.pendingApprovals.length +
+    briefing.overdueTasks.length +
+    briefing.criticalExpiries.length;
+
   const [customEndDate, setCustomEndDate] = useState('2026-08-31');
   const slot = (card: ChartSlot) => CHART_SLOTS[card];
 
@@ -512,38 +564,52 @@ export function DashboardScreen({
          ========================================================================= */}
       <div
         id="dashboard-header-fintech-dock"
-        className="p-5 sm:p-6 border border-blue-200/90 rounded-2xl shadow-2xs bg-[linear-gradient(90deg,var(--color-blue-50)_0%,var(--color-white)_32%)]"
+        className="p-5 sm:p-6 border border-white/60 rounded-3xl shadow-xl bg-gradient-to-r from-blue-50/80 via-white/80 to-indigo-50/80 backdrop-blur-xl relative overflow-hidden"
       >
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-xs shadow-blue-500/30">
-              <Layers className="w-5 h-5" />
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute top-0 right-20 -mt-10 w-40 h-40 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/30">
+              <Layers className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-semibold text-blue-950 tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-950 to-blue-900 tracking-tight leading-tight">
                 Dashboard
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
-                Executive overview of customers, risk, IPO subscriptions and products.
+              <p className="text-sm text-slate-500 mt-1 font-medium">
+                Executive overview of portfolios, operations, and compliance risk.
               </p>
             </div>
           </div>
 
           {/* Filter & Actions Bar */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Quick Actions Dropdown-like Buttons */}
+            <button onClick={() => onNavigateToInsert()} className="flex items-center gap-1.5 h-10 px-4 text-sm font-bold text-indigo-700 bg-indigo-100/50 hover:bg-indigo-100 border border-indigo-200/50 rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-indigo-500/20">
+              <UserPlus className="w-4 h-4" />
+              <span>Onboard Client</span>
+            </button>
+            <button onClick={() => onNavigate('portfolio')} className="flex items-center gap-1.5 h-10 px-4 text-sm font-bold text-emerald-700 bg-emerald-100/50 hover:bg-emerald-100 border border-emerald-200/50 rounded-xl transition-all cursor-pointer shadow-sm hover:shadow-emerald-500/20">
+              <Activity className="w-4 h-4" />
+              <span>Log Trade</span>
+            </button>
+            
+            <div className="w-px h-8 bg-slate-200/60 mx-1"></div>
+
             {/* Date Button */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
-                className="flex items-center gap-2 bg-white hover:bg-blue-50/50 border border-blue-200 h-9 px-3.5 rounded-xl text-xs font-medium text-blue-950 shadow-2xs hover:shadow-xs transition cursor-pointer"
+                className="flex items-center gap-2 bg-white/80 hover:bg-white border border-slate-200/60 h-10 px-4 rounded-xl text-sm font-semibold text-slate-700 shadow-sm transition-all cursor-pointer"
               >
-                <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-slate-500">Date Range:</span>
-                <span className="font-mono font-semibold text-blue-950 text-[11px] leading-none bg-blue-50/80 px-2 py-1 rounded border border-blue-200">
+                <Calendar className="w-4 h-4 text-indigo-600" />
+                <span className="hidden sm:inline">Period:</span>
+                <span className="font-mono text-indigo-900">
                   {formattedDateRange}
                 </span>
-                <ChevronDown className={cn('w-3.5 h-3.5 text-blue-600 transition-transform', isDatePopoverOpen && 'rotate-180')} />
+                <ChevronDown className={cn('w-4 h-4 text-indigo-600 transition-transform', isDatePopoverOpen && 'rotate-180')} />
               </button>
               {renderDatePopover()}
             </div>
@@ -552,25 +618,16 @@ export function DashboardScreen({
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 h-9 px-3.5 text-xs font-semibold text-blue-900 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl shadow-2xs hover:shadow-xs transition cursor-pointer"
+              className="flex items-center justify-center w-10 h-10 bg-white/80 hover:bg-white border border-slate-200/60 rounded-xl shadow-sm transition-all cursor-pointer text-slate-500 hover:text-slate-900"
               title="Print Dashboard"
             >
-              <Printer className="w-3.5 h-3.5 text-blue-700" />
-              <span>Print</span>
-            </button>
-
-            {/* Vivid Ocean Blue Preview Report Button */}
-            <button
-              type="button"
-              onClick={() => setShowPreviewModal(true)}
-              className="flex items-center gap-1.5 h-9 px-4 text-xs font-semibold text-white bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl shadow-xs shadow-blue-500/30 transition cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Preview Report</span>
+              <Printer className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+
+
 
       {/* =========================================================================
           SUMMARY CARDS
@@ -859,9 +916,9 @@ export function DashboardScreen({
           </div>
         </div>
 
-        {/* Card 2: Account Status (Donut Ring, driven by ACCOUNT_STATUS_DATA) */}
+        {/* Card 2: Sales Pipeline Funnel (CRM Benchmark) */}
         <div
-          id="chart-account-status"
+          id="chart-sales-funnel"
           className={cn(
             slot('account'),
             'p-5 bg-white border border-slate-200 flex flex-col justify-between',
@@ -869,22 +926,33 @@ export function DashboardScreen({
           )}
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-sm font-semibold text-slate-900">Account Status</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Sales Pipeline Funnel</h2>
+            <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700">Conversion: 19%</div>
           </div>
 
-          <div className="pt-2 pb-2 flex-1 flex items-center justify-center min-h-[200px]">
-            <div className="w-full max-w-[220px] h-[190px] relative flex items-center justify-center">
-              <AccountStatusDonut />
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-                <span className="text-xs font-medium text-slate-500 tracking-tight">Accounts</span>
-                <span className="text-3xl font-semibold text-slate-900 tracking-tight mt-0.5">
-                  {ACCOUNT_STATUS_TOTAL}
-                </span>
+          <div className="pt-4 pb-2 flex-1 flex flex-col items-center justify-center min-h-[200px] w-full">
+            <div 
+              className="w-full flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.08)] cursor-pointer"
+              style={{ clipPath: 'polygon(0 0, 100% 0, 70% 100%, 30% 100%)', height: '170px' }}
+            >
+              <div className="flex-1 bg-gradient-to-r from-slate-900 to-slate-700 hover:from-slate-800 hover:to-slate-600 transition-colors flex items-center justify-between px-[10%] text-white group border-b border-white/10">
+                <span className="text-[11px] font-bold tracking-widest uppercase opacity-80">Contacted</span> 
+                <span className="text-xl font-black group-hover:scale-110 transition-transform text-white/90">145</span>
+              </div>
+              <div className="flex-1 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400 transition-colors flex items-center justify-between px-[18%] text-white group border-b border-white/10">
+                <span className="text-[11px] font-bold tracking-widest uppercase opacity-90">Meeting</span> 
+                <span className="text-xl font-black group-hover:scale-110 transition-transform text-white/90">89</span>
+              </div>
+              <div className="flex-1 bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-500 hover:to-indigo-300 transition-colors flex items-center justify-between px-[25%] text-white group border-b border-white/10">
+                <span className="text-[11px] font-bold tracking-widest uppercase opacity-90">Docs</span> 
+                <span className="text-xl font-black group-hover:scale-110 transition-transform text-white/90">42</span>
+              </div>
+              <div className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-400 hover:from-emerald-500 hover:to-emerald-300 transition-colors flex items-center justify-between px-[32%] text-white group">
+                <span className="text-[11px] font-bold tracking-widest uppercase opacity-90">Opened</span> 
+                <span className="text-xl font-black group-hover:scale-110 transition-transform text-white/90">28</span>
               </div>
             </div>
           </div>
-
-          <AccountStatusLegend />
         </div>
 
         {/* Card 3: Investment Experience Overview (Horizontal Bars UI matching image) */}

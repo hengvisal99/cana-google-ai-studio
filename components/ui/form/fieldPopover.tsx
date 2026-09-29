@@ -130,7 +130,7 @@ export function FieldPanel({
       ref={panelRef}
       style={placement.style}
       className={cn(
-        'fixed z-[60] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)]',
+        'fixed z-[9999] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)]',
         'animate-in fade-in zoom-in-95 duration-100',
         placement.side === 'top' ? 'origin-bottom' : 'origin-top'
       )}

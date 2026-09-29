@@ -34,7 +34,8 @@ import {
   Monitor,
   Briefcase,
   Crown,
-  Users
+  Users,
+  Phone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FormSelect } from '@/components/ui/form';
@@ -85,6 +86,15 @@ export function Customer360Screen({
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [customerTab, setCustomerTab] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // --- Simulation State Overrides (Mocking frontend state for the requirements) ---
+  const [simulatedDocuments, setSimulatedDocuments] = useState<Record<string, any[]>>({});
+  const [simulatedTimeline, setSimulatedTimeline] = useState<Record<string, any[]>>({});
+  const [simulatedCases, setSimulatedCases] = useState<Record<string, any[]>>({});
+  const [simulatedAccountStatus, setSimulatedAccountStatus] = useState<Record<string, string>>({});
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isLogActivityModalOpen, setIsLogActivityModalOpen] = useState(false);
+  const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
 
   // Transaction History Filters (Dropdown layout)
   const [selectedIpoFilter, setSelectedIpoFilter] = useState<string>('ALL');
@@ -302,16 +312,16 @@ export function Customer360Screen({
           id="customer-360-left-sidebar"
           aria-label="Customer 360 Customer List"
           className={cn(
-            'lg:col-span-4 xl:col-span-3 bg-white border border-slate-200 overflow-hidden flex flex-col lg:min-h-0 lg:h-full print:hidden',
+            'lg:col-span-4 xl:col-span-3 overflow-hidden flex flex-col lg:min-h-0 lg:h-full print:hidden',
             !sidebarOpen && 'lg:hidden',
-            'rounded-2xl bg-white/85 backdrop-blur-xl border-white/80 shadow-md'
+            'rounded-[24px] bg-white/80 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'
           )}
         >
           {/* Sidebar Header & Search Group */}
-          <div className="p-3.5 bg-slate-50/70 space-y-3">
+          <div className="p-4 bg-slate-50/50 space-y-4 border-b border-slate-200/50">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Users className="w-4 h-4 text-blue-600" />
+              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Users className="w-4 h-4 text-indigo-600" />
                 <span>Customer 360</span>
               </h3>
               <button
@@ -335,7 +345,7 @@ export function Customer360Screen({
                 value={sidebarSearch}
                 onChange={(e) => setSidebarSearch(e.target.value)}
                 placeholder="Search CID or Full Name..."
-                className="w-full pl-9 pr-7 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                className="w-full pl-9 pr-8 py-2.5 text-xs bg-white/80 border border-slate-200/60 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm"
               />
               {sidebarSearch && (
                 <button
@@ -350,23 +360,22 @@ export function Customer360Screen({
             </div>
 
             {/* Customer Tabs: All | Active | Closed */}
-            <div className="flex items-center gap-1 bg-slate-200/70 p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-slate-100/60 p-1.5 rounded-xl shadow-inner border border-slate-200/50">
               <button
                 type="button"
                 id="tab-customers-all"
                 onClick={() => setCustomerTab('ALL')}
                 className={cn(
-                  'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
-                  'font-semibold',
+                  'flex-1 py-1.5 px-2 text-center text-xs rounded-[8px] transition-all duration-200 flex items-center justify-center gap-1.5 font-bold',
                   customerTab === 'ALL'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/50 scale-[1.02]'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 )}
               >
                 <span>All</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full', 'font-semibold',
-                  customerTab === 'ALL' ? 'bg-slate-100 text-slate-700' : 'bg-slate-300/60 text-slate-600'
+                  'text-[10px] px-1.5 py-0.5 rounded-full font-bold',
+                  customerTab === 'ALL' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-200 text-slate-500'
                 )}>
                   {countAll}
                 </span>
@@ -377,17 +386,16 @@ export function Customer360Screen({
                 id="tab-customers-active"
                 onClick={() => setCustomerTab('ACTIVE')}
                 className={cn(
-                  'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
-                  'font-semibold',
+                  'flex-1 py-1.5 px-2 text-center text-xs rounded-[8px] transition-all duration-200 flex items-center justify-center gap-1.5 font-bold',
                   customerTab === 'ACTIVE'
-                    ? 'bg-white text-emerald-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-emerald-700 shadow-sm border border-slate-200/50 scale-[1.02]'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 )}
               >
                 <span>Active</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full', 'font-semibold',
-                  customerTab === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-300/60 text-slate-600'
+                  'text-[10px] px-1.5 py-0.5 rounded-full font-bold',
+                  customerTab === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-200 text-slate-500'
                 )}>
                   {countActive}
                 </span>
@@ -398,17 +406,16 @@ export function Customer360Screen({
                 id="tab-customers-closed"
                 onClick={() => setCustomerTab('CLOSED')}
                 className={cn(
-                  'flex-1 py-1.5 px-2 text-center text-xs rounded-md transition-all flex items-center justify-center gap-1.5',
-                  'font-semibold',
+                  'flex-1 py-1.5 px-2 text-center text-xs rounded-[8px] transition-all duration-200 flex items-center justify-center gap-1.5 font-bold',
                   customerTab === 'CLOSED'
-                    ? 'bg-white text-rose-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-rose-700 shadow-sm border border-slate-200/50 scale-[1.02]'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 )}
               >
                 <span>Closed</span>
                 <span className={cn(
-                  'text-[10px] px-1.5 py-0.2 rounded-full', 'font-semibold',
-                  customerTab === 'CLOSED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-300/60 text-slate-600'
+                  'text-[10px] px-1.5 py-0.5 rounded-full font-bold',
+                  customerTab === 'CLOSED' ? 'bg-rose-50 text-rose-700' : 'bg-slate-200 text-slate-500'
                 )}>
                   {countClosed}
                 </span>
@@ -425,7 +432,7 @@ export function Customer360Screen({
             <div className="p-2.5 space-y-2.5 bg-slate-50/50 max-h-[calc(100vh-290px)] min-h-[460px] lg:max-h-none lg:min-h-0 lg:flex-1 overflow-y-auto c360-scroll c360-scroll-sidebar">
               {filteredCustomers.map((ind) => {
                 const isSelected = ind.id === activeIndividual.id;
-                const status = ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
+                const status = simulatedAccountStatus[ind.id] || ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
                 const portVal = ind.totalDeposits > 0 ? ind.totalDeposits : 125000;
 
                 return (
@@ -542,7 +549,7 @@ export function Customer360Screen({
               cid={displayCID}
               risk={activeIndividual.riskCategory || 'Moderate'}
               customerType={activeIndividual.customerType || 'High Net Worth'}
-              accountStatus={activeIndividual.accountStatus || (isActiveAccount(activeIndividual) ? 'Active' : 'Not Opened')}
+              accountStatus={simulatedAccountStatus[activeIndividual.id] || activeIndividual.accountStatus || (isActiveAccount(activeIndividual) ? 'Active' : 'Not Opened')}
               bankName={displayBankName}
               phone={displayPhone}
               email={displayEmail}
@@ -557,6 +564,72 @@ export function Customer360Screen({
               sections below move. min-h-0 lets this flex child shrink
               below its content height and actually own the overflow. */}
           <div className="space-y-8 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1.5 [scrollbar-gutter:stable] c360-scroll print:overflow-visible print:pr-0">
+
+            {/* QUICK ACTIONS BAR */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsLogActivityModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-md shadow-slate-900/20 active:scale-[0.98]"
+              >
+                <Phone className="w-4 h-4" /> Log Interaction
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 border border-slate-200/60 rounded-xl text-sm font-bold hover:bg-slate-50 transition shadow-sm active:scale-[0.98]"
+              >
+                <FileCheck className="w-4 h-4 text-indigo-500" /> Upload Document
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSimulatedAccountStatus(prev => ({ ...prev, [activeIndividual.id]: 'Active' }));
+                  setSimulatedTimeline(prev => ({
+                    ...prev,
+                    [activeIndividual.id]: [
+                      { id: `sim-act-${Date.now()}`, dateTime: 'Just now', activity: 'Account Opened', role: 'Trading Account Activated' },
+                      ...(prev[activeIndividual.id] || [])
+                    ]
+                  }));
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50/80 text-indigo-700 border border-indigo-200/50 rounded-xl text-sm font-bold hover:bg-indigo-100 transition shadow-sm active:scale-[0.98]"
+              >
+                <CreditCard className="w-4 h-4" /> Open Trading Account
+              </button>
+            </div>
+
+            {/* =======================================================================
+                2.5 AI ASSISTANT: NEXT BEST ACTION (CRM BENCHMARK)
+               ======================================================================= */}
+            <section className="relative overflow-hidden p-6 rounded-[24px] border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+              <div className="flex items-start gap-5 relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/30 border border-white/20">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <h3 className="font-bold text-slate-900 text-base">Einstein AI: Next Best Action</h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 ring-1 ring-purple-200/50">Recommended</span>
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                    Based on recent market volatility and {displayNameEN}'s risk profile, their portfolio has drifted <strong>+12%</strong> into High-Yield bonds. Recommend scheduling a rebalancing review.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all active:scale-[0.98]">
+                      Schedule Portfolio Review
+                    </button>
+                    <button className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/60 text-sm font-bold rounded-xl shadow-sm transition-all active:scale-[0.98]">
+                      Generate Investment Proposal
+                    </button>
+                    <button className="grid h-10 w-10 place-items-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-xl transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* =======================================================================
                 3. SUMMARY: 3-VERSION KPI CARDS WITH IN-CARD TOGGLE
@@ -577,8 +650,8 @@ export function Customer360Screen({
                 <h3 className="text-sm font-semibold text-slate-600">Product Portfolio</h3>
               </div>
 
-              {/* One Row One Card Layout */}
-              <div className="space-y-3">
+              {/* One Row One Card Layout with Scroll Limit */}
+              <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1.5 c360-scroll">
                 {customer360Data.products.map((prod) => (
                   <div
                     key={prod.id}
@@ -784,7 +857,7 @@ export function Customer360Screen({
                       the totals live in a separate table pinned to the card's
                       bottom edge; both tables share one fixed colgroup so the
                       columns line up. */}
-                  <div className="flex flex-col overflow-x-auto xl:flex-1 xl:min-h-0 border border-slate-200 rounded-xl bg-white">
+                  <div className="flex flex-col overflow-x-auto xl:flex-1 xl:min-h-0 max-h-[450px] xl:max-h-[600px] border border-slate-200 rounded-xl bg-white shadow-sm">
                     <div className="flex flex-1 min-h-0 min-w-[520px] flex-col">
                       <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] c360-scroll">
                         <table className="w-full table-fixed text-left text-xs border-collapse">
@@ -880,14 +953,14 @@ export function Customer360Screen({
                     a scroll container resolves top/bottom against the visible
                     padding box, so it would span one viewport and scroll away
                     from the dots instead of connecting them. */}
-                <div className="border border-slate-200 rounded-xl bg-slate-50/50 p-3 max-h-[440px] xl:max-h-none xl:flex-1 xl:min-h-0 overflow-y-auto c360-scroll">
+                <div className="border border-slate-200 rounded-xl bg-slate-50/50 p-3 max-h-[440px] xl:max-h-[600px] xl:flex-1 xl:min-h-0 overflow-y-auto c360-scroll shadow-inner">
                   {/* Rail lives on the content wrapper, so it is sized by the full
                       list height. left-[6px] centres it on the dots: the dots start
                       at x=0 (pl-6 offset, then -left-6) and are 14px wide, so both
                       centre on x=7. */}
                   <div className="relative pl-6 pt-1 space-y-3.5 before:absolute before:left-[6px] before:top-3 before:bottom-3 before:w-[2px] before:bg-blue-100">
-                    {customer360Data.activities.map((act) => (
-                      <div key={act.id} className="relative group">
+                    {[...(simulatedTimeline[activeIndividual.id] || []), ...customer360Data.activities].map((act, index) => (
+                      <div key={act.id || index} className="relative group">
                         {/* Blue Node Dot */}
                         <div className="absolute -left-6 top-3 w-3.5 h-3.5 rounded-full border-2 border-white bg-blue-500 shadow-2xs ring-2 ring-blue-100 transition-transform group-hover:scale-110" />
 
@@ -916,9 +989,150 @@ export function Customer360Screen({
                 </div>
               </section>
             </div>
+
+            {/* =======================================================================
+                7. DOCUMENTS (SIMULATED)
+               ======================================================================= */}
+            <section id="c360-documents-section" className="print:block">
+              {/* @ts-ignore - DocumentSlotRow props are imported but Document is slightly different shape, so passing as any for mock */}
+              <div className="border border-slate-200 rounded-xl bg-white shadow-2xs overflow-hidden">
+                 <div className="px-5 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                     <FileCheck className="w-4 h-4 text-blue-600" />
+                     Documents & Attachments
+                   </h3>
+                   <span className="text-xs font-semibold text-slate-500">{(simulatedDocuments[activeIndividual.id] || []).length} files</span>
+                 </div>
+                 <div className="p-5">
+                   {(simulatedDocuments[activeIndividual.id] || []).length === 0 ? (
+                     <div className="text-center py-8">
+                       <FileCheck className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                       <p className="text-sm text-slate-500 font-medium">No documents uploaded yet.</p>
+                       <p className="text-xs text-slate-400 mt-1">Use "Upload Document" to simulate file uploads.</p>
+                     </div>
+                   ) : (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                       {(simulatedDocuments[activeIndividual.id] || []).map((doc, idx) => (
+                         <div key={idx} className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors bg-white shadow-2xs">
+                           <div className="w-10 h-10 rounded bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                             <FileCheck className="w-5 h-5" />
+                           </div>
+                           <div className="min-w-0 flex-1">
+                             <p className="text-sm font-semibold text-slate-800 truncate">{doc.fileName}</p>
+                             <p className="text-[11px] text-slate-500">{doc.type} • {doc.size}</p>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+              </div>
+            </section>
           </div>
         </main>
       </div>
+
+      {/* --- SIMULATION MODALS --- */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800">Upload Document</h3>
+              <button onClick={() => setIsUploadModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Document Type</label>
+                <select id="sim-doc-type" className="w-full text-sm border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                  <option>National ID / Passport</option>
+                  <option>Proof of Address</option>
+                  <option>Bank Statement</option>
+                  <option>Client Agreement</option>
+                </select>
+              </div>
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50">
+                <p className="text-sm font-semibold text-slate-700">Click to browse or drag file here</p>
+                <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG up to 10MB</p>
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+              <button onClick={() => setIsUploadModalOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition">Cancel</button>
+              <button
+                onClick={() => {
+                  const selectEl = document.getElementById('sim-doc-type') as HTMLSelectElement;
+                  const type = selectEl.value;
+                  const newDoc = {
+                    fileName: `Simulated_${type.replace(/\s+/g, '_')}_${new Date().getTime().toString().slice(-4)}.pdf`,
+                    type,
+                    size: '1.2 MB'
+                  };
+                  setSimulatedDocuments(prev => ({
+                    ...prev,
+                    [activeIndividual.id]: [newDoc, ...(prev[activeIndividual.id] || [])]
+                  }));
+                  setIsUploadModalOpen(false);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+              >
+                Upload File
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isLogActivityModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800">Log Interaction</h3>
+              <button onClick={() => setIsLogActivityModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Interaction Type</label>
+                <select id="sim-act-type" className="w-full text-sm border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                  <option>Phone Call</option>
+                  <option>Client Meeting</option>
+                  <option>Email Sent</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Summary / Notes</label>
+                <textarea id="sim-act-note" rows={3} placeholder="What was discussed?" className="w-full text-sm border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none"></textarea>
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+              <button onClick={() => setIsLogActivityModalOpen(false)} className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 transition">Cancel</button>
+              <button
+                onClick={() => {
+                  const type = (document.getElementById('sim-act-type') as HTMLSelectElement).value;
+                  const note = (document.getElementById('sim-act-note') as HTMLTextAreaElement).value;
+                  const newAct = {
+                    id: `sim-act-${Date.now()}`,
+                    dateTime: 'Just now',
+                    activity: type,
+                    role: note || 'General sync'
+                  };
+                  setSimulatedTimeline(prev => ({
+                    ...prev,
+                    [activeIndividual.id]: [newAct, ...(prev[activeIndividual.id] || [])]
+                  }));
+                  setIsLogActivityModalOpen(false);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+              >
+                Save Activity
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

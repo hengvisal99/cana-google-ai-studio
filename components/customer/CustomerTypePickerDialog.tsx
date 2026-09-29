@@ -31,7 +31,7 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
 
   return (
     <DialogShell
-      title="Add Customer Types"
+      title="Assign Products & Services"
       onClose={onClose}
       footer={
         <button
@@ -47,7 +47,7 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
       <div className="flex min-h-[320px] flex-col md:min-h-[420px] gap-4 md:flex-row md:gap-5">
         <nav
           aria-label="Customer types"
-          className="flex shrink-0 flex-col gap-4 rounded-2xl bg-slate-50 p-2.5 ring-1 ring-inset ring-slate-100 md:sticky md:top-0 md:w-60 md:self-start"
+          className="flex shrink-0 flex-col gap-4 rounded-[20px] bg-slate-50/50 p-3 border border-slate-200/60 shadow-sm md:sticky md:top-0 md:w-[280px] md:self-start"
         >
           <RailCustomerCard ctx={ctx} />
 
@@ -65,11 +65,11 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
                 <div
                   key={id}
                   className={cn(
-                    'group relative flex items-center gap-1 rounded-xl pr-1.5 transition',
-                    active ? 'bg-white shadow-sm ring-1 ring-blue-200' : 'hover:bg-white/80'
+                    'group relative flex items-center gap-1 rounded-[14px] pr-1.5 transition-all duration-200',
+                    active ? 'bg-white shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] ring-1 ring-indigo-200/80 scale-[1.02]' : 'hover:bg-white/80 hover:shadow-sm hover:scale-[1.01]'
                   )}
                 >
-                  {active && <span className="absolute inset-y-2.5 left-0 w-[3px] rounded-full bg-blue-500" />}
+                  {active && <span className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />}
                   <button
                     type="button"
                     aria-current={active ? 'true' : undefined}
@@ -80,7 +80,7 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
                       className={cn(
                         'relative grid h-8 w-8 shrink-0 place-items-center rounded-lg transition',
                         active
-                          ? 'bg-blue-500 text-white shadow-md shadow-blue-500/30'
+                          ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/30'
                           : invalid
                             ? 'bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100'
                             : complete
@@ -116,8 +116,8 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
                       {/* "Added" until every required field is filled, then "Completed" */}
                       <span
                         className={cn(
-                          'block truncate text-[10.5px] font-medium',
-                          complete && !invalid ? 'text-emerald-600' : 'text-blue-600'
+                          'block truncate text-[10.5px] font-bold uppercase tracking-wider',
+                          complete && !invalid ? 'text-emerald-600' : 'text-indigo-600'
                         )}
                       >
                         {complete && !invalid ? 'Completed' : 'Added'}
@@ -176,9 +176,9 @@ export function CustomerTypePickerDialog({ onClose, ...options }: CustomerTypePi
 function FormTitle({ type }: { type: ReturnType<typeof getCustomerType> }) {
   const Icon = type.icon;
   return (
-    <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
-      <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-blue-50 text-blue-600">
-        <Icon className="h-3.5 w-3.5" />
+    <h4 className="mb-6 flex items-center gap-2.5 text-base font-bold text-slate-900">
+      <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200/50">
+        <Icon className="h-4 w-4" />
       </span>
       <span className="truncate">{type.label}</span>
     </h4>
@@ -230,7 +230,7 @@ function RailCustomerCard({ ctx }: { ctx: MultiTypeInsert }) {
               onClick={() => setSelecting(true)}
               title="Change customer"
               aria-label="Change customer"
-              className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-lg text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+              className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-600"
             >
               <ArrowLeftRight className="h-3.5 w-3.5" />
             </button>

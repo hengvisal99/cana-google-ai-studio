@@ -197,7 +197,7 @@ export function FormDatePicker({
                 }
               }}
               className={cn(
-                'fixed z-[60] overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-3 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)]',
+                'fixed z-[9999] overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-3 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)]',
                 'animate-in fade-in zoom-in-95 duration-100',
                 placement.side === 'top' ? 'origin-bottom' : 'origin-top'
               )}

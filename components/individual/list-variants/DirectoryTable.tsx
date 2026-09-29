@@ -211,7 +211,7 @@ function demoActions(item: Individual): RowAction[] {
   return [
     { id: 'view', label: 'View', icon: Eye, iconClassName: 'text-blue-600', shortcut: 'V', onSelect: noop },
     { id: 'edit', label: 'Edit', icon: Edit3, iconClassName: 'text-amber-600', shortcut: 'E', onSelect: noop },
-    { id: 'customer-type', label: 'Customer Type', icon: Tags, iconClassName: 'text-indigo-600', shortcut: 'T', onSelect: noop },
+    { id: 'customer-type', label: 'Assign Products', icon: Tags, iconClassName: 'text-indigo-600', shortcut: 'T', onSelect: noop },
     { id: 'resend-email', label: 'Resend Email', icon: Mail, iconClassName: 'text-sky-600', shortcut: 'M', onSelect: noop },
     ...(item.accountStatus === 'Active'
       ? [{ id: 'close-account', label: 'Close Account', icon: Lock, iconClassName: 'text-purple-600', shortcut: 'C', onSelect: noop }]

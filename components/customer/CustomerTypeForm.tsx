@@ -2,7 +2,7 @@
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Check, DollarSign, Search, X, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Check, DollarSign, Search, X, AlertTriangle, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   computeFieldValue,
@@ -23,9 +23,9 @@ import {
 } from '@/components/ui/form';
 
 export const BTN_SECONDARY =
-  'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200';
+  'inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/20';
 export const BTN_PRIMARY =
-  'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-blue-500 px-5 text-xs font-semibold text-white shadow-md shadow-blue-500/25 transition hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 active:scale-[0.98]';
+  'inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl bg-indigo-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 active:scale-[0.98]';
 
 const SEGMENT_SELECTED: Record<SegmentTone, string> = {
   primary: 'bg-blue-500 text-white',
@@ -84,50 +84,50 @@ export function DialogShell({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 sm:p-6 backdrop-blur-md">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95"
+        className="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-[24px] border border-white/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-indigo-900/10 animate-in fade-in zoom-in-95 duration-200"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200/60 px-6 py-5 bg-white/50 rounded-t-[24px]">
+          <div className="flex min-w-0 items-center gap-3">
             {onBack && (
               <button
                 type="button"
                 onClick={onBack}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                 title="Back"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
             )}
             {Icon && (
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600">
-                <Icon className="h-4 w-4" />
-              </span>
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/20">
+                <Icon className="h-5 w-5" />
+              </div>
             )}
             <div className="min-w-0">
-              <h3 id={titleId} className="truncate text-sm font-semibold text-slate-900">
+              <h3 id={titleId} className="truncate text-lg font-bold text-slate-900">
                 {title}
               </h3>
-              {subtitle && <div className="mt-0.5 truncate text-xs text-slate-500">{subtitle}</div>}
+              {subtitle && <div className="mt-0.5 truncate text-sm text-slate-500 font-medium">{subtitle}</div>}
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             title="Close"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-5 scrollbar-thin scrollbar-thumb-slate-200">{children}</div>
 
-        {footer && <div className="flex items-center justify-end gap-2 px-5 pb-4 pt-1">{footer}</div>}
+        {footer && <div className="flex items-center justify-end gap-3 px-6 py-5 border-t border-slate-200/60 bg-slate-50/50 rounded-b-[24px]">{footer}</div>}
       </div>
     </div>
   );
@@ -263,15 +263,64 @@ export function CustomerTypeForm({
         return (
           <FormField key={field.key} label={label} htmlFor={id} required={field.required} error={error}>
             {field.type === 'customer' ? (
-              <CustomerPicker
-                id={id}
-                value={text}
-                customers={customers}
-                locked={customerLocked}
-                invalid={invalid}
-                placeholder={field.placeholder}
-                onChange={set}
-              />
+              <div className="space-y-2">
+                <CustomerPicker
+                  id={id}
+                  value={text}
+                  customers={customers}
+                  locked={customerLocked}
+                  invalid={invalid}
+                  placeholder={field.placeholder}
+                  onChange={set}
+                />
+                {text && type.id === 'ipo-customer' && (
+                  (() => {
+                    const cust = customers.find(c => c.id === text);
+                    if (!cust) return null;
+                    const today = new Date();
+                    
+                    const kycExpired = cust.expiredDate && new Date(cust.expiredDate) < today;
+                    const noSeccId = !cust.investorIdInfo?.investorIdNumber;
+                    const seccExpired = cust.investorIdInfo?.investorIdExpiredDate && new Date(cust.investorIdInfo.investorIdExpiredDate) < today;
+
+                    if (noSeccId) {
+                      return (
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200">
+                          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-rose-800">Ineligible for IPO</p>
+                            <p className="text-xs text-rose-600 mt-0.5">Customer is missing an SECC Investor ID. Please apply for one before subscribing.</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (kycExpired || seccExpired) {
+                      return (
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-amber-800">Eligibility Warning</p>
+                            <p className="text-xs text-amber-600 mt-0.5">
+                              {kycExpired ? "Customer KYC/ID has expired. " : ""}
+                              {seccExpired ? "SECC Investor ID has expired. " : ""}
+                              This must be renewed for allotment.
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-emerald-800">Eligible for IPO</p>
+                          <p className="text-xs text-emerald-600 mt-0.5">Customer KYC and SECC ID are valid.</p>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
             ) : (
               <FieldInput id={id} field={field} value={values[field.key]} invalid={invalid} onChange={set} />
             )}
@@ -510,7 +559,7 @@ function CustomerPicker({
         createPortal(
           <div
             ref={listRef}
-            className="fixed z-[60] max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10"
+            className="fixed z-[110] max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-900/10"
             style={{ top: rect.bottom + 4, left: rect.left, width: rect.width }}
           >
             {matches.length === 0 ? (
