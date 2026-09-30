@@ -141,7 +141,7 @@ export function PortfolioScreen() {
                     <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
                   ))}
                 </Pie>
-                <Tooltip formatter={(val: number) => formatUSD(val)} />
+                <Tooltip formatter={(val) => formatUSD(Number(val))} />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -177,7 +177,7 @@ export function PortfolioScreen() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} tickFormatter={(val) => `$${val/1000}k`} />
-                <Tooltip formatter={(val: number) => formatUSD(val)} />
+                <Tooltip formatter={(val) => formatUSD(Number(val))} />
                 <Area type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
               </AreaChart>
             </ResponsiveContainer>
