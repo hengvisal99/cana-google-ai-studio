@@ -20,7 +20,8 @@ export interface PanelPlacement {
 export function usePanelPlacement(
   open: boolean,
   triggerRef: React.RefObject<HTMLElement | null>,
-  maxHeight = 288
+  maxHeight = 288,
+  minWidth = 0
 ): PanelPlacement | null {
   const [placement, setPlacement] = useState<PanelPlacement | null>(null);
 
@@ -39,8 +40,9 @@ export function usePanelPlacement(
       setPlacement({
         side: flip ? 'top' : 'bottom',
         style: {
-          left: rect.left,
-          width: rect.width,
+          // Widen narrow triggers (e.g. pills) and keep the panel inside the viewport.
+          left: Math.min(rect.left, window.innerWidth - Math.max(rect.width, minWidth) - VIEWPORT_MARGIN),
+          width: Math.max(rect.width, minWidth),
           maxHeight: Math.max(120, Math.min(maxHeight, flip ? roomAbove : roomBelow)),
           ...(flip ? { bottom: window.innerHeight - rect.top + GAP } : { top: rect.bottom + GAP }),
         },
@@ -57,7 +59,7 @@ export function usePanelPlacement(
       // the panel at where the trigger used to be.
       setPlacement(null);
     };
-  }, [open, maxHeight, triggerRef]);
+  }, [open, maxHeight, minWidth, triggerRef]);
 
   return placement;
 }

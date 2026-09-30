@@ -9,6 +9,7 @@ import {
   ArrowRightLeft, History, PieChart as PieChartIcon, Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FormInput, FormSelect } from '@/components/ui/form';
 import { format, parseISO } from 'date-fns';
 
 import { 
@@ -336,35 +337,46 @@ export function PortfolioScreen() {
             </div>
             
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Customer</label>
-                <select value={tradeForm.customerId || ''} onChange={e => setTradeForm({...tradeForm, customerId: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white">
-                  <option value="">Select Customer</option>
-                  {INITIAL_INDIVIDUALS.map(i => <option key={i.id} value={i.id}>{i.fullNameEN || i.givenNameEN} ({i.id})</option>)}
-                </select>
+              <FormSelect
+                label="Customer"
+                searchable
+                placeholder="Select Customer"
+                value={tradeForm.customerId || ''}
+                onChange={v => setTradeForm({...tradeForm, customerId: v})}
+                options={INITIAL_INDIVIDUALS.map(i => ({ value: i.id, label: `${i.fullNameEN || i.givenNameEN} (${i.id})` }))}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormSelect
+                  label="Trade Type"
+                  value={tradeForm.type || 'Buy'}
+                  onChange={v => setTradeForm({...tradeForm, type: v as 'Buy'|'Sell'})}
+                  options={['Buy', 'Sell']}
+                />
+                <FormInput
+                  label="Ticker / Asset"
+                  value={tradeForm.ticker || ''}
+                  onChange={e => setTradeForm({...tradeForm, ticker: e.target.value.toUpperCase()})}
+                  className="uppercase placeholder:normal-case"
+                  placeholder="e.g. ABC"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Trade Type</label>
-                  <select value={tradeForm.type || 'Buy'} onChange={e => setTradeForm({...tradeForm, type: e.target.value as 'Buy'|'Sell'})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white">
-                    <option value="Buy">Buy</option>
-                    <option value="Sell">Sell</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Ticker / Asset</label>
-                  <input type="text" value={tradeForm.ticker || ''} onChange={e => setTradeForm({...tradeForm, ticker: e.target.value.toUpperCase()})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none uppercase placeholder-normal" placeholder="e.g. ABC" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Quantity</label>
-                  <input type="number" min="1" value={tradeForm.quantity || ''} onChange={e => setTradeForm({...tradeForm, quantity: parseInt(e.target.value) || 0})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none" placeholder="0" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Price (USD)</label>
-                  <input type="number" step="0.01" value={tradeForm.price || ''} onChange={e => setTradeForm({...tradeForm, price: parseFloat(e.target.value) || 0})} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none" placeholder="0.00" />
-                </div>
+                <FormInput
+                  label="Quantity"
+                  type="number"
+                  min="1"
+                  value={tradeForm.quantity || ''}
+                  onChange={e => setTradeForm({...tradeForm, quantity: parseInt(e.target.value) || 0})}
+                  placeholder="0"
+                />
+                <FormInput
+                  label="Price (USD)"
+                  type="number"
+                  step="0.01"
+                  value={tradeForm.price || ''}
+                  onChange={e => setTradeForm({...tradeForm, price: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00"
+                />
               </div>
               <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-start gap-2 mt-2">
                 <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />

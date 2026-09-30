@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useSyncExternalStore, useMemo } from 'react';
+import React, { useState, useSyncExternalStore, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Individual, CustomerType, CustomerTypeRecord, Task, NavigationPage } from '@/types';
 import {
@@ -88,6 +88,10 @@ interface DashboardScreenProps {
   tasks: Task[];
   onNavigate: (page: NavigationPage) => void;
 }
+
+const ALL_CUSTOMERS = 'ALL';
+
+const individualName = (i: Individual) => i.fullNameEN ?? `${i.firstName} ${i.lastName}`;
 
 // 1. Data Definitions from specification
 const CUSTOMER_GROWTH_DATA = [
@@ -344,13 +348,27 @@ const CHART_SLOTS: Record<ChartSlot, string> = {
 const subscribeNoop = () => () => {};
 
 export function DashboardScreen({
-  individuals,
+  individuals: allIndividuals,
   onNavigateToInsert,
   onNavigateToList,
-  customerTypeRecords,
+  customerTypeRecords: allCustomerTypeRecords,
   tasks = [],
   onNavigate,
 }: DashboardScreenProps) {
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(ALL_CUSTOMERS);
+  const selectedCustomer = allIndividuals.find((i) => i.id === selectedCustomerId);
+  // Everything customer-derived below follows the header's customer picker.
+  const individuals = useMemo(
+    () => (selectedCustomer ? [selectedCustomer] : allIndividuals),
+    [allIndividuals, selectedCustomer]
+  );
+  const customerTypeRecords = useMemo(
+    () =>
+      selectedCustomer
+        ? allCustomerTypeRecords.filter((r) => r.customerId === selectedCustomer.id)
+        : allCustomerTypeRecords,
+    [allCustomerTypeRecords, selectedCustomer]
+  );
   const isMounted = useSyncExternalStore(
     subscribeNoop,
     () => true,
@@ -360,6 +378,21 @@ export function DashboardScreen({
   const [hoveredAgeGroup, setHoveredAgeGroup] = useState<string | null>('18\u201324');
   const [selectedDatePreset, setSelectedDatePreset] = useState<string>('MTD');
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
+  const roleMenuRef = useRef<HTMLDivElement>(null);
+  const datePopoverRef = useRef<HTMLDivElement>(null);
+
+  // Close header menus on outside click (a fixed overlay can't be used: the header's backdrop-blur traps it)
+  useEffect(() => {
+    if (!isRoleMenuOpen && !isDatePopoverOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (roleMenuRef.current && !roleMenuRef.current.contains(target)) setIsRoleMenuOpen(false);
+      if (datePopoverRef.current && !datePopoverRef.current.contains(target)) setIsDatePopoverOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isRoleMenuOpen, isDatePopoverOpen]);
   const [customStartDate, setCustomStartDate] = useState('2026-08-01');
 
   // ── Command Centre data ─────────────────────────────────────────────────────
@@ -431,7 +464,7 @@ export function DashboardScreen({
   ];
 
   const customerName = (c: (typeof ipo.topCustomers)[number]) =>
-    c.individual ? c.individual.fullNameEN ?? `${c.individual.firstName} ${c.individual.lastName}` : c.customerId;
+    c.individual ? individualName(c.individual) : c.customerId;
 
   const handlePrint = () => {
     window.print();
@@ -463,10 +496,6 @@ export function DashboardScreen({
     if (!isDatePopoverOpen) return null;
     return (
       <>
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsDatePopoverOpen(false)}
-        />
         <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 z-50 space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
@@ -564,10 +593,13 @@ export function DashboardScreen({
          ========================================================================= */}
       <div
         id="dashboard-header-fintech-dock"
-        className="p-5 sm:p-6 border border-white/60 rounded-3xl shadow-xl bg-gradient-to-r from-blue-50/80 via-white/80 to-indigo-50/80 backdrop-blur-xl relative overflow-hidden"
+        className="p-5 sm:p-6 border border-white/60 rounded-3xl shadow-xl bg-gradient-to-r from-blue-50/80 via-white/80 to-indigo-50/80 backdrop-blur-xl relative z-30"
       >
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 right-20 -mt-10 w-40 h-40 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        {/* Blobs clipped in their own layer so header dropdowns can overflow the dock */}
+        <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute top-0 right-20 -mt-10 w-40 h-40 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/30">
@@ -594,14 +626,38 @@ export function DashboardScreen({
               <Activity className="w-4 h-4" />
               <span>Log Trade</span>
             </button>
-            
-            <div className="w-px h-8 bg-slate-200/60 mx-1"></div>
 
-            {/* Date Button */}
-            <div className="relative">
+            {/* Customer Picker */}
+            <div ref={roleMenuRef} className="relative">
               <button
                 type="button"
-                onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+                onClick={() => { setIsRoleMenuOpen(p => !p); setIsDatePopoverOpen(false); }}
+                className="flex items-center gap-2 bg-white/80 hover:bg-white border border-slate-200/60 h-10 px-4 rounded-xl text-sm font-semibold text-slate-700 shadow-sm transition-all cursor-pointer"
+                title="Select customer"
+              >
+                <Users className="w-4 h-4 text-indigo-600" />
+                <span className="max-w-[160px] truncate text-indigo-900">
+                  {selectedCustomer ? individualName(selectedCustomer) : 'All Customers'}
+                </span>
+                <ChevronDown className={cn('w-4 h-4 text-indigo-600 transition-transform', isRoleMenuOpen && 'rotate-180')} />
+              </button>
+              {isRoleMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-60 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-xl z-50 py-1">
+                  {[{ id: ALL_CUSTOMERS, name: 'All Customers' }, ...allIndividuals.map((i) => ({ id: i.id, name: individualName(i) }))].map((c) => (
+                    <button key={c.id} type="button" onClick={() => { setSelectedCustomerId(c.id); setIsRoleMenuOpen(false); }}
+                      className={cn('w-full text-left px-4 py-2.5 text-xs font-medium transition truncate', c.id === selectedCustomerId ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-700 hover:bg-slate-50')}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Date Button */}
+            <div ref={datePopoverRef} className="relative">
+              <button
+                type="button"
+                onClick={() => { setIsDatePopoverOpen(p => !p); setIsRoleMenuOpen(false); }}
                 className="flex items-center gap-2 bg-white/80 hover:bg-white border border-slate-200/60 h-10 px-4 rounded-xl text-sm font-semibold text-slate-700 shadow-sm transition-all cursor-pointer"
               >
                 <Calendar className="w-4 h-4 text-indigo-600" />

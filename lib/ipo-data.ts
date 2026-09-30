@@ -101,3 +101,11 @@ export const INITIAL_IPOS: IpoMaster[] = [
     oversubscriptionRate: 5.1,
   },
 ];
+
+/** Demo subscription totals per ticker (USD amount and subscriber count), added on top of live records. */
+export const STATIC_IPO_STATS: Record<string, { subscribers: number; total: number }> = {
+  PPSP: { subscribers: 4_820, total: 50_400_000 },
+  GTRZ: { subscribers: 2_135, total: 22_400_000 },
+  CAMF: { subscribers: 1_268, total: 19_200_000 },
+  CANA: { subscribers: 6_410, total: 35_000_000 },
+};

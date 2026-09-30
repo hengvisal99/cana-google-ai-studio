@@ -10,6 +10,7 @@ import {
   List, LayoutGrid, Activity, Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FormInput, FormPhone, FormSelect, FormTextarea } from '@/components/ui/form';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 
 export type PipelineStageType = { id: LeadStage; label: string; color: string; border: string; bg: string; linkedScreen?: NavigationPage | '' };
@@ -27,6 +28,29 @@ const formatUSD = (val: number) => new Intl.NumberFormat('en-US', { style: 'curr
 
 import { NavigationPage } from '@/types';
 
+const LINKED_SCREEN_OPTIONS = [
+  { value: 'individual-insert', label: 'Onboarding / Open Account (individual-insert)' },
+  { value: 'customer-360', label: 'Customer 360' },
+  { value: 'portfolio', label: 'Portfolio' },
+  { value: 'compliance', label: 'Compliance Review' },
+];
+
+/** Linked-screen picker for the stage dialog; `name` keeps it in the dialog's FormData. */
+function LinkedScreenSelect({ defaultValue }: { defaultValue: string }) {
+  const [value, setValue] = useState(defaultValue);
+  return (
+    <FormSelect
+      name="linkedScreen"
+      value={value}
+      onChange={setValue}
+      options={LINKED_SCREEN_OPTIONS}
+      placeholder="None"
+      searchable={false}
+      clearable
+    />
+  );
+}
+
 export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (page: NavigationPage) => void, onConvertLead?: (lead: Lead) => void }) {
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
 
@@ -34,6 +58,10 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
+  // FormPhone / FormSelect are controlled; their hidden inputs still feed the FormData submit.
+  const [newLeadPhone, setNewLeadPhone] = useState('');
+  const [newLeadSource, setNewLeadSource] = useState('Walk-in');
+  const [newLeadPhoneError, setNewLeadPhoneError] = useState('');
   const [isStageModalOpen, setIsStageModalOpen] = useState(false);
   const [editingStage, setEditingStage] = useState<PipelineStageType | null>(null);
   
@@ -203,7 +231,7 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
             />
           </div>
           <button 
-            onClick={() => setIsNewLeadModalOpen(true)}
+            onClick={() => { setNewLeadPhone(''); setNewLeadSource('Walk-in'); setNewLeadPhoneError(''); setIsNewLeadModalOpen(true); }}
             className="flex items-center gap-2 px-4 h-10 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm shadow-indigo-200 transition-colors shrink-0"
           >
             <Plus className="w-4 h-4" /> New Lead
@@ -416,23 +444,25 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
                       <p className="text-xs text-slate-400">{lead.email}</p>
                     </td>
                     <td className="px-5 py-4">
-                      <select
-                        onClick={(e) => e.stopPropagation()}
-                        value={lead.stage}
-                        onChange={(e) => {
-                          const newStage = e.target.value as LeadStage;
-                          setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, stage: newStage } : l));
-                        }}
-                        className={cn("px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer appearance-none outline-none", 
-                          stages.find(s => s.id === lead.stage)?.bg,
-                          stages.find(s => s.id === lead.stage)?.color,
-                          stages.find(s => s.id === lead.stage)?.border
-                        )}
-                      >
-                        {stages.map(s => (
-                          <option key={s.id} value={s.id}>{s.label}</option>
-                        ))}
-                      </select>
+                      {/* Stops row click; portal events bubble through the React tree too. */}
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <FormSelect
+                          variant="bare"
+                          searchable={false}
+                          panelMinWidth={200}
+                          value={lead.stage}
+                          options={stages.map(s => ({ value: s.id, label: s.label }))}
+                          onChange={(v) => {
+                            const newStage = v as LeadStage;
+                            setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, stage: newStage } : l));
+                          }}
+                          className={cn("pl-2.5 py-1 rounded-full text-xs font-semibold border",
+                            stages.find(s => s.id === lead.stage)?.bg,
+                            stages.find(s => s.id === lead.stage)?.color,
+                            stages.find(s => s.id === lead.stage)?.border
+                          )}
+                        />
+                      </span>
                     </td>
                     <td className="px-5 py-4 text-slate-600 font-medium">{lead.source}</td>
                     <td className="px-5 py-4 font-bold text-slate-700">{formatUSD(lead.estimatedValue)}</td>
@@ -478,6 +508,10 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
             
             <form className="p-6 space-y-4" onSubmit={(e) => {
               e.preventDefault();
+              if (newLeadPhone.replace(/\D/g, '').length < 8) {
+                setNewLeadPhoneError('Enter a valid phone number');
+                return;
+              }
               const formData = new FormData(e.currentTarget);
               const newLead: Lead = {
                 id: `LD-${Math.floor(Math.random() * 10000)}`,
@@ -496,35 +530,27 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
               setIsNewLeadModalOpen(false);
             }}>
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Full Name *</label>
-                  <input required name="name" type="text" className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none" placeholder="e.g. Sokha Meng" />
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Phone Number *</label>
-                  <input required name="phone" type="text" className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none" placeholder="+855..." />
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Email Address</label>
-                  <input name="email" type="email" className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none" placeholder="name@example.com" />
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Lead Source</label>
-                  <select name="source" className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none">
-                    <option value="Walk-in">Walk-in</option>
-                    <option value="Referral">Referral</option>
-                    <option value="Online">Online</option>
-                    <option value="Event">Event</option>
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Estimated Value (USD)</label>
-                  <input name="estimatedValue" type="number" className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none" placeholder="0" />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Initial Notes</label>
-                  <textarea name="notes" rows={3} className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm outline-none resize-none" placeholder="Add any relevant context..."></textarea>
-                </div>
+                <FormInput containerClassName="col-span-2 sm:col-span-1" label="Full Name" required name="name" placeholder="e.g. Sokha Meng" />
+                <FormPhone
+                  containerClassName="col-span-2 sm:col-span-1"
+                  label="Phone Number"
+                  required
+                  name="phone"
+                  value={newLeadPhone}
+                  onChange={(v) => { setNewLeadPhone(v); setNewLeadPhoneError(''); }}
+                  error={newLeadPhoneError || undefined}
+                />
+                <FormInput containerClassName="col-span-2 sm:col-span-1" label="Email Address" name="email" type="email" placeholder="name@example.com" />
+                <FormSelect
+                  containerClassName="col-span-2 sm:col-span-1"
+                  label="Lead Source"
+                  name="source"
+                  value={newLeadSource}
+                  onChange={setNewLeadSource}
+                  options={['Walk-in', 'Referral', 'Online', 'Event']}
+                />
+                <FormInput containerClassName="col-span-2" label="Estimated Value (USD)" name="estimatedValue" type="number" placeholder="0" />
+                <FormTextarea containerClassName="col-span-2" label="Initial Notes" name="notes" rows={3} placeholder="Add any relevant context..." />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
@@ -581,23 +607,24 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
                         Hot Score: {selectedLead.score}
                       </span>
                     )}
-                    <select
+                    <FormSelect
+                      variant="bare"
+                      searchable={false}
+                      panelMinWidth={200}
+                      containerClassName="shrink-0"
                       value={selectedLead.stage}
-                      onChange={(e) => {
-                        const newStage = e.target.value as LeadStage;
+                      options={stages.map(s => ({ value: s.id, label: s.label }))}
+                      onChange={(v) => {
+                        const newStage = v as LeadStage;
                         setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, stage: newStage } : l));
                         setSelectedLead({ ...selectedLead, stage: newStage });
                       }}
-                      className={cn("px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer outline-none shrink-0",
+                      className={cn("pl-2.5 py-1 rounded-full text-xs font-semibold border",
                         stages.find(s => s.id === selectedLead.stage)?.bg,
                         stages.find(s => s.id === selectedLead.stage)?.color,
                         stages.find(s => s.id === selectedLead.stage)?.border
                       )}
-                    >
-                      {stages.map(s => (
-                        <option key={s.id} value={s.id}>{s.label}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg shrink-0">
@@ -811,17 +838,7 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Linked Screen (Optional)</label>
-                <select 
-                  name="linkedScreen" 
-                  defaultValue={editingStage?.linkedScreen || ''}
-                  className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all text-sm bg-white"
-                >
-                  <option value="">-- None --</option>
-                  <option value="individual-insert">Onboarding / Open Account (individual-insert)</option>
-                  <option value="customer-360">Customer 360</option>
-                  <option value="portfolio">Portfolio</option>
-                  <option value="compliance">Compliance Review</option>
-                </select>
+                <LinkedScreenSelect defaultValue={editingStage?.linkedScreen || ''} />
                 <p className="text-[11px] text-slate-500 mt-1.5">If selected, dropping a lead here will prompt to navigate to this screen.</p>
               </div>
               <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-100">

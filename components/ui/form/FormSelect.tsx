@@ -41,6 +41,13 @@ export interface FormSelectProps {
   id?: string;
   className?: string;
   containerClassName?: string;
+  /**
+   * `bare` drops the field chrome (label, border, sizing) so `className` fully
+   * styles the trigger — e.g. an inline status pill — while keeping the same panel.
+   */
+  variant?: 'field' | 'bare';
+  /** Minimum panel width in px, for triggers narrower than their options. */
+  panelMinWidth?: number;
 }
 
 /**
@@ -65,7 +72,10 @@ export function FormSelect({
   id,
   className,
   containerClassName,
+  variant = 'field',
+  panelMinWidth,
 }: FormSelectProps) {
+  const bare = variant === 'bare';
   const autoId = useId();
   const fieldId = id ?? autoId;
   const listId = `${fieldId}-listbox`;
@@ -97,7 +107,7 @@ export function FormSelect({
     setHighlight(next ? Math.max(0, allOptions.findIndex((option) => option.value === value)) : 0);
   };
 
-  const placement = usePanelPlacement(open, triggerRef);
+  const placement = usePanelPlacement(open, triggerRef, undefined, panelMinWidth);
   useDismissOnOutside(open, () => setOpen(false), triggerRef, panelRef);
   useScrollHighlightIntoView(open, open ? optionId(highlight) : undefined);
 
@@ -153,17 +163,8 @@ export function FormSelect({
     if (e.key === 'Tab' && open) close();
   };
 
-  return (
-    <FormField
-      label={label}
-      htmlFor={fieldId}
-      required={required}
-      hint={hint}
-      error={error}
-      describedById={describedById}
-      className={containerClassName}
-    >
-      <div className="relative">
+  const control = (
+      <div className={cn('relative', bare && 'inline-block', bare && containerClassName)}>
         <button
           ref={triggerRef}
           id={fieldId}
@@ -179,14 +180,18 @@ export function FormSelect({
           disabled={disabled}
           onClick={() => !disabled && setOpen(!open)}
           onKeyDown={handleKeyDown}
-          className={fieldControlClass({
-            size,
-            invalid: Boolean(error),
-            disabled,
-            className: cn('flex items-center gap-2 text-left', clearable && value ? 'pr-12' : 'pr-8', className),
-          })}
+          className={
+            bare
+              ? cn('inline-flex items-center gap-2 text-left pr-7 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60', className)
+              : fieldControlClass({
+                  size,
+                  invalid: Boolean(error),
+                  disabled,
+                  className: cn('flex items-center gap-2 text-left', clearable && value ? 'pr-12' : 'pr-8', className),
+                })
+          }
         >
-          <span className={cn('min-w-0 flex-1 truncate', selected ? 'text-slate-800' : 'text-slate-400')}>
+          <span className={cn('min-w-0 flex-1 truncate', !bare && (selected ? 'text-slate-800' : 'text-slate-400'))}>
             {selected?.label ?? placeholder}
           </span>
         </button>
@@ -209,7 +214,8 @@ export function FormSelect({
 
         <ChevronDown
           className={cn(
-            'pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 transition-transform',
+            'pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-transform',
+            bare ? 'opacity-60' : 'text-slate-400',
             open && 'rotate-180',
             disabled && 'text-slate-300'
           )}
@@ -253,6 +259,21 @@ export function FormSelect({
             document.body
           )}
       </div>
+  );
+
+  if (bare) return control;
+
+  return (
+    <FormField
+      label={label}
+      htmlFor={fieldId}
+      required={required}
+      hint={hint}
+      error={error}
+      describedById={describedById}
+      className={containerClassName}
+    >
+      {control}
     </FormField>
   );
 }

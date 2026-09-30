@@ -5,9 +5,3 @@ create url to show me another 4 version dialog ui with the same layout customer 
 <!--  -->
 
 redesign ui : csx live market , ipo management
-
-header : remove badge
-    
-remove button below customer 360 header
-
-remove float button

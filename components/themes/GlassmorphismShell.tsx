@@ -81,12 +81,21 @@ export function GlassmorphismShell({
   cases = [],
   children,
 }: ShellProps) {
-  const [crmMenuOpen, setCrmMenuOpen] = useState(true);
-  const [tradingMenuOpen, setTradingMenuOpen] = useState(true);
-  const [riskMenuOpen, setRiskMenuOpen] = useState(true);
-  const [analyticsMenuOpen, setAnalyticsMenuOpen] = useState(true);
-  const [settingsMenuOpen, setSettingsMenuOpen] = useState(true);
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  // Accordion: opening one group closes the others.
+  type MenuGroup = 'crm' | 'trading' | 'risk' | 'analytics' | 'settings';
+  const [openMenu, setOpenMenu] = useState<MenuGroup | null>(null);
+  const groupSetter = (group: MenuGroup) => (open: boolean) =>
+    setOpenMenu(open ? group : (current) => (current === group ? null : current));
+  const crmMenuOpen = openMenu === 'crm';
+  const tradingMenuOpen = openMenu === 'trading';
+  const riskMenuOpen = openMenu === 'risk';
+  const analyticsMenuOpen = openMenu === 'analytics';
+  const settingsMenuOpen = openMenu === 'settings';
+  const setCrmMenuOpen = groupSetter('crm');
+  const setTradingMenuOpen = groupSetter('trading');
+  const setRiskMenuOpen = groupSetter('risk');
+  const setAnalyticsMenuOpen = groupSetter('analytics');
+  const setSettingsMenuOpen = groupSetter('settings');
 
   const mainRef = useRef<HTMLElement>(null);
   const scrollbarWidth = useScrollbarWidth(mainRef);
@@ -115,11 +124,20 @@ export function GlassmorphismShell({
 
   const isSettingsPage = currentPage === 'master-data';
 
+  // When the active page moves to another group, open that group (and close the rest).
+  const activeGroup: MenuGroup | null = isCrmPage ? 'crm'
+    : isTradingPage ? 'trading'
+    : isRiskPage ? 'risk'
+    : isAnalyticsPage ? 'analytics'
+    : isSettingsPage ? 'settings'
+    : null;
+  const [prevActiveGroup, setPrevActiveGroup] = useState(activeGroup);
+  if (activeGroup !== prevActiveGroup) {
+    setPrevActiveGroup(activeGroup);
+    setOpenMenu(activeGroup);
+  }
+
   const openCasesCount = cases.filter(c => c.status !== 'Closed' && c.status !== 'Resolved').length;
-  const ROLES: AppUserRole[] = [
-    'Relationship Manager', 'KYC Officer', 'Compliance Officer',
-    'Customer Service', 'Operations', 'Supervisor', 'Management', 'System Administrator'
-  ];
 
   // Icons grow in the collapsed dock and carry the blue in both states.
   const navIcon = (active: boolean) =>
@@ -131,11 +149,6 @@ export function GlassmorphismShell({
       className="h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/80 via-white to-indigo-50/80 text-slate-800 flex flex-col antialiased relative selection:bg-blue-100"
       style={{ '--sbw': `${scrollbarWidth}px` } as React.CSSProperties}
     >
-      {/* Floating AI Assistant FAB */}
-      <button className="absolute bottom-8 right-8 z-50 w-14 h-14 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-full shadow-xl shadow-indigo-600/40 flex items-center justify-center text-white hover:scale-105 hover:shadow-indigo-600/60 transition-all duration-300 group">
-        <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-      </button>
-
       {/* Right padding lives inside <main> instead, so its scrollbar sits at the window edge */}
       <div className="flex flex-1 min-h-0 overflow-hidden py-3 sm:py-5 pl-3 sm:pl-5 gap-5">
         {/* =========================================================================
@@ -164,9 +177,9 @@ export function GlassmorphismShell({
                 <h1 className="text-sm font-semibold text-slate-900 tracking-wide uppercase leading-tight truncate">
                   Cana Securities
                 </h1>
-                <span className="text-xs text-blue-600 font-semibold block leading-tight truncate">
+                {/* <span className="text-xs text-blue-600 font-semibold block leading-tight truncate">
                   Customer Operations
-                </span>
+                </span> */}
               </div>
             )}
           </div>
@@ -454,7 +467,7 @@ export function GlassmorphismShell({
               </div>
             </div>
 
-            <div>
+            {/* <div>
               {!sidebarCollapsed && (
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2 block">
                   Design System
@@ -479,7 +492,7 @@ export function GlassmorphismShell({
                 <LayoutList className={navIcon(currentPage === 'form-fields')} />
                 {!sidebarCollapsed && <span>Form Fields</span>}
               </button>
-            </div>
+            </div> */}
           </nav>
 
 
@@ -537,31 +550,6 @@ export function GlassmorphismShell({
                 >
                   <Search className="w-4 h-4" />
                 </button>
-              )}
-
-              {/* Role indicator badge */}
-              {currentRole && onRoleChange && !sidebarCollapsed && (
-                <div className="relative hidden lg:block">
-                  <button
-                    onClick={() => setRoleMenuOpen(p => !p)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition"
-                    title="Switch role"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span className="max-w-[120px] truncate">{currentRole}</span>
-                    <ChevronDown className={cn('w-3 h-3 transition-transform', roleMenuOpen && 'rotate-180')} />
-                  </button>
-                  {roleMenuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
-                      {ROLES.map(r => (
-                        <button key={r} onClick={() => { onRoleChange(r); setRoleMenuOpen(false); }}
-                          className={cn('w-full text-left px-4 py-2.5 text-xs font-medium transition', r === currentRole ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-700 hover:bg-slate-50')}>
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
               )}
 
               <NotificationBell

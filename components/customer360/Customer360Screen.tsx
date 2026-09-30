@@ -565,40 +565,6 @@ export function Customer360Screen({
               below its content height and actually own the overflow. */}
           <div className="space-y-8 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1.5 [scrollbar-gutter:stable] c360-scroll print:overflow-visible print:pr-0">
 
-            {/* QUICK ACTIONS BAR */}
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsLogActivityModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition shadow-md shadow-slate-900/20 active:scale-[0.98]"
-              >
-                <Phone className="w-4 h-4" /> Log Interaction
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsUploadModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 border border-slate-200/60 rounded-xl text-sm font-bold hover:bg-slate-50 transition shadow-sm active:scale-[0.98]"
-              >
-                <FileCheck className="w-4 h-4 text-indigo-500" /> Upload Document
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSimulatedAccountStatus(prev => ({ ...prev, [activeIndividual.id]: 'Active' }));
-                  setSimulatedTimeline(prev => ({
-                    ...prev,
-                    [activeIndividual.id]: [
-                      { id: `sim-act-${Date.now()}`, dateTime: 'Just now', activity: 'Account Opened', role: 'Trading Account Activated' },
-                      ...(prev[activeIndividual.id] || [])
-                    ]
-                  }));
-                }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50/80 text-indigo-700 border border-indigo-200/50 rounded-xl text-sm font-bold hover:bg-indigo-100 transition shadow-sm active:scale-[0.98]"
-              >
-                <CreditCard className="w-4 h-4" /> Open Trading Account
-              </button>
-            </div>
-
             {/* =======================================================================
                 2.5 AI ASSISTANT: NEXT BEST ACTION (CRM BENCHMARK)
                ======================================================================= */}
@@ -1008,7 +974,6 @@ export function Customer360Screen({
                      <div className="text-center py-8">
                        <FileCheck className="w-10 h-10 text-slate-200 mx-auto mb-3" />
                        <p className="text-sm text-slate-500 font-medium">No documents uploaded yet.</p>
-                       <p className="text-xs text-slate-400 mt-1">Use "Upload Document" to simulate file uploads.</p>
                      </div>
                    ) : (
                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
