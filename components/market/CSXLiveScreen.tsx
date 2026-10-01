@@ -7,10 +7,9 @@ import {
   Layers, Hash, Barcode, CalendarCheck, Users,
   Wallet, PiggyBank, Coins, CandlestickChart, BarChart3,
   PieChart, Download, Eye, Percent, Tag,
-  Receipt, Scale, Landmark, Handshake, ShieldCheck
+  Receipt, Scale, Landmark, Handshake, ShieldCheck, X, ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FormSelect } from '@/components/ui/form';
 import { format } from 'date-fns';
 
 const formatKHR = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'KHR', maximumFractionDigits: 0 }).format(val);
@@ -304,8 +303,23 @@ export function CSXLiveScreen() {
   const [selectedProfileTicker, setSelectedProfileTicker] = useState<string>('DBDE');
   const [selectedTab, setSelectedTab] = useState('Profile');
   const [activeHolder, setActiveHolder] = useState<number | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const selectedProfile = MOCK_PROFILES[selectedProfileTicker];
+
+  const openDetail = (ticker: string) => {
+    if (!MOCK_PROFILES[ticker]) return;
+    setSelectedProfileTicker(ticker);
+    setSelectedTab('Profile');
+    setDetailOpen(true);
+  };
+
+  useEffect(() => {
+    if (!detailOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDetailOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [detailOpen]);
 
   // Figures stay fixed per ticker so they don't reshuffle on every live-price poll.
   const financials = useMemo(() => {
@@ -380,6 +394,55 @@ export function CSXLiveScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // Rendered by the IPO and Dividend Policy tabs
+  const ipoSection = (
+    <div className="space-y-5">
+      <TabHeading icon={Tag} title="IPO Details" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 rounded-2xl bg-slate-50/60 ring-1 ring-slate-200/60 p-2">
+        <InfoField icon={Handshake} label="Underwriter" value="Cana Securities Ltd." />
+        <InfoField icon={Coins} label="Offering Price" value="2,080 KHR" mono />
+        <InfoField icon={Hash} label="Total Shares Offered" value="15,000,000" mono />
+        <InfoField icon={ShieldCheck} label="Guaranteed Dividend" value="6% for first 2 years" highlight />
+      </div>
+    </div>
+  );
+
+  const dividendSection = (
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+      {/* Policy statement with its one hard number pulled out */}
+      <div className="relative rounded-2xl bg-gradient-to-br from-blue-50/80 to-indigo-50/40 ring-1 ring-blue-100 p-5 overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-full blur-2xl pointer-events-none" />
+        <TabHeading icon={Percent} title="Dividend Policy Statement" />
+        <p className="relative mt-3 text-sm leading-relaxed text-slate-600">
+          The Company intends to recommend and distribute dividends of not less than 20% of its net profit after tax. The actual dividend payout will depend on the Company&apos;s financial performance, capital expenditure requirements, and future expansion plans, subject to the approval of the Board of Directors and Shareholders.
+        </p>
+      </div>
+
+      <div className="xl:col-span-2 rounded-2xl bg-slate-50/60 ring-1 ring-slate-200/60 p-2">
+        <div className="grid grid-cols-3 px-3 pt-2 pb-3 text-[10px] font-medium uppercase tracking-widest text-slate-400">
+          <span>Record Date</span>
+          <span className="text-right">Dividend / Share (KHR)</span>
+          <span className="text-right">Yield</span>
+        </div>
+        {[
+          { date: 'Apr 15, 2023', dps: 120, yld: 3.5 },
+          { date: 'Apr 12, 2022', dps: 105, yld: 3.2 },
+        ].map((row) => (
+          <div key={row.date} className="grid grid-cols-3 items-center rounded-xl px-3 py-3 transition hover:bg-white hover:shadow-sm">
+            <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <CalendarCheck className="w-4 h-4 text-indigo-500" />
+              {row.date}
+            </span>
+            <span className="text-right text-sm font-semibold font-mono text-slate-900">{formatNumber(row.dps)}</span>
+            <span className="text-right">
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium font-mono text-emerald-700">{row.yld.toFixed(1)}%</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col space-y-6 py-2 pb-8 min-h-full">
       {/* Header */}
@@ -424,20 +487,23 @@ export function CSXLiveScreen() {
                     <th className="px-5 py-3 border-b border-slate-200/70 text-right">Price (KHR)</th>
                     <th className="px-5 py-3 border-b border-slate-200/70 text-right">Change</th>
                     <th className="px-5 py-3 border-b border-slate-200/70 text-right">Volume</th>
+                    <th className="w-10 pr-4 py-3 border-b border-slate-200/70"><span className="sr-only">Details</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {stocks.map(stock => {
                     const isUp = stock.change >= 0;
-                    const selected = stock.ticker === selectedProfileTicker;
+                    const selected = detailOpen && stock.ticker === selectedProfileTicker;
                     return (
                       <tr
                         key={stock.ticker}
-                        className={cn('transition-colors', selected ? 'bg-blue-50/60' : 'hover:bg-slate-50/80')}
+                        onClick={() => openDetail(stock.ticker)}
+                        title={`View ${stock.ticker} details`}
+                        className={cn('group cursor-pointer transition-colors', selected ? 'bg-blue-50/60' : 'hover:bg-blue-50/40')}
                       >
                         <td className="px-5 py-3">
                           <div className="min-w-0">
-                            <p className="font-semibold text-slate-900">{stock.ticker}</p>
+                            <p className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{stock.ticker}</p>
                             <p className="text-xs text-slate-400 truncate max-w-[220px]" title={stock.name}>{stock.name}</p>
                           </div>
                         </td>
@@ -459,6 +525,9 @@ export function CSXLiveScreen() {
                         </td>
                         <td className="px-5 py-3 text-right font-mono font-medium text-slate-600">
                           {formatNumber(stock.volume)}
+                        </td>
+                        <td className="w-10 pr-4 py-3 text-right">
+                          <ChevronRight className="w-4 h-4 ml-auto text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                         </td>
                       </tr>
                     );
@@ -530,28 +599,39 @@ export function CSXLiveScreen() {
 
       </div>
 
-      {/* Full Width Stock Detail Information Module — styled after the Customer 360 profile */}
-      <div className="relative bg-gradient-to-br from-white/95 to-white/75 backdrop-blur-2xl rounded-2xl border border-slate-200/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden flex flex-col">
+      {/* Stock detail popup, opened by clicking a quotation row — styled after the Customer 360 profile */}
+      {detailOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/40 backdrop-blur-sm animate-in fade-in"
+        onClick={() => setDetailOpen(false)}
+      >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stock-detail-title"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-6xl max-h-[92vh] bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/80 shadow-2xl shadow-blue-950/15 overflow-hidden flex flex-col"
+      >
         <div className="absolute -top-16 -right-16 w-64 h-64 bg-gradient-to-bl from-blue-400/15 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        {/* Header: title and ticker selector only */}
-        <div className="relative z-10 p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-          <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Stock Detail Information</h2>
-
-          <div className="relative w-full sm:w-48">
-            <Building2 className="w-4 h-4 text-blue-500 absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
-            <FormSelect
-              options={Object.keys(MOCK_PROFILES).sort()}
-              value={selectedProfileTicker}
-              onChange={setSelectedProfileTicker}
-              placeholder="Search symbol…"
-              className="pl-9 font-semibold"
-            />
+        {/* Header: clicked symbol and close */}
+        <div className="relative z-10 p-6 flex items-start gap-4 justify-between shrink-0">
+          <div className="min-w-0">
+            <h2 id="stock-detail-title" className="text-lg font-semibold text-slate-900 tracking-tight">{selectedProfile.symbol}</h2>
+            <p className="text-sm text-slate-500 truncate">{selectedProfile.companyName}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setDetailOpen(false)}
+            title="Close"
+            className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Segmented tab navigation */}
-        <div className="relative z-10 px-6 pb-4">
+        <div className="relative z-10 px-6 pb-4 shrink-0">
           <div className="flex overflow-x-auto no-scrollbar gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-inset ring-slate-200/60 w-fit max-w-full">
             {['Profile', 'Financial Summary', 'Trading Data Summary', 'Shareholders', 'Disclosure', 'Dividend Policy', 'IPO'].map((tab) => (
               <button
@@ -568,10 +648,11 @@ export function CSXLiveScreen() {
               </button>
             ))}
           </div>
+
         </div>
 
         {/* Content Area */}
-        <div className="relative z-10 border-t border-slate-200/70 bg-white/60">
+        <div className="relative z-10 flex-1 min-h-0 overflow-y-auto border-t border-slate-200/70 bg-white/60">
           {selectedTab === 'Profile' ? (
             <div className="p-6 grid grid-cols-1 xl:grid-cols-3 gap-5">
               {/* Field grid: small uppercase label above the value, indigo icon tile (Customer 360 DenseField) */}
@@ -768,52 +849,14 @@ export function CSXLiveScreen() {
               </div>
             </div>
           ) : selectedTab === 'Dividend Policy' ? (
-            <div className="p-6 grid grid-cols-1 xl:grid-cols-3 gap-5">
-              {/* Policy statement with its one hard number pulled out */}
-              <div className="relative rounded-2xl bg-gradient-to-br from-blue-50/80 to-indigo-50/40 ring-1 ring-blue-100 p-5 overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-full blur-2xl pointer-events-none" />
-                <TabHeading icon={Percent} title="Dividend Policy Statement" />
-                <p className="relative mt-3 text-sm leading-relaxed text-slate-600">
-                  The Company intends to recommend and distribute dividends of not less than 20% of its net profit after tax. The actual dividend payout will depend on the Company&apos;s financial performance, capital expenditure requirements, and future expansion plans, subject to the approval of the Board of Directors and Shareholders.
-                </p>
-              </div>
-
-              <div className="xl:col-span-2 rounded-2xl bg-slate-50/60 ring-1 ring-slate-200/60 p-2">
-                <div className="grid grid-cols-3 px-3 pt-2 pb-3 text-[10px] font-medium uppercase tracking-widest text-slate-400">
-                  <span>Record Date</span>
-                  <span className="text-right">Dividend / Share (KHR)</span>
-                  <span className="text-right">Yield</span>
-                </div>
-                {[
-                  { date: 'Apr 15, 2023', dps: 120, yld: 3.5 },
-                  { date: 'Apr 12, 2022', dps: 105, yld: 3.2 },
-                ].map((row) => (
-                  <div key={row.date} className="grid grid-cols-3 items-center rounded-xl px-3 py-3 transition hover:bg-white hover:shadow-sm">
-                    <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                      <CalendarCheck className="w-4 h-4 text-indigo-500" />
-                      {row.date}
-                    </span>
-                    <span className="text-right text-sm font-semibold font-mono text-slate-900">{formatNumber(row.dps)}</span>
-                    <span className="text-right">
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium font-mono text-emerald-700">{row.yld.toFixed(1)}%</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="p-6">{dividendSection}</div>
           ) : selectedTab === 'IPO' ? (
-            <div className="p-6 space-y-5">
-              <TabHeading icon={Tag} title="IPO Details" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 rounded-2xl bg-slate-50/60 ring-1 ring-slate-200/60 p-2">
-                <InfoField icon={Handshake} label="Underwriter" value="Cana Securities Ltd." />
-                <InfoField icon={Coins} label="Offering Price" value="2,080 KHR" mono />
-                <InfoField icon={Hash} label="Total Shares Offered" value="15,000,000" mono />
-                <InfoField icon={ShieldCheck} label="Guaranteed Dividend" value="6% for first 2 years" highlight />
-              </div>
-            </div>
+            <div className="p-6">{ipoSection}</div>
           ) : null}
         </div>
       </div>
+      </div>
+      )}
     </div>
   );
 }

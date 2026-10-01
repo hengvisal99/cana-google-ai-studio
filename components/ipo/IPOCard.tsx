@@ -6,10 +6,10 @@ import type { IpoMaster } from '@/types';
 import { differenceInDays, parseISO, isValid } from 'date-fns';
 
 export const STATUS_CONFIG: Record<string,{dot:string;soft:string;grad:string}> = {
-  Upcoming: {dot:'bg-slate-400',soft:'bg-slate-100 text-slate-600',grad:'from-slate-400 to-slate-600'},
-  Open:     {dot:'bg-emerald-500',soft:'bg-emerald-50 text-emerald-700',grad:'from-emerald-400 to-teal-600'},
-  Closed:   {dot:'bg-amber-500',soft:'bg-amber-50 text-amber-700',grad:'from-amber-400 to-orange-500'},
-  Allotted: {dot:'bg-blue-500',soft:'bg-blue-50 text-blue-700',grad:'from-sky-400 to-blue-600'},
+  Upcoming: {dot:'bg-amber-500',soft:'bg-amber-50 text-amber-700',grad:'from-amber-400 to-orange-500'},
+  Open:     {dot:'bg-emerald-500',soft:'bg-emerald-50 text-emerald-700',grad:'from-emerald-400 to-green-600'},
+  Closed:   {dot:'bg-slate-400',soft:'bg-slate-100 text-slate-600',grad:'from-slate-400 to-slate-600'},
+  Allotted: {dot:'bg-cyan-500',soft:'bg-cyan-50 text-cyan-700',grad:'from-cyan-400 to-cyan-600'},
   Listed:   {dot:'bg-purple-500',soft:'bg-violet-50 text-violet-700',grad:'from-violet-500 to-fuchsia-500'},
 };
 
