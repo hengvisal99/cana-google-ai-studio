@@ -64,6 +64,7 @@ export const SIDEBAR_NAV: SidebarGroup[] = [
         children: [
           { id: 'pipeline', label: 'Leads Pipeline' },
           { id: 'individual-list', label: 'Customers' },
+          { id: 'customer-type', label: 'Customer Product' },
           { id: 'customer-360', label: 'Customer 360' },
         ],
       },
@@ -95,6 +96,7 @@ export const SIDEBAR_NAV: SidebarGroup[] = [
         children: [
           { id: 'performance', label: 'SR Performance' },
           { id: 'reports', label: 'Management Reports' },
+          { id: 'customer-report', label: 'Customer Report' },
         ],
       },
       {

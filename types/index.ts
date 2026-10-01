@@ -10,6 +10,7 @@ export type NavigationPage =
   | 'master-data'
   | 'compliance'
   | 'reports'
+  | 'customer-report'
   | 'ipo-management'
   | 'tasks'
   | 'notifications'

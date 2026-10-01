@@ -25,6 +25,7 @@ import {
   MessageSquare,
   Sparkles,
   ChevronRight,
+  Tags,
 } from 'lucide-react';
 import { HeaderActions } from '@/components/shared/HeaderActions';
 import { NotificationBell } from '@/components/shared/NotificationBell';
@@ -105,6 +106,7 @@ export function GlassmorphismShell({
     currentPage === 'individual-list' ||
     currentPage === 'individual-insert' ||
     currentPage === 'individual-update' ||
+    currentPage === 'customer-type' ||
     currentPage === 'customer-360';
 
   const isTradingPage =
@@ -120,6 +122,7 @@ export function GlassmorphismShell({
 
   const isAnalyticsPage =
     currentPage === 'reports' ||
+    currentPage === 'customer-report' ||
     currentPage === 'performance';
 
   const isSettingsPage = currentPage === 'master-data';
@@ -239,6 +242,7 @@ export function GlassmorphismShell({
                     {[
                       { label: 'Leads Pipeline', page: 'pipeline' as NavigationPage, icon: Workflow },
                       { label: 'Customers', page: 'individual-list' as NavigationPage, icon: User },
+                      { label: 'Customer Product', page: 'customer-type' as NavigationPage, icon: Tags },
                       { label: 'Customer 360', page: 'customer-360' as NavigationPage, icon: Users },
                     ].map((item) => (
                       <button
@@ -397,6 +401,7 @@ export function GlassmorphismShell({
                     {[
                       { label: 'SR Performance', page: 'performance' as NavigationPage, icon: Award },
                       { label: 'Management Reports', page: 'reports' as NavigationPage, icon: BarChart3 },
+                      { label: 'Customer Report', page: 'customer-report' as NavigationPage, icon: Users },
                     ].map((item) => (
                       <button
                         key={item.page}

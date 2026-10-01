@@ -40,6 +40,7 @@ import { FormFieldsScreen } from '@/components/form-fields/FormFieldsScreen';
 import { MasterDataScreen } from '@/components/settings/MasterDataScreen';
 import { ComplianceScreen } from '@/components/compliance/ComplianceScreen';
 import { ReportsScreen } from '@/components/reports/ReportsScreen';
+import { CustomerReportScreen } from '@/components/reports/CustomerReportScreen';
 import { IPOManagementScreen } from '@/components/ipo/IPOManagementScreen';
 import { TasksScreen } from '@/components/tasks/TasksScreen';
 import { PipelineScreen } from '@/components/pipeline/PipelineScreen';
@@ -484,6 +485,9 @@ export default function Home() {
 
       case 'reports':
         return <ReportsScreen individuals={individuals} customerTypeRecords={customerTypeRecords} />;
+
+      case 'customer-report':
+        return <CustomerReportScreen individuals={individuals} />;
 
       case 'ipo-management':
         return (
