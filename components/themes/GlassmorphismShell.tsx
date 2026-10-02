@@ -149,7 +149,7 @@ export function GlassmorphismShell({
   return (
     <div
       id="glassmorphism-layout"
-      className="h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/80 via-white to-indigo-50/80 text-slate-800 flex flex-col antialiased relative selection:bg-blue-100"
+      className="h-screen overflow-hidden bg-[#F8FAFC] text-slate-800 flex flex-col antialiased relative selection:bg-blue-100"
       style={{ '--sbw': `${scrollbarWidth}px` } as React.CSSProperties}
     >
       {/* Right padding lives inside <main> instead, so its scrollbar sits at the window edge */}

@@ -4,4 +4,7 @@ create url to show me another 4 version dialog ui with the same layout customer 
 
 <!--  -->
 
-redesign ui : csx live market , ipo management
+
+kyc , onboarding and account open happen during customer registration
+
+after kyc we will go to onboarding to wait for approval

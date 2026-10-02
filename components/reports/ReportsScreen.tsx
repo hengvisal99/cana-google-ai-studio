@@ -21,8 +21,8 @@ function exportCSV(filename: string, headers: string[], rows: (string|number)[][
 }
 
 function StatBadge({ label, value, tone }: { label: string; value: string|number; tone: string }) {
-  const tones: Record<string,string> = { blue: 'bg-blue-50 text-blue-700 border-blue-200', green: 'bg-emerald-50 text-emerald-700 border-emerald-200', amber: 'bg-amber-50 text-amber-700 border-amber-200', rose: 'bg-rose-50 text-rose-700 border-rose-200', slate: 'bg-slate-50 text-slate-600 border-slate-200' };
-  return <div className={cn('rounded-2xl border px-4 py-3 flex flex-col gap-1',tones[tone]||tones.slate)}><span className="text-xs font-medium opacity-70">{label}</span><span className="text-xl font-bold">{value}</span></div>;
+  const tones: Record<string,string> = { blue: 'text-blue-700 border-blue-200', green: 'text-emerald-700 border-emerald-200', amber: 'text-amber-700 border-amber-200', rose: 'text-rose-700 border-rose-200', slate: 'text-slate-600 border-slate-200' };
+  return <div className={cn('rounded-2xl border bg-white shadow-2xs px-4 py-3 flex flex-col gap-1',tones[tone]||tones.slate)}><span className="text-xs font-medium opacity-70">{label}</span><span className="text-xl font-bold">{value}</span></div>;
 }
 
 export function ReportsScreen({ individuals, customerTypeRecords }: ReportsScreenProps) {

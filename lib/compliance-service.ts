@@ -34,7 +34,7 @@ function daysUntil(dateStr: string): number | null {
   return differenceInDays(d, today());
 }
 
-function severity(days: number): 'critical' | 'warning' | 'upcoming' {
+function severity(days: number): ExpiryAlert['severity'] {
   if (days <= 7) return 'critical';
   if (days <= 30) return 'warning';
   return 'upcoming';
@@ -60,6 +60,31 @@ export function getDocumentExpiryAlerts(individuals: Individual[], windowDays = 
     }
   }
   return alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
+}
+
+// Static demo data for the Document Expiry tab — offsets are days from today
+const STATIC_DOCUMENT_EXPIRY: Array<Pick<ExpiryAlert, 'customerId' | 'customerName' | 'investorId' | 'label'> & { offset: number }> = [
+  { customerId: 'CUS-000124', customerName: 'Sok Dara',        investorId: 'INV-2023-00124', label: 'National ID Expiry',     offset: -5 },
+  { customerId: 'CUS-000087', customerName: 'Chan Sreymom',    investorId: 'INV-2022-00087', label: 'Passport Expiry',        offset: 2 },
+  { customerId: 'CUS-000231', customerName: 'Lim Vannak',      investorId: 'INV-2024-00231', label: 'National ID Expiry',     offset: 6 },
+  { customerId: 'CUS-000045', customerName: 'Keo Sophea',      investorId: 'INV-2021-00045', label: 'Passport Expiry',        offset: 12 },
+  { customerId: 'CUS-000312', customerName: 'Heng Rithy',      investorId: 'INV-2024-00312', label: 'Residence Permit Expiry', offset: 19 },
+  { customerId: 'CUS-000158', customerName: 'Meas Chanthou',   investorId: 'INV-2023-00158', label: 'National ID Expiry',     offset: 27 },
+  { customerId: 'CUS-000276', customerName: 'Ouk Piseth',      investorId: 'INV-2024-00276', label: 'Passport Expiry',        offset: 41 },
+  { customerId: 'CUS-000093', customerName: 'Tep Bopha',       investorId: 'INV-2022-00093', label: 'National ID Expiry',     offset: 55 },
+  { customerId: 'CUS-000340', customerName: 'Nguon Kimheng',   investorId: 'INV-2025-00340', label: 'Passport Expiry',        offset: 68 },
+  { customerId: 'CUS-000199', customerName: 'Pich Sokunthea',  investorId: 'INV-2023-00199', label: 'National ID Expiry',     offset: 84 },
+];
+
+export function getStaticDocumentExpiryAlerts(windowDays = 90): ExpiryAlert[] {
+  return STATIC_DOCUMENT_EXPIRY
+    .filter((s) => s.offset <= windowDays)
+    .map(({ offset, ...s }) => {
+      const d = today();
+      d.setDate(d.getDate() + offset);
+      return { ...s, field: 'expiredDate', expiryDate: d.toISOString().slice(0, 10), daysRemaining: offset, severity: severity(offset) };
+    })
+    .sort((a, b) => a.daysRemaining - b.daysRemaining);
 }
 
 export function getInvestorIdExpiryAlerts(individuals: Individual[], windowDays = 90): ExpiryAlert[] {
@@ -122,6 +147,9 @@ export function getKYCComplianceRows(individuals: Individual[]): KYCComplianceRo
 export function buildComplianceNotifications(individuals: Individual[]): AppNotification[] {
   const notes: AppNotification[] = [];
   const now = new Date().toISOString();
+  const when = (a: ExpiryAlert) => a.daysRemaining <= 0
+    ? `expired ${Math.abs(a.daysRemaining)} day${Math.abs(a.daysRemaining) !== 1 ? 's' : ''} ago`
+    : `expires in ${a.daysRemaining} day${a.daysRemaining !== 1 ? 's' : ''}`;
 
   const docAlerts = getDocumentExpiryAlerts(individuals, 30);
   const idAlerts = getInvestorIdExpiryAlerts(individuals, 30);
@@ -131,8 +159,8 @@ export function buildComplianceNotifications(individuals: Individual[]): AppNoti
       id: `notif-doc-${i}`,
       type: a.severity === 'critical' ? 'error' : 'warning',
       category: 'Document Expiry',
-      title: a.severity === 'critical' ? 'ID Card Expiring Soon!' : 'ID Card Expiry Warning',
-      message: `${a.customerName}'s ${a.label} expires in ${a.daysRemaining} day${a.daysRemaining !== 1 ? 's' : ''} (${a.expiryDate}).`,
+      title: a.daysRemaining <= 0 ? 'ID Card Expired' : a.severity === 'critical' ? 'ID Card Expiring Soon!' : 'ID Card Expiry Warning',
+      message: `${a.customerName}'s ${a.label} ${when(a)} (${a.expiryDate}).`,
       relatedCustomerId: a.customerId,
       relatedCustomerName: a.customerName,
       isRead: false,
@@ -147,8 +175,8 @@ export function buildComplianceNotifications(individuals: Individual[]): AppNoti
       id: `notif-id-${i}`,
       type: a.severity === 'critical' ? 'error' : 'warning',
       category: 'Investor ID Expiry',
-      title: a.severity === 'critical' ? 'Investor ID Critical Expiry' : 'Investor ID Renewal Due',
-      message: `${a.customerName}'s SECC Investor ID expires in ${a.daysRemaining} day${a.daysRemaining !== 1 ? 's' : ''}.`,
+      title: a.daysRemaining <= 0 ? 'Investor ID Expired' : a.severity === 'critical' ? 'Investor ID Critical Expiry' : 'Investor ID Renewal Due',
+      message: `${a.customerName}'s SECC Investor ID ${when(a)}.`,
       relatedCustomerId: a.customerId,
       relatedCustomerName: a.customerName,
       isRead: false,

@@ -305,7 +305,7 @@ export function PipelineScreen({ onNavigate, onConvertLead }: { onNavigate?: (pa
                 
                 {/* Column Body */}
                 <div 
-                  className={cn('flex-1 p-3 rounded-b-2xl border-b border-x space-y-3 bg-slate-50/50 transition-colors', 
+                  className={cn('flex-1 p-3 rounded-b-2xl border-b border-x space-y-3 bg-white transition-colors', 
                     stage.border,
                     dragOverStage === stage.id ? 'bg-indigo-50/80 border-indigo-300 shadow-[inset_0_0_20px_rgba(99,102,241,0.1)]' : ''
                   )}

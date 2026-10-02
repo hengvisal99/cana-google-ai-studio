@@ -307,7 +307,7 @@ const SUMMARY_CARDS: {
     value: '51',
     change: 18.6,
     icon: Users,
-    outline: 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300',
+    outline: 'border-white/80 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300',
     iconStyle: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20',
   },
   {
@@ -315,7 +315,7 @@ const SUMMARY_CARDS: {
     value: '44',
     change: 22.2,
     icon: UserCheck,
-    outline: 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300',
+    outline: 'border-white/80 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300',
     iconStyle: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20',
   },
   {
@@ -323,7 +323,7 @@ const SUMMARY_CARDS: {
     value: '8',
     change: 33.3,
     icon: UserPlus,
-    outline: 'border-white/60 bg-white/40 backdrop-blur-md hover:bg-white/60 hover:border-cyan-300 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300',
+    outline: 'border-white/80 hover:border-cyan-300 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300',
     iconStyle: 'bg-gradient-to-br from-cyan-500 to-sky-600 text-white shadow-md shadow-cyan-500/20',
   },
 ];
@@ -458,7 +458,7 @@ export function DashboardScreen({
       value: usdCompact(ipo.totals.total),
       change: ipo.totals.changePercent,
       icon: DollarSign,
-      outline: 'border-blue-300/80 hover:border-blue-500 hover:shadow-blue-500/10',
+      outline: 'border-white/80 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300',
       iconStyle: 'bg-blue-100 text-blue-800',
     },
   ];
@@ -593,7 +593,7 @@ export function DashboardScreen({
          ========================================================================= */}
       <div
         id="dashboard-header-fintech-dock"
-        className="p-5 sm:p-6 border border-white/60 rounded-3xl shadow-xl bg-gradient-to-r from-blue-50/80 via-white/80 to-indigo-50/80 backdrop-blur-xl relative z-30"
+        className="p-5 sm:p-6 border border-blue-100/80 rounded-3xl shadow-sm bg-gradient-to-r from-blue-50/80 via-white/80 to-indigo-50/80 relative z-30"
       >
         {/* Blobs clipped in their own layer so header dropdowns can overflow the dock */}
         <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
@@ -693,7 +693,7 @@ export function DashboardScreen({
           <div
             key={label}
             className={cn(
-              'p-5 bg-white border rounded-2xl shadow-2xs hover:shadow-md transition-all duration-200',
+              'p-5 bg-white border rounded-2xl shadow-sm hover:shadow-md transition-all duration-200',
               outline
             )}
           >

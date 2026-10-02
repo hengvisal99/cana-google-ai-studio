@@ -9,7 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { Individual } from '@/types';
 import {
-  getDocumentExpiryAlerts, getInvestorIdExpiryAlerts, getKYCComplianceRows,
+  getStaticDocumentExpiryAlerts, getInvestorIdExpiryAlerts, getKYCComplianceRows,
   type ExpiryAlert, type KYCComplianceRow,
 } from '@/lib/compliance-service';
 
@@ -114,7 +114,7 @@ export function ComplianceScreen({ individuals }: ComplianceScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [windowFilter, setWindowFilter] = useState<WindowFilter>('90');
   const windowDays = parseInt(windowFilter, 10);
-  const docAlerts = useMemo(()=>getDocumentExpiryAlerts(individuals,windowDays),[individuals,windowDays]);
+  const docAlerts = useMemo(()=>getStaticDocumentExpiryAlerts(windowDays),[windowDays]);
   const idAlerts  = useMemo(()=>getInvestorIdExpiryAlerts(individuals,windowDays),[individuals,windowDays]);
   const kycRows   = useMemo(()=>getKYCComplianceRows(individuals),[individuals]);
   const criticalDoc = docAlerts.filter(a=>a.severity==='critical').length;

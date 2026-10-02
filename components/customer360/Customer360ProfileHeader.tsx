@@ -283,7 +283,7 @@ export function Customer360ProfileHeader({
       id="c360-profile-header-section"
       className={cn(
         'relative overflow-hidden p-6',
-        'rounded-[24px] border border-white/60 bg-white/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-2xl'
+        'rounded-[24px] border border-slate-200/60 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]'
       )}
     >
 
