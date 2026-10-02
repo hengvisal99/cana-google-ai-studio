@@ -116,12 +116,15 @@ export default function Home() {
   // hot refresh honest. In-session edits are dropped when a seed file changes, which is the point.
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
-    setIndividuals(INITIAL_INDIVIDUALS);
-    setCustomerTypeRecords(INITIAL_CUSTOMER_TYPE_RECORDS);
-    setMasterData(INITIAL_MASTER_DATA);
-    setTasks(INITIAL_TASKS);
-    setNotifications(buildComplianceNotifications(INITIAL_INDIVIDUALS));
-    setSelectedCustomerId((id) => (INITIAL_INDIVIDUALS.some((i) => i.id === id) ? id : INITIAL_INDIVIDUALS[0].id));
+    const timer = setTimeout(() => {
+      setIndividuals(INITIAL_INDIVIDUALS);
+      setCustomerTypeRecords(INITIAL_CUSTOMER_TYPE_RECORDS);
+      setMasterData(INITIAL_MASTER_DATA);
+      setTasks(INITIAL_TASKS);
+      setNotifications(buildComplianceNotifications(INITIAL_INDIVIDUALS));
+      setSelectedCustomerId((id) => (INITIAL_INDIVIDUALS.some((i) => i.id === id) ? id : INITIAL_INDIVIDUALS[0].id));
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- module identity is the signal here
   }, [INITIAL_INDIVIDUALS, INITIAL_CUSTOMER_TYPE_RECORDS, INITIAL_MASTER_DATA]);
 

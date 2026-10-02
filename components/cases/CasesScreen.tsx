@@ -74,6 +74,18 @@ function SlaChip({ deadline, breached, status }: { deadline: string; breached?: 
   return null;
 }
 
+function CaseFormField({ label, id, required, error, children }: { label: string; id: string; required?: boolean; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label htmlFor={id} className="text-xs font-semibold text-slate-500 block mb-1">
+        {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
+      </label>
+      {children}
+      {error && <p className="text-xs text-rose-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
 // ─── New Case Modal ────────────────────────────────────────────────────────────
 interface NewCaseModalProps {
   onSave: (c: CustomerCase) => void;
@@ -143,16 +155,6 @@ function NewCaseModal({ onSave, onClose }: NewCaseModalProps) {
     onClose();
   };
 
-  const Field = ({ label, id, required, children }: { label: string; id: string; required?: boolean; children: React.ReactNode }) => (
-    <div>
-      <label htmlFor={id} className="text-xs font-semibold text-slate-500 block mb-1">
-        {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
-      </label>
-      {children}
-      {errors[id] && <p className="text-xs text-rose-500 mt-1">{errors[id]}</p>}
-    </div>
-  );
-
   const inputCls = (key: string) => cn(
     'w-full px-3 py-2 text-sm border rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400/30 transition',
     errors[key] ? 'border-rose-300 focus:ring-rose-300/30' : 'border-slate-200'
@@ -172,37 +174,37 @@ function NewCaseModal({ onSave, onClose }: NewCaseModalProps) {
         </div>
 
         <div className="p-6 space-y-4">
-          <Field label="Case Title" id="title" required>
+          <CaseFormField label="Case Title" id="title" required error={errors.title}>
             <input id="title" type="text" value={form.title}
               onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
               placeholder="Brief description of the issue"
               className={inputCls('title')} />
-          </Field>
+          </CaseFormField>
 
-          <Field label="Description" id="description" required>
+          <CaseFormField label="Description" id="description" required error={errors.description}>
             <textarea id="description" value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               rows={3} placeholder="Detailed description of the customer's issue..."
               className={cn(inputCls('description'), 'resize-none')} />
-          </Field>
+          </CaseFormField>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Customer Name" id="customerName" required>
+            <CaseFormField label="Customer Name" id="customerName" required error={errors.customerName}>
               <input id="customerName" type="text" value={form.customerName}
                 onChange={e => setForm(p => ({ ...p, customerName: e.target.value }))}
                 placeholder="Full customer name"
                 className={inputCls('customerName')} />
-            </Field>
-            <Field label="Customer ID" id="customerId">
+            </CaseFormField>
+            <CaseFormField label="Customer ID" id="customerId" error={errors.customerId}>
               <input id="customerId" type="text" value={form.customerId}
                 onChange={e => setForm(p => ({ ...p, customerId: e.target.value }))}
                 placeholder="e.g. IND-9021"
                 className={inputCls('customerId')} />
-            </Field>
+            </CaseFormField>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Category" id="category">
+            <CaseFormField label="Category" id="category" error={errors.category}>
               <select id="category" value={form.category}
                 onChange={e => setForm(p => ({ ...p, category: e.target.value as CaseCategory }))}
                 className={inputCls('category')}>
@@ -211,8 +213,8 @@ function NewCaseModal({ onSave, onClose }: NewCaseModalProps) {
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-            </Field>
-            <Field label="Priority" id="priority">
+            </CaseFormField>
+            <CaseFormField label="Priority" id="priority" error={errors.priority}>
               <select id="priority" value={form.priority}
                 onChange={e => setForm(p => ({ ...p, priority: e.target.value as CasePriority }))}
                 className={inputCls('priority')}>
@@ -221,11 +223,11 @@ function NewCaseModal({ onSave, onClose }: NewCaseModalProps) {
                 <option>Medium</option>
                 <option>Low</option>
               </select>
-            </Field>
+            </CaseFormField>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Branch" id="branch">
+            <CaseFormField label="Branch" id="branch" error={errors.branch}>
               <select id="branch" value={form.branch}
                 onChange={e => setForm(p => ({ ...p, branch: e.target.value }))}
                 className={inputCls('branch')}>
@@ -235,13 +237,13 @@ function NewCaseModal({ onSave, onClose }: NewCaseModalProps) {
                 <option>Sihanoukville Branch</option>
                 <option>Battambang Branch</option>
               </select>
-            </Field>
-            <Field label="Assign To (optional)" id="assignedTo">
+            </CaseFormField>
+            <CaseFormField label="Assign To (optional)" id="assignedTo" error={errors.assignedTo}>
               <input id="assignedTo" type="text" value={form.assignedTo}
                 onChange={e => setForm(p => ({ ...p, assignedTo: e.target.value }))}
                 placeholder="Staff name"
                 className={inputCls('assignedTo')} />
-            </Field>
+            </CaseFormField>
           </div>
 
           <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-700">
@@ -264,6 +266,10 @@ function NewCaseModal({ onSave, onClose }: NewCaseModalProps) {
   );
 }
 
+function createActivityId() {
+  return `ACT-${Date.now()}`;
+}
+
 // ─── Case Detail Panel ─────────────────────────────────────────────────────────
 interface CaseDetailProps {
   case_: CustomerCase;
@@ -277,7 +283,7 @@ function CaseDetailPanel({ case_: c, onClose, onUpdate }: CaseDetailProps) {
   const handleAddComment = () => {
     if (!comment.trim()) return;
     const activity: CaseActivity = {
-      id: `ACT-${Date.now()}`,
+      id: createActivityId(),
       type: 'comment',
       description: comment,
       performedBy: 'Marcus Aurelius',
@@ -292,7 +298,7 @@ function CaseDetailPanel({ case_: c, onClose, onUpdate }: CaseDetailProps) {
 
   const handleStatusChange = (newStatus: CaseStatus) => {
     const activity: CaseActivity = {
-      id: `ACT-${Date.now()}`,
+      id: createActivityId(),
       type: newStatus === 'Resolved' ? 'resolved' : newStatus === 'Closed' ? 'closed' : 'status_change',
       description: `Case status changed to ${newStatus}.`,
       performedBy: 'Marcus Aurelius',

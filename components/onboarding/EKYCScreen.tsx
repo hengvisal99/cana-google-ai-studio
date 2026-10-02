@@ -196,7 +196,7 @@ export function EKYCScreen() {
                 <CheckCircle2 className="w-10 h-10 text-emerald-600" />
               </div>
               <h2 className="text-2xl font-bold text-slate-900 mb-2">e-KYC Complete</h2>
-              <p className="text-slate-500 mb-8 max-w-sm">The customer's identity has been successfully verified. A new prospect profile has been created.</p>
+              <p className="text-slate-500 mb-8 max-w-sm">The customer&apos;s identity has been successfully verified. A new prospect profile has been created.</p>
               
               <button 
                 onClick={() => setStep('capture-id')}

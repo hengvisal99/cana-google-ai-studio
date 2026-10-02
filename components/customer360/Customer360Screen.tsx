@@ -580,7 +580,7 @@ export function Customer360Screen({
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 ring-1 ring-purple-200/50">Recommended</span>
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed mb-5">
-                    Based on recent market volatility and {displayNameEN}'s risk profile, their portfolio has drifted <strong>+12%</strong> into High-Yield bonds. Recommend scheduling a rebalancing review.
+                    Based on recent market volatility and {displayNameEN}&apos;s risk profile, their portfolio has drifted <strong>+12%</strong> into High-Yield bonds. Recommend scheduling a rebalancing review.
                   </p>
                   <div className="flex items-center gap-3">
                     <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md shadow-indigo-600/20 transition-all active:scale-[0.98]">
