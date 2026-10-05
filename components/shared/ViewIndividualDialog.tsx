@@ -4,191 +4,20 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { 
   Individual, 
-  AuthorizationTimelineItem,
   SupportingDocument
 } from '@/types';
 import {
   X,
-  ShieldCheck,
-  AlertTriangle,
-  Clock,
   Briefcase,
-  CheckCircle2,
   LayoutDashboard,
   Users,
-  RotateCcw,
   IdCard,
-  Landmark,
-  Send
+  Landmark
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IndividualOverviewSection } from '@/components/individual/IndividualOverviewSection';
 import { DossierCard, Field } from '@/components/shared/DossierCard';
 import { SupportingDocumentsSection } from '@/components/shared/SupportingDocumentsSection';
-import { ApproveDialogAuroraGlass } from '@/components/shared/ApproveDialogVariants';
-import { DecisionDialogMatchedMark } from '@/components/shared/DecisionDialogVariants';
-
-/** One node in a workflow timeline (registration or account close). */
-export function WorkflowTimelineRow({
-  item,
-  isLast,
-  closeInfo,
-  details,
-}: {
-  item: AuthorizationTimelineItem;
-  isLast: boolean;
-  /** Close request details — only passed for the account-close submitter stage. */
-  closeInfo?: { closeDate: string; account: string; reason: string };
-  /** Extra label/value lines under the badge (e.g. a PR cancel date) */
-  details?: { label: string; value: string }[];
-}) {
-  const reason = closeInfo?.reason || item.reason;
-  const isDone = item.status === 'Submitted' || item.status === 'Approved';
-  const isRejected = item.status === 'Rejected';
-  const isPending = item.status === 'Pending' || item.status === 'Resubmit';
-  // Queued stages carry a placeholder instead of a real date — don't echo the status twice.
-  const hasTimestamp = Boolean(
-    item.dateTime && item.dateTime.trim().toLowerCase() !== item.status.toLowerCase()
-  );
-
-  return (
-    <li className="relative flex items-start gap-3.5 pb-5 last:pb-0">
-      {/* Vertical connector — the track runs the whole way; colour marks progress */}
-      {!isLast && (
-        <div
-          className={cn(
-            'absolute left-4 top-9 bottom-0 w-0.5',
-            isDone ? 'bg-emerald-500' : isRejected ? 'bg-rose-300' : 'bg-slate-200'
-          )}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Stage node */}
-      <div
-        className={cn(
-          'w-8 h-8 rounded-full flex items-center justify-center shrink-0 border z-10',
-          isDone
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
-            : isRejected
-            ? 'bg-rose-50 border-rose-200 text-rose-600'
-            : isPending
-            ? 'bg-amber-50 border-amber-200 text-amber-600'
-            : 'bg-slate-50 border-slate-200 text-slate-400'
-        )}
-      >
-        {isDone ? (
-          <Send className="w-4 h-4" />
-        ) : isRejected ? (
-          <X className="w-4 h-4 stroke-[2.5]" />
-        ) : (
-          <Clock className="w-4 h-4" />
-        )}
-      </div>
-
-      {/* Stage detail */}
-      <div className="min-w-0 flex-1 pt-1 space-y-1">
-        <h5 className="text-sm font-medium text-slate-900">
-          {item.processedBy} <span className="font-normal text-slate-500">· {item.role}</span>
-        </h5>
-
-        {hasTimestamp && <div className="text-xs text-slate-400">{item.dateTime}</div>}
-
-        {/* Every stage gets the same badge treatment so the column reads consistently */}
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide',
-            isDone
-              ? 'bg-emerald-50 text-emerald-700'
-              : isRejected
-              ? 'bg-rose-50 text-rose-700'
-              : isPending
-              ? 'bg-amber-50 text-amber-700'
-              : 'bg-slate-100 text-slate-500'
-          )}
-        >
-          <span
-            className={cn(
-              'w-1.5 h-1.5 rounded-full',
-              isDone
-                ? 'bg-emerald-600'
-                : isRejected
-                ? 'bg-rose-600'
-                : isPending
-                ? 'bg-amber-500'
-                : 'bg-slate-400'
-            )}
-          />
-          {item.status}
-        </span>
-
-        {closeInfo && (
-          <>
-            <p className="text-sm text-slate-600 pt-0.5">
-              <span className="font-medium text-slate-700">Close Date:</span>{' '}
-              <span className="font-mono">{closeInfo.closeDate}</span>
-            </p>
-            <p className="text-sm text-slate-600 pt-0.5">
-              <span className="font-medium text-slate-700">Delink Account:</span>{' '}
-              <span className="font-mono">{closeInfo.account}</span>
-            </p>
-          </>
-        )}
-
-        {details?.map((detail) => (
-          <p key={detail.label} className="text-sm text-slate-600 pt-0.5">
-            {detail.label}: {detail.value}
-          </p>
-        ))}
-
-        {reason && (
-          <p className="text-sm text-slate-600 pt-0.5">
-            <span className="font-medium text-slate-700">Reason:</span> {reason}
-          </p>
-        )}
-      </div>
-    </li>
-  );
-}
-
-/** Static placeholder shown until real account-close workflow data is wired up. */
-const STATIC_ACCOUNT_CLOSE_HISTORY: AuthorizationTimelineItem[] = [
-  {
-    id: 'close-static-1',
-    stage: 'Close Request',
-    status: 'Submitted',
-    dateTime: '10 Sep 2026, 10:20 AM',
-    processedBy: 'Chea Vichea',
-    role: 'CSO',
-    reason: 'Customer requested to close the trading account.',
-    requestType: 'Close Account',
-  },
-  {
-    id: 'close-static-2',
-    stage: 'Close Review',
-    status: 'Approved',
-    dateTime: '12 Sep 2026, 03:45 PM',
-    processedBy: 'Meas Sokha',
-    role: 'SR',
-    requestType: 'Close Account',
-  },
-  {
-    id: 'close-static-3',
-    stage: 'Close Approval',
-    status: 'Queue',
-    dateTime: 'Queue',
-    processedBy: 'Ly Chanthy',
-    role: 'Manager',
-    requestType: 'Close Account',
-  },
-];
-
-/** Static placeholder close details, paired with the static timeline above. */
-const STATIC_CLOSE_ACCOUNT_INFO = {
-  closeDate: '2026-09-10',
-  account: 'TRD-000000',
-  reason: 'Customer requested to close the trading account.',
-};
 
 interface ViewIndividualDialogProps {
   individual: Individual | null;
@@ -196,24 +25,9 @@ interface ViewIndividualDialogProps {
   onClose: () => void;
   onNavigateToUpdate: (individual: Individual) => void;
   onNavigateToCustomer360: (individual: Individual) => void;
-  onAuthorizeIndividual?: (
-    id: string,
-    action: 'authorize' | 'resubmit' | 'reject',
-    role: 'CSO' | 'SR' | 'Manager',
-    processedBy: string,
-    comment: string,
-    reason?: string
-  ) => void;
-  onCloseAccountIndividual?: (
-    id: string,
-    closeDate: string,
-    account: string,
-    reason: string,
-    processedBy: string
-  ) => void;
 }
 
-type DialogTab = 'overview' | 'identification' | 'employment' | 'family' | 'account' | 'authorization';
+type DialogTab = 'overview' | 'identification' | 'employment' | 'family' | 'account';
 
 export function ViewIndividualDialog({
   individual,
@@ -221,72 +35,13 @@ export function ViewIndividualDialog({
   onClose,
   onNavigateToUpdate,
   onNavigateToCustomer360,
-  onAuthorizeIndividual,
-  onCloseAccountIndividual,
 }: ViewIndividualDialogProps) {
   const [activeTab, setActiveTab] = useState<DialogTab>('overview');
-
-  // Dedicated Authorization Decision Dialog State
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [authRole, setAuthRole] = useState<'CSO' | 'SR' | 'Manager'>('SR');
-  const [authOfficer, setAuthOfficer] = useState('Dara Vong (SR)');
-  const [authAction, setAuthAction] = useState<'authorize' | 'resubmit' | 'reject'>('authorize');
-  const [authComment, setAuthComment] = useState('');
 
   if (!isOpen || !individual) return null;
 
   const modalContainerClasses = () =>
     'bg-white/95 backdrop-blur-2xl border border-white/80 shadow-2xl shadow-blue-950/15 rounded-3xl';
-
-  const handleOpenAuthDialog = (action: 'authorize' | 'resubmit' | 'reject') => {
-    setAuthAction(action);
-    let defaultRole: 'CSO' | 'SR' | 'Manager' = 'SR';
-    let defaultOfficer = 'Dara Vong (SR)';
-
-    if (individual.currentWorkflowStage === 'CSO') {
-      defaultRole = 'CSO';
-      defaultOfficer = 'Sophea Keo (CSO)';
-    } else if (individual.currentWorkflowStage === 'Manager') {
-      defaultRole = 'Manager';
-      defaultOfficer = 'Vannak Lim (Manager)';
-    } else {
-      defaultRole = 'SR';
-      defaultOfficer = 'Dara Vong (SR)';
-    }
-
-    setAuthRole(defaultRole);
-    setAuthOfficer(defaultOfficer);
-    setAuthComment(
-      action === 'authorize'
-        ? `Authorized by ${defaultOfficer} (${defaultRole})`
-        : ''
-    );
-    setShowAuthDialog(true);
-  };
-
-  // The reject / resubmit dialog owns its field, so it hands the reason back here.
-  const handleExecuteAuth = (reason = '') => {
-    if (!onAuthorizeIndividual) return;
-
-    onAuthorizeIndividual(
-      individual.id,
-      authAction,
-      authRole,
-      authOfficer,
-      authAction === 'authorize' ? (authComment || `Approved by ${authOfficer} (${authRole})`) : reason,
-      reason
-    );
-    setShowAuthDialog(false);
-    setAuthComment('');
-  };
-
-  // Where an approval sends the application next.
-  const nextWorkflowStage =
-    individual.currentWorkflowStage === 'CSO'
-      ? 'Senior Review'
-      : individual.currentWorkflowStage === 'SR'
-      ? 'Manager Review'
-      : 'Final Approval';
 
   // Supporting documents: open in a new tab when a file URL exists, otherwise stub out.
   const handleViewDocument = (doc: SupportingDocument) => {
@@ -306,33 +61,6 @@ export function ViewIndividualDialog({
       return;
     }
     alert(`Downloading verified document: ${doc.fileName}`);
-  };
-
-  // Categorize workflow authorization history into Registration vs Account Close
-  const isCloseItem = (item: { requestType?: string; stage?: string; comment?: string }) => {
-    if (item.requestType === 'Close Account') return true;
-    if (item.requestType === 'Registration') return false;
-    const stageLower = (item.stage || '').toLowerCase();
-    const commentLower = (item.comment || '').toLowerCase();
-    return (
-      stageLower.includes('close') ||
-      stageLower.includes('closure') ||
-      commentLower.includes('close account') ||
-      commentLower.includes('closure')
-    );
-  };
-
-  const registrationHistory = (individual.authorizationHistory || []).filter((item) => !isCloseItem(item));
-  const recordedCloseHistory = (individual.authorizationHistory || []).filter((item) => isCloseItem(item));
-  const accountCloseHistory =
-    recordedCloseHistory.length > 0 ? recordedCloseHistory : STATIC_ACCOUNT_CLOSE_HISTORY;
-  const closeInfo = {
-    closeDate: individual.closeAccountInfo?.closeDate || STATIC_CLOSE_ACCOUNT_INFO.closeDate,
-    account:
-      individual.closeAccountInfo?.account ||
-      individual.tradingAccountInfo?.tradingAccountNumber ||
-      STATIC_CLOSE_ACCOUNT_INFO.account,
-    reason: individual.closeAccountInfo?.reason || STATIC_CLOSE_ACCOUNT_INFO.reason,
   };
 
   return (
@@ -375,19 +103,6 @@ export function ViewIndividualDialog({
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Request status */}
-            <span className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold uppercase tracking-wide',
-              individual.requestStatus === 'Approved'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : individual.requestStatus === 'Rejected'
-                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                : 'bg-amber-50 text-amber-700 border-amber-200'
-            )}>
-              <Clock className="w-3 h-3" />
-              {individual.requestStatus || 'Pending'}
-            </span>
-
             {/* Account status */}
             <span className={cn(
               'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold uppercase tracking-wide',
@@ -416,7 +131,6 @@ export function ViewIndividualDialog({
             { id: 'employment', label: 'Employment & Banking', icon: Briefcase },
             { id: 'family', label: 'Family & Related Persons', icon: Users },
             { id: 'account', label: 'Account Information', icon: Landmark },
-            { id: 'authorization', label: 'Workflow History', icon: ShieldCheck },
           ].map((tab) => {
             const TabIcon = tab.icon;
             return (
@@ -636,15 +350,6 @@ export function ViewIndividualDialog({
                 />
 
                 <Field
-                  label="Assigned Reviewer"
-                  value={individual.tradingAccountInfo?.accountCheckedBy}
-                />
-                <Field
-                  label="Approved By"
-                  value={individual.tradingAccountInfo?.accountApprovedBy}
-                />
-
-                <Field
                   label="Current Assigned SR"
                   value={individual.tradingAccountInfo?.currentAssignedSR}
                 />
@@ -663,111 +368,8 @@ export function ViewIndividualDialog({
               </DossierCard>
             </div>
           )}
-
-          {/* TAB 7: WORKFLOW & AUTHORIZATION HISTORY */}
-          {activeTab === 'authorization' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-              {/* CARD 1: REGISTRATION TIMELINE */}
-              <DossierCard title="Registration" plain>
-                  {registrationHistory.length > 0 ? (
-                    <ol>
-                      {registrationHistory.map((item, idx) => (
-                        <WorkflowTimelineRow
-                          key={item.id || idx}
-                          item={item}
-                          isLast={idx === registrationHistory.length - 1}
-                        />
-                      ))}
-                    </ol>
-                  ) : (
-                    <div className="py-10 flex flex-col items-center justify-center text-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-                        <CheckCircle2 className="w-7 h-7" />
-                      </div>
-                      <p className="text-sm text-slate-500">No registration workflow records yet.</p>
-                    </div>
-                  )}
-              </DossierCard>
-
-              {/* CARD 2: ACCOUNT CLOSE TIMELINE */}
-              <DossierCard title="Account Close" plain>
-                  <ol>
-                    {accountCloseHistory.map((item, idx) => (
-                      <WorkflowTimelineRow
-                        key={item.id || idx}
-                        item={item}
-                        isLast={idx === accountCloseHistory.length - 1}
-                        // The CSO submits the close request, so its stage carries the close details
-                        closeInfo={item.role === 'CSO' ? closeInfo : undefined}
-                      />
-                    ))}
-                  </ol>
-              </DossierCard>
-            </div>
-          )}
-        </div>
-
-        {/* Footer with Authorization Buttons */}
-        <div className="p-3.5 sm:p-4 bg-slate-50 flex items-center justify-end gap-3 shrink-0">
-          {/* Authorization Buttons Group (Reject, Resubmit, Approve) */}
-          <div className="flex items-center gap-2.5 justify-end flex-wrap">
-            {/* Reject Button */}
-            <button
-              id="btn-view-dialog-reject"
-              type="button"
-              onClick={() => handleOpenAuthDialog('reject')}
-              className="h-[35px] px-3.5 text-xs font-semibold rounded-lg border border-rose-300 hover:border-rose-400 bg-white hover:bg-rose-50 text-rose-600 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Reject application"
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-              <span>Reject</span>
-            </button>
-
-            {/* Resubmit Button */}
-            <button
-              id="btn-view-dialog-resubmit"
-              type="button"
-              onClick={() => handleOpenAuthDialog('resubmit')}
-              className="h-[35px] px-3.5 text-xs font-semibold rounded-lg border border-amber-300 hover:border-amber-400 bg-white hover:bg-amber-50 text-amber-700 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Request resubmission"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
-              <span>Resubmit</span>
-            </button>
-
-            {/* Approve Button */}
-            <button
-              id="btn-view-dialog-approve"
-              type="button"
-              onClick={() => handleOpenAuthDialog('authorize')}
-              className="h-[35px] px-4 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
-              title="Approve & advance workflow"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Approve</span>
-            </button>
-          </div>
         </div>
       </div>
-
-      {/* Authorization decision dialogs */}
-      {showAuthDialog &&
-        (authAction === 'authorize' ? (
-          <ApproveDialogAuroraGlass
-            customerName={individual.fullNameEN || `${individual.firstName} ${individual.lastName}`}
-            customerId={individual.customerId || individual.id}
-            nextStage={nextWorkflowStage}
-            onCancel={() => setShowAuthDialog(false)}
-            onConfirm={() => handleExecuteAuth()}
-          />
-        ) : (
-          <DecisionDialogMatchedMark
-            action={authAction}
-            onCancel={() => setShowAuthDialog(false)}
-            onConfirm={(reason) => handleExecuteAuth(reason)}
-          />
-        ))}
-
     </div>
   );
 }

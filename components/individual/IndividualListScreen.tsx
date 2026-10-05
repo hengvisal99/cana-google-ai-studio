@@ -4,11 +4,6 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { 
   Individual, 
-  RequestStatus, 
-  RequestType, 
-  WorkflowStage, 
-  Gender, 
-  MaritalStatus,
   AccountStatus 
 } from '@/types';
 import { 
@@ -22,11 +17,9 @@ import {
   Columns, 
   Download, 
   MoreVertical, 
-  ShieldCheck, 
   CheckCircle2, 
   Clock, 
   AlertTriangle, 
-  AlertCircle, 
   ChevronDown, 
   ChevronUp, 
   ExternalLink, 
@@ -35,9 +28,7 @@ import {
   User, 
   UserPlus, 
   Lock, 
-  Check,
   UserCheck,
-  ChevronRight,
   Layers,
   SlidersHorizontal,
   Globe,
@@ -45,43 +36,35 @@ import {
   LayoutList,
   RotateCcw,
   Tags,
-  Mail
+  Mail,
+  FileSpreadsheet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { CheckBadge, FilterSelect, LIFTED_ACTIVE, MENU_SURFACE, Popover } from './DirectoryControls';
 import { CustomerTypePickerDialog } from '@/components/customer/CustomerTypePickerDialog';
-import { ResendEmailDialog } from '@/components/shared/ApproveDialogVariants';
+import { ResendEmailDialog } from '@/components/shared/ResendEmailDialog';
 import type { CustomerTypeRecord } from '@/types';
 import { FormDatePicker } from '@/components/ui/form';
 import { RowActionMenu, useRowActionMenu, type RowAction } from '@/components/shared/RowActionMenu';
 import { SortableHeader, sortRows, useTableSort, type SortValue } from '@/components/shared/SortableHeader';
-import { BulkApproveBar, BulkApproveDialog, ROW_CHECKBOX } from '@/components/shared/BulkApprove';
 
 interface IndividualListScreenProps {
   individuals: Individual[];
   onViewIndividual: (individual: Individual) => void;
   onNavigateToInsert: () => void;
+  onNavigateToBulkInsert: () => void;
   onNavigateToUpdate: (individual: Individual) => void;
   onNavigateToCustomer360: (individual: Individual) => void;
   onSaveCustomerTypeRecord?: (record: CustomerTypeRecord) => void;
   /** Ids already in use, so a new customer type record gets the next free one */
   customerTypeRecordIds?: string[];
   onDeleteIndividual: (id: string) => void;
-  onAuthorizeIndividual?: (
-    id: string,
-    action: 'authorize' | 'resubmit' | 'reject',
-    role: 'CSO' | 'SR' | 'Manager',
-    processedBy: string,
-    comment: string,
-    reason?: string
-  ) => void;
   onCloseAccountIndividual?: (
     id: string,
     closeDate: string,
     account: string,
-    reason: string,
-    processedBy: string
+    reason: string
   ) => void;
   onReload?: () => void;
 }
@@ -96,25 +79,19 @@ const SEARCH_FIELD_OPTIONS: { id: SearchByField; label: string; placeholder: str
   { id: 'roId', label: 'RO ID', placeholder: 'SEARCH RO ID' },
 ];
 
-/** Request-status tabs in lifecycle order (open → closed); the icon carries the status colour. */
-export const STATUS_TABS: { id: 'ALL' | RequestStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
-  { id: 'ALL', label: 'All', icon: LayoutList, iconColor: 'text-blue-600' },
-  { id: 'Pending', label: 'Pending', icon: Clock, iconColor: 'text-yellow-500' },
-  { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, iconColor: 'text-orange-600' },
-  { id: 'Approved', label: 'Approved', icon: CheckCircle2, iconColor: 'text-emerald-500' },
-  { id: 'Rejected', label: 'Rejected', icon: AlertTriangle, iconColor: 'text-rose-500' },
-];
+type StatusTabId = 'ALL' | AccountStatus;
 
-/** Status icon shared by the tabs' definitions and the Request column, so both always match. */
-function StatusIcon({ status, className }: { status: RequestStatus; className?: string }) {
-  const tab = STATUS_TABS.find((t) => t.id === status) ?? STATUS_TABS[0];
-  const Icon = tab.icon;
-  return <Icon className={cn('h-4 w-4 shrink-0 stroke-[2.2]', tab.iconColor, className)} />;
-}
+/** Account-status tabs; the icon carries the same colour as the Account Status badge. */
+const STATUS_TABS: { id: StatusTabId; label: string; icon: React.ElementType; iconColor: string }[] = [
+  { id: 'ALL', label: 'All', icon: LayoutList, iconColor: 'text-blue-600' },
+  { id: 'Active', label: 'Active', icon: CheckCircle2, iconColor: 'text-emerald-500' },
+  { id: 'Not Opened', label: 'Not Opened', icon: Clock, iconColor: 'text-slate-500' },
+  { id: 'Closed', label: 'Closed', icon: Lock, iconColor: 'text-purple-500' },
+];
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
-const REQUEST_TYPE_OPTIONS = ['Registration', 'Close Account'];
+const PROFILE_STATUS_OPTIONS = ['Completed', 'Incomplete'];
 
 interface ColumnConfig {
   id: string;
@@ -127,17 +104,17 @@ export function IndividualListScreen({
   individuals,
   onViewIndividual,
   onNavigateToInsert,
+  onNavigateToBulkInsert,
   onNavigateToUpdate,
   onNavigateToCustomer360,
   onSaveCustomerTypeRecord,
   customerTypeRecordIds,
   onDeleteIndividual,
-  onAuthorizeIndividual,
   onCloseAccountIndividual,
   onReload,
 }: IndividualListScreenProps) {
-  // Status Tab filter: Approved | Resubmit | Pending | Rejected | All
-  const [statusTab, setStatusTab] = useState<'ALL' | RequestStatus>('ALL');
+  // Status Tab filter: account status, or All
+  const [statusTab, setStatusTab] = useState<StatusTabId>('ALL');
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,13 +124,13 @@ export function IndividualListScreen({
   const [showFilterPanel, setShowFilterPanel] = useState(true);  const [genderFilter, setGenderFilter] = useState<string>('ALL');
   const [maritalFilter, setMaritalFilter] = useState<string>('ALL');
   const [nationalityFilter, setNationalityFilter] = useState<string>('ALL');
-  const [requestTypeFilter, setRequestTypeFilter] = useState<string>('ALL');
+  const [profileStatusFilter, setProfileStatusFilter] = useState<string>('ALL');
 
   const activeFilterCount = [
     genderFilter !== 'ALL',
     maritalFilter !== 'ALL',
     nationalityFilter !== 'ALL',
-    requestTypeFilter !== 'ALL',
+    profileStatusFilter !== 'ALL',
   ].filter(Boolean).length;
   const hasActiveFilters = activeFilterCount > 0;
 
@@ -176,20 +153,11 @@ export function IndividualListScreen({
     { id: 'securitiesKnowledge', label: 'Securities Knowledge', isDefault: false, visible: false },
   ]);
 
-  // Authorization Modal state
-  const [authModalIndividual, setAuthModalIndividual] = useState<Individual | null>(null);
-  const [authRole, setAuthRole] = useState<'CSO' | 'SR' | 'Manager'>('SR');
-  const [authOfficer, setAuthOfficer] = useState('Dara Vong (SR)');
-  const [authComment, setAuthComment] = useState('');
-  const [authReason, setAuthReason] = useState('');
-  const [authActionType, setAuthActionType] = useState<'authorize' | 'resubmit' | 'reject'>('authorize');
-
   // Close Account Modal state
   const [closeAccountIndividual, setCloseAccountModalIndividual] = useState<Individual | null>(null);
   const [closeDate, setCloseDate] = useState('2026-09-09');
   const [closeAccountName, setCloseAccountName] = useState('');
   const [closeReason, setCloseReason] = useState('');
-  const [closeOfficer] = useState('Sophea Keo (CSO)');
   const [closeDelinkCsx, setCloseDelinkCsx] = useState(false);
   const [closeDelinkBankAc, setCloseDelinkBankAc] = useState(false);
 
@@ -212,19 +180,11 @@ export function IndividualListScreen({
   const [resendEmailId, setResendEmailId] = useState<string | null>(null);
   const resendEmailIndividual = individuals.find((item) => item.id === resendEmailId);
 
-  // Status Tab counts
-  const countAll = individuals.length;
-  const countApproved = individuals.filter((i) => i.requestStatus === 'Approved').length;
-  const countResubmit = individuals.filter((i) => i.requestStatus === 'Resubmit').length;
-  const countPending = individuals.filter((i) => i.requestStatus === 'Pending').length;
-  const countRejected = individuals.filter((i) => i.requestStatus === 'Rejected').length;
-  const statusCounts: Record<'ALL' | RequestStatus, number> = {
-    ALL: countAll,
-    Approved: countApproved,
-    Resubmit: countResubmit,
-    Pending: countPending,
-    Rejected: countRejected,
-  };
+  // Status Tab counts; a customer with no account status yet counts as Not Opened
+  const statusCounts: Record<StatusTabId, number> = { ALL: individuals.length, Active: 0, 'Not Opened': 0, Closed: 0 };
+  individuals.forEach((i) => {
+    statusCounts[i.accountStatus || 'Not Opened'] += 1;
+  });
 
   const activeSearchField = SEARCH_FIELD_OPTIONS.find((o) => o.id === searchBy) ?? SEARCH_FIELD_OPTIONS[0];
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -240,7 +200,7 @@ export function IndividualListScreen({
     return individuals
       .filter((item) => {
         // Status tab filter
-        if (statusTab !== 'ALL' && item.requestStatus !== statusTab) {
+        if (statusTab !== 'ALL' && (item.accountStatus || 'Not Opened') !== statusTab) {
           return false;
         }
 
@@ -255,7 +215,7 @@ export function IndividualListScreen({
             const accCombined = `${item.tradingAccountInfo?.tradingAccountNumber || ''} ${item.banking?.accountNumber || ''} ${item.banking?.savingAccount || ''} ${item.investorIdInfo?.investorIdNumber || ''}`.toLowerCase();
             if (!accCombined.includes(query)) return false;
           } else if (searchBy === 'roName') {
-            const roCombined = `${item.tradingAccountInfo?.currentAssignedSR || ''} ${item.tradingAccountInfo?.accountCheckedBy || ''} ${item.tradingAccountInfo?.accountApprovedBy || ''}`.toLowerCase();
+            const roCombined = `${item.tradingAccountInfo?.currentAssignedSR || ''}`.toLowerCase();
             if (!roCombined.includes(query)) return false;
           } else if (searchBy === 'roId') {
             const roIdCombined = `${item.tradingAccountInfo?.currentAssignedSR || ''} ${item.customerId || ''} ${item.id || ''} ${item.idNumber || ''}`.toLowerCase();
@@ -271,7 +231,7 @@ export function IndividualListScreen({
         if (genderFilter !== 'ALL' && item.gender !== genderFilter) return false;
         if (maritalFilter !== 'ALL' && item.maritalStatus !== maritalFilter) return false;
         if (nationalityFilter !== 'ALL' && item.nationality !== nationalityFilter) return false;
-        if (requestTypeFilter !== 'ALL' && item.requestType !== requestTypeFilter) return false;
+        if (profileStatusFilter !== 'ALL' && item.profileStatus !== profileStatusFilter) return false;
 
         return true;
       });
@@ -283,7 +243,7 @@ export function IndividualListScreen({
     genderFilter,
     maritalFilter,
     nationalityFilter,
-    requestTypeFilter,
+    profileStatusFilter,
   ]);
 
   const { sort, toggle: toggleSort } = useTableSort();
@@ -293,38 +253,6 @@ export function IndividualListScreen({
     const hidden = sort && columns.some((col) => col.id === sort.key && !col.visible);
     return sortRows(filteredData, hidden ? null : sort, sortValue);
   }, [filteredData, sort, columns]);
-
-  // Bulk approve: only pending requests at a review stage can be ticked
-  const canBulkApprove = Boolean(onAuthorizeIndividual);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkApproving, setBulkApproving] = useState(false);
-  const approvableRows = useMemo(() => sortedData.filter(isApprovable), [sortedData]);
-  // Rows filtered out or already moved on drop out of the selection
-  const selectedRows = approvableRows.filter((item) => selectedIds.has(item.id));
-  const allSelected = approvableRows.length > 0 && selectedRows.length === approvableRows.length;
-
-  const toggleSelected = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const toggleSelectAll = () =>
-    setSelectedIds(allSelected ? new Set() : new Set(approvableRows.map((item) => item.id)));
-
-  const handleBulkApprove = () => {
-    if (!onAuthorizeIndividual) return;
-    selectedRows.forEach((item) => {
-      const role = item.currentWorkflowStage as ReviewStage;
-      const officer = STAGE_OFFICER[role];
-      onAuthorizeIndividual(item.id, 'authorize', role, officer, `Bulk approved by ${officer}`, '');
-    });
-    triggerToast(`${selectedRows.length} ${selectedRows.length === 1 ? 'application' : 'applications'} approved.`);
-    setSelectedIds(new Set());
-    setBulkApproving(false);
-  };
 
   // Column toggle helper
   const isColVisible = (colId: string) => {
@@ -341,7 +269,7 @@ export function IndividualListScreen({
   // Export action
   const handleExport = (format: 'csv' | 'json') => {
     if (format === 'csv') {
-      const headers = ['Customer ID', 'Full Name EN', 'Full Name KH', 'Gender', 'Nationality', 'Profile Status', 'Account Status', 'Request Type', 'Request Status', 'Workflow Stage'];
+      const headers = ['Customer ID', 'Full Name EN', 'Full Name KH', 'Gender', 'Nationality', 'Profile Status', 'Account Status'];
       const rows = sortedData.map((item) => [
         item.customerId || item.id,
         `"${item.fullNameEN || `${item.firstName} ${item.lastName}`}"`,
@@ -350,9 +278,6 @@ export function IndividualListScreen({
         item.nationality,
         item.profileStatus,
         item.accountStatus,
-        item.requestType,
-        item.requestStatus,
-        item.currentWorkflowStage,
       ]);
 
       const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -390,33 +315,10 @@ export function IndividualListScreen({
     setGenderFilter('ALL');
     setMaritalFilter('ALL');
     setNationalityFilter('ALL');
-    setRequestTypeFilter('ALL');
+    setProfileStatusFilter('ALL');
     setSearchTerm('');
     setSearchBy('all');
     triggerToast('Directory filters have been reset.');
-  };
-
-  // Workflow Authorization submission
-  const handleSubmitAuthorization = () => {
-    if (!authModalIndividual || !onAuthorizeIndividual) return;
-    if (authActionType !== 'authorize' && !authReason.trim()) {
-      alert('Please provide a reason for ' + authActionType);
-      return;
-    }
-
-    onAuthorizeIndividual(
-      authModalIndividual.id,
-      authActionType,
-      authRole,
-      authOfficer,
-      authComment || `Decision recorded by ${authOfficer} (${authRole}).`,
-      authReason
-    );
-
-    triggerToast(`Customer ${authModalIndividual.customerId || authModalIndividual.id} workflow updated: ${authActionType.toUpperCase()}`);
-    setAuthModalIndividual(null);
-    setAuthComment('');
-    setAuthReason('');
   };
 
   // Close Account submission
@@ -431,11 +333,10 @@ export function IndividualListScreen({
       closeAccountIndividual.id,
       closeDate,
       closeAccountName || `Trading Account ${closeAccountIndividual.tradingAccountInfo?.tradingAccountNumber || 'TRD-DEFAULT'}`,
-      closeReason,
-      closeOfficer
+      closeReason
     );
 
-    triggerToast(`Account closure request submitted for ${closeAccountIndividual.customerId || closeAccountIndividual.id}.`);
+    triggerToast(`Account closed for ${closeAccountIndividual.customerId || closeAccountIndividual.id}.`);
     setCloseAccountModalIndividual(null);
     setCloseReason('');
   };
@@ -480,108 +381,6 @@ export function IndividualListScreen({
         <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
         Not Opened
       </span>
-    );
-  };
-
-  const renderRequestBadge = (item: Individual) => {
-    const isApproved = item.requestStatus === 'Approved' || item.currentWorkflowStage === 'Approved';
-    const isRejected = item.requestStatus === 'Rejected' || item.currentWorkflowStage === 'Rejected';
-    const isResubmit = item.requestStatus === 'Resubmit' || item.currentWorkflowStage === 'Resubmit';
-    const isPending = item.requestStatus === 'Pending' || (!isApproved && !isRejected && !isResubmit);
-
-    const requestType = item.requestType || 'Registration';
-    // Reviewer after the dot (SR or Manager only): the current stage while in review, otherwise
-    // whoever last acted on it, since reject/resubmit overwrite the stage with the status word
-    const isReviewer = (role?: string): role is 'SR' | 'Manager' => role === 'SR' || role === 'Manager';
-    const reviewer = isReviewer(item.currentWorkflowStage)
-      ? item.currentWorkflowStage
-      : [...(item.authorizationHistory ?? [])].reverse().find((h) => isReviewer(h.role))?.role;
-
-    if (isApproved) {
-      return (
-        <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-          <StatusIcon status="Approved" className="mt-0.5" />
-          <div className="flex flex-col">
-            <span className="text-[13px] font-semibold text-slate-900 leading-tight">
-              Approved
-            </span>
-            <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
-              {requestType}
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    if (isPending) {
-      return (
-        <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-          <StatusIcon status="Pending" className="mt-0.5" />
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1 leading-tight">
-              <span className="text-[13px] font-semibold text-slate-900">
-                Pending
-              </span>
-              {reviewer && (
-                <>
-                  <span className="text-slate-400 font-semibold text-xs">·</span>
-                  <span className="text-slate-600 font-semibold text-xs">{reviewer}</span>
-                </>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
-              {requestType}
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    if (isRejected) {
-      return (
-        <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-          <StatusIcon status="Rejected" className="mt-0.5" />
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1 leading-tight">
-              <span className="text-[13px] font-semibold text-slate-900">
-                Rejected
-              </span>
-              {reviewer && (
-                <>
-                  <span className="text-slate-400 font-semibold text-xs">·</span>
-                  <span className="text-slate-600 font-semibold text-xs">{reviewer}</span>
-                </>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
-              {requestType}
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    // Resubmit state
-    return (
-      <div className="flex items-start gap-2.5 select-none text-left py-0.5">
-        <StatusIcon status="Resubmit" className="mt-0.5" />
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1 leading-tight">
-            <span className="text-[13px] font-semibold text-slate-900">
-              Resubmit
-            </span>
-            {reviewer && (
-              <>
-                <span className="text-slate-400 font-semibold text-xs">·</span>
-                <span className="text-slate-600 font-semibold text-xs">{reviewer}</span>
-              </>
-            )}
-          </div>
-          <span className="text-[11px] text-slate-500 font-normal leading-tight mt-0.5">
-            {requestType}
-          </span>
-        </div>
-      </div>
     );
   };
 
@@ -646,7 +445,7 @@ export function IndividualListScreen({
           <div>
             <h1 className="text-[26px] font-semibold tracking-tight text-slate-900">Individual Directory</h1>
             <p className="mt-1 text-xs text-slate-500">
-              Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
+              Manage individual client onboarding, document verification, and trading profiles.
             </p>
           </div>
 
@@ -734,6 +533,16 @@ export function IndividualListScreen({
               </div>
             </div>
 
+            <button
+              id="btn-individual-bulk-upload"
+              type="button"
+              onClick={onNavigateToBulkInsert}
+              className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-xl bg-white px-3.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:text-blue-600"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span>Bulk Upload</span>
+            </button>
+
             {/* Primary action: the only solid blue control */}
             <button
               id="btn-individual-add-new"
@@ -759,7 +568,7 @@ export function IndividualListScreen({
                 <button
                   key={tab.id}
                   type="button"
-                  id={`tab-status-${tab.id.toLowerCase()}`}
+                  id={`tab-status-${tab.id.toLowerCase().replace(' ', '-')}`}
                   onClick={() => setStatusTab(tab.id)}
                   className={cn(
                     'group relative inline-flex h-[30px] cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[13px] transition-colors',
@@ -891,11 +700,11 @@ export function IndividualListScreen({
                 onChange={setNationalityFilter}
               />
               <FilterSelect
-                id="filter-request-type"
-                label="Request Type"
-                value={requestTypeFilter}
-                options={REQUEST_TYPE_OPTIONS}
-                onChange={setRequestTypeFilter}
+                id="filter-profile-status"
+                label="Profile Status"
+                value={profileStatusFilter}
+                options={PROFILE_STATUS_OPTIONS}
+                onChange={setProfileStatusFilter}
               />
             </div>
 
@@ -923,24 +732,6 @@ export function IndividualListScreen({
           <table id="individual-data-table" className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                {canBulkApprove && (
-                  <th className="w-10 py-3 pl-4 pr-1">
-                    <input
-                      id="checkbox-individual-select-all"
-                      type="checkbox"
-                      checked={allSelected}
-                      ref={(el) => {
-                        if (el) el.indeterminate = selectedRows.length > 0 && !allSelected;
-                      }}
-                      onChange={toggleSelectAll}
-                      disabled={approvableRows.length === 0}
-                      aria-label="Select all pending requests"
-                      title="Select all pending requests"
-                      className={ROW_CHECKBOX}
-                    />
-                  </th>
-                )}
-
                 <SortableHeader label="Customer ID" sortKey="customerId" sort={sort} onSort={toggleSort} className="py-3 px-4 font-semibold text-slate-700 text-left" />
                 <SortableHeader label="Full Name (EN / KH)" sortKey="name" sort={sort} onSort={toggleSort} className="py-3 px-4 font-semibold text-slate-700 text-left" />
 
@@ -951,7 +742,6 @@ export function IndividualListScreen({
 
                 <SortableHeader label="Profile Status" sortKey="profileStatus" sort={sort} onSort={toggleSort} className="py-3 px-4" />
                 <SortableHeader label="Account Status" sortKey="accountStatus" sort={sort} onSort={toggleSort} className="py-3 px-4" />
-                <SortableHeader label="Request" sortKey="request" sort={sort} onSort={toggleSort} className="py-3 px-4 min-w-[160px] font-semibold text-slate-700 text-left" />
 
                 {/* Default Column: Action */}
                 <th className="py-3 px-4 text-right">Action</th>
@@ -973,23 +763,8 @@ export function IndividualListScreen({
                     key={item.id}
                     id={`individual-row-${item.id}`}
                     onContextMenu={(e) => rowMenu.openFromContextMenu(item.id, e)}
-                    className={cn('hover:bg-slate-50/75 transition-[background-color] group', (rowMenu.menu?.rowId === item.id || selectedIds.has(item.id)) && 'bg-slate-50/75')}
+                    className={cn('hover:bg-slate-50/75 transition-[background-color] group', rowMenu.menu?.rowId === item.id && 'bg-slate-50/75')}
                   >
-                    {canBulkApprove && (
-                      <td className="py-3.5 pl-4 pr-1">
-                        <input
-                          id={`checkbox-individual-${item.id}`}
-                          type="checkbox"
-                          checked={selectedIds.has(item.id)}
-                          onChange={() => toggleSelected(item.id)}
-                          disabled={!isApprovable(item)}
-                          aria-label={`Select ${item.customerId || item.id}`}
-                          title={isApprovable(item) ? undefined : 'Only pending requests can be approved'}
-                          className={ROW_CHECKBOX}
-                        />
-                      </td>
-                    )}
-
                     {/* Customer ID */}
                     <td className="py-3.5 px-4 font-mono font-semibold text-slate-700">
                       {item.customerId || item.id}
@@ -1041,11 +816,6 @@ export function IndividualListScreen({
                       {renderAccountStatusBadge(item.accountStatus)}
                     </td>
 
-                    {/* Request */}
-                    <td className="py-3.5 px-4">
-                      {renderRequestBadge(item)}
-                    </td>
-
                     {/* Action: three-dot menu; right-clicking the row opens the same menu */}
                     <td className="py-3.5 px-4 text-right">
                       <button
@@ -1071,25 +841,6 @@ export function IndividualListScreen({
 
       {rowMenu.menu && menuItem && (
         <RowActionMenu anchor={rowMenu.menu.anchor} actions={rowActions(menuItem)} onClose={rowMenu.close} />
-      )}
-
-      {selectedRows.length > 0 && !bulkApproving && (
-        <BulkApproveBar
-          idPrefix="individual"
-          count={selectedRows.length}
-          onClear={() => setSelectedIds(new Set())}
-          onApprove={() => setBulkApproving(true)}
-        />
-      )}
-
-      {bulkApproving && selectedRows.length > 0 && (
-        <BulkApproveDialog
-          idPrefix="individual"
-          count={selectedRows.length}
-          noun={['application', 'applications']}
-          onCancel={() => setBulkApproving(false)}
-          onConfirm={handleBulkApprove}
-        />
       )}
 
       {/* Customize Columns Modal */}
@@ -1226,200 +977,6 @@ export function IndividualListScreen({
                 </button>
               </div>
             </div>
-        </div>
-      )}
-
-      {/* Authorize Workflow Modal (CSO -> SR -> Manager) */}
-      {authModalIndividual && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-5 border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                <div>
-                  <h3 className="font-semibold text-slate-900 text-sm">
-                    Workflow Authorization & Sign-off
-                  </h3>
-                  <span className="text-[11px] text-slate-500 font-mono">
-                    {authModalIndividual.customerId || authModalIndividual.id} • {authModalIndividual.fullNameEN || authModalIndividual.firstName}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setAuthModalIndividual(null)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Workflow Progress visualization */}
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Workflow Pipeline: CSO → SR → Manager
-              </span>
-              <div className="flex items-center justify-between text-xs">
-                <div className={cn(
-                  'flex items-center gap-1 font-semibold',
-                  authModalIndividual.currentWorkflowStage === 'CSO' ? 'text-blue-600' : 'text-slate-700'
-                )}>
-                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">1</span>
-                  <span>CSO Entry</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-300" />
-                <div className={cn(
-                  'flex items-center gap-1 font-semibold',
-                  authModalIndividual.currentWorkflowStage === 'SR' ? 'text-blue-600' : 'text-slate-700'
-                )}>
-                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">2</span>
-                  <span>SR Review</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-300" />
-                <div className={cn(
-                  'flex items-center gap-1 font-semibold',
-                  authModalIndividual.currentWorkflowStage === 'Manager' ? 'text-blue-600' : 'text-slate-700'
-                )}>
-                  <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">3</span>
-                  <span>Manager Final</span>
-                </div>
-              </div>
-              <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200 flex items-center justify-between">
-                <span>Current Stage: <strong className="font-semibold text-slate-800">{authModalIndividual.currentWorkflowStage}</strong></span>
-                <span>Request Type: <strong className="font-semibold text-slate-800">{authModalIndividual.requestType}</strong></span>
-              </div>
-            </div>
-
-            {/* Role & Officer Acting */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Authorizer Role</label>
-                <select
-                  value={authRole}
-                  onChange={(e) => {
-                    const r = e.target.value as 'CSO' | 'SR' | 'Manager';
-                    setAuthRole(r);
-                    if (r === 'CSO') setAuthOfficer('Sophea Keo (CSO)');
-                    if (r === 'SR') setAuthOfficer('Dara Vong (SR)');
-                    if (r === 'Manager') setAuthOfficer('Vannak Lim (Manager)');
-                  }}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="CSO">CSO (Customer Service Officer)</option>
-                  <option value="SR">SR (Senior Representative)</option>
-                  <option value="Manager">Department Manager</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Officer Name</label>
-                <input
-                  type="text"
-                  value={authOfficer}
-                  onChange={(e) => setAuthOfficer(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Action Type: Authorize / Resubmit / Reject */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">Decision</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAuthActionType('authorize')}
-                  className={cn(
-                    'py-2 px-3 rounded-lg font-semibold text-xs border transition flex items-center justify-center gap-1.5',
-                    authActionType === 'authorize'
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  )}
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Authorize</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAuthActionType('resubmit')}
-                  className={cn(
-                    'py-2 px-3 rounded-lg font-semibold text-xs border transition flex items-center justify-center gap-1.5',
-                    authActionType === 'resubmit'
-                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  )}
-                >
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>Resubmit</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAuthActionType('reject')}
-                  className={cn(
-                    'py-2 px-3 rounded-lg font-semibold text-xs border transition flex items-center justify-center gap-1.5',
-                    authActionType === 'reject'
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  )}
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Reject</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Reason field (Mandatory for Resubmit or Reject) */}
-            {authActionType !== 'authorize' && (
-              <div>
-                <label className="block text-[11px] font-semibold text-rose-700 mb-1">
-                  Reason for {authActionType === 'resubmit' ? 'Resubmission' : 'Rejection'} *
-                </label>
-                <textarea
-                  rows={2}
-                  value={authReason}
-                  onChange={(e) => setAuthReason(e.target.value)}
-                  placeholder="State the exact discrepancy or missing paperwork for the audit trail..."
-                  className="w-full px-3 py-2 text-xs bg-rose-50/50 border border-rose-200 rounded-lg text-slate-800 placeholder-rose-300 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                />
-              </div>
-            )}
-
-            {/* General Comment */}
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                Internal Remarks & Compliance Comments
-              </label>
-              <textarea
-                rows={2}
-                value={authComment}
-                onChange={(e) => setAuthComment(e.target.value)}
-                placeholder="Optional notes to accompany this stage transition..."
-                className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-              <button
-                type="button"
-                onClick={() => setAuthModalIndividual(null)}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmitAuthorization}
-                className={cn(
-                  'px-4 py-2 text-xs font-semibold text-white rounded-lg transition shadow-xs',
-                  authActionType === 'authorize' ? 'bg-emerald-600 hover:bg-emerald-700' : authActionType === 'resubmit' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-rose-600 hover:bg-rose-700'
-                )}
-              >
-                {authActionType === 'authorize' ? 'Approve' : authActionType === 'resubmit' ? 'Resubmit' : 'Reject'}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1599,21 +1156,6 @@ function sortValue(item: Individual, key: string): SortValue {
     case 'securitiesKnowledge': return item.securitiesKnowledge;
     case 'profileStatus': return item.profileStatus;
     case 'accountStatus': return item.accountStatus || 'Not Opened';
-    case 'request': return item.requestStatus;
     default: return null;
   }
-}
-
-
-type ReviewStage = 'CSO' | 'SR' | 'Manager';
-
-/** Same reviewer the view dialog signs an approval with at each stage */
-const STAGE_OFFICER: Record<ReviewStage, string> = {
-  CSO: 'Sophea Keo (CSO)',
-  SR: 'Dara Vong (SR)',
-  Manager: 'Vannak Lim (Manager)',
-};
-
-function isApprovable(item: Individual) {
-  return item.requestStatus === 'Pending' && ['CSO', 'SR', 'Manager'].includes(item.currentWorkflowStage);
 }

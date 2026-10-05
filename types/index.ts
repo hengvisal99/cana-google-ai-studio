@@ -4,6 +4,7 @@ export type NavigationPage =
   | 'customer-360'
   | 'individual-list'
   | 'individual-insert'
+  | 'individual-bulk'
   | 'individual-update'
   | 'customer-type'
   | 'form-fields'
@@ -14,11 +15,9 @@ export type NavigationPage =
   | 'ipo-management'
   | 'tasks'
   | 'notifications'
-  | 'pipeline'
   | 'portfolio'
   | 'e-kyc'
   | 'performance'
-  | 'csx-live'
   | 'cases'
   | 'my-work';
 
@@ -38,12 +37,8 @@ export type KYCStatus = 'verified' | 'pending' | 'under_review' | 'rejected';
 export type RiskRating = 'low' | 'moderate' | 'high';
 export type IndividualCategory = 'Retail' | 'Wealth & Premier' | 'Corporate Officer' | 'Private Banking';
 
-export type RequestType = 'Registration' | 'Close Account';
-export type RequestStatus = 'Approved' | 'Resubmit' | 'Pending' | 'Rejected';
 export type ProfileStatus = 'Completed' | 'Incomplete';
 export type AccountStatus = 'Not Opened' | 'Active' | 'Closed';
-export type WorkflowRole = 'CSO' | 'SR' | 'Manager';
-export type WorkflowStage = 'CSO' | 'SR' | 'Manager' | 'Approved' | 'Rejected' | 'Resubmit' | 'Closed';
 
 export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
 export type MaritalStatus = 'Single' | 'Married' | 'Divorced' | 'Widowed';
@@ -67,21 +62,10 @@ export interface CustomerTypeRecord {
   customerId: string;
   typeId: CustomerTypeId;
   values: Record<string, CustomerTypeFieldValue>;
-  /** Registration / close-account workflow, for types that need approval */
-  approval?: CustomerTypeApproval;
   createdAt: string;
   updatedAt: string;
 }
 
-/** Same CSO → SR → Manager flow as a customer's registration and close account */
-export interface CustomerTypeApproval {
-  requestType: RequestType;
-  requestStatus: RequestStatus;
-  currentWorkflowStage: WorkflowStage;
-  history: AuthorizationTimelineItem[];
-  /** Set by a close-account request */
-  cancelledDate?: string;
-}
 export type EducationBackground = 'High School' | "Bachelor's" | "Master's" | 'Doctorate' | 'Professional' | 'Other';
 export type SecuritiesKnowledge = 'None' | 'Beginner' | 'Intermediate' | 'Advanced' | 'Professional';
 export type InvestmentExperience = '< 1 year' | '1 - 3 years' | '3 - 5 years' | '5+ years';
@@ -178,23 +162,9 @@ export interface InvestorIdInfo {
 export interface TradingAccountInfo {
   tradingAccountNumber: string;
   accountDate: string;
-  accountCheckedBy: string;
-  accountApprovedBy: string;
   email: string;
   currentAssignedSR: string;
   phoneNumber: string;
-}
-
-export interface AuthorizationTimelineItem {
-  id: string;
-  stage: string;
-  status: 'Approved' | 'Resubmit' | 'Pending' | 'Rejected' | 'Submitted' | 'Queue';
-  dateTime: string;
-  processedBy: string;
-  role: WorkflowRole;
-  comment?: string;
-  reason?: string;
-  requestType?: RequestType;
 }
 
 export interface CloseAccountInfo {
@@ -255,13 +225,9 @@ export interface Individual {
   investorIdInfo: InvestorIdInfo;
   tradingAccountInfo: TradingAccountInfo;
 
-  // Statuses & Workflow
+  // Statuses
   profileStatus: ProfileStatus;
   accountStatus: AccountStatus;
-  requestType: RequestType;
-  requestStatus: RequestStatus;
-  currentWorkflowStage: WorkflowStage;
-  authorizationHistory: AuthorizationTimelineItem[];
   closeAccountInfo?: CloseAccountInfo;
 
   // Compatibility fields
@@ -391,7 +357,7 @@ export type EnterpriseApp =
 // ─── Task & Reminder System ──────────────────────────────────────────────────
 export type TaskPriority = 'High' | 'Medium' | 'Low';
 export type TaskStatus = 'Open' | 'In Progress' | 'Done' | 'Overdue';
-export type TaskCategory = 'KYC Review' | 'IPO' | 'Customer Follow-up' | 'Compliance' | 'Approval' | 'Other';
+export type TaskCategory = 'KYC Review' | 'IPO' | 'Customer Follow-up' | 'Compliance' | 'Other';
 
 export interface Task {
   id: string;
@@ -415,7 +381,6 @@ export type NotificationCategory =
   | 'Document Expiry'
   | 'Investor ID Expiry'
   | 'KYC'
-  | 'Approval'
   | 'IPO'
   | 'Task'
   | 'System';
@@ -560,7 +525,7 @@ export interface CustomerCase {
 }
 
 // ─── Global Search ────────────────────────────────────────────────────────────
-export type SearchResultType = 'customer' | 'lead' | 'case' | 'task';
+export type SearchResultType = 'customer' | 'case' | 'task';
 
 export interface GlobalSearchResult {
   id: string;

@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -16,6 +14,7 @@ import {
   RotateCw,
   Search,
   X,
+  Lock,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -95,16 +94,15 @@ const SEARCH_FIELDS = [
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All', count: 18, icon: LayoutList, iconColor: 'text-blue-600' },
-  { id: 'Pending', label: 'Pending', count: 2, icon: Clock, iconColor: 'text-yellow-500' },
-  { id: 'Resubmit', label: 'Resubmit', count: 1, icon: AlertCircle, iconColor: 'text-orange-600' },
-  { id: 'Approved', label: 'Approved', count: 12, icon: CheckCircle2, iconColor: 'text-emerald-500' },
-  { id: 'Rejected', label: 'Rejected', count: 3, icon: AlertTriangle, iconColor: 'text-rose-500' },
+  { id: 'Active', label: 'Active', count: 13, icon: CheckCircle2, iconColor: 'text-emerald-500' },
+  { id: 'Not Opened', label: 'Not Opened', count: 3, icon: Clock, iconColor: 'text-slate-500' },
+  { id: 'Closed', label: 'Closed', count: 2, icon: Lock, iconColor: 'text-purple-500' },
 ];
 
 const GENDER_OPTIONS = ['Male', 'Female'];
 const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced'];
 const NATIONALITY_OPTIONS = ['Cambodian', 'British', 'Japanese', 'Singaporean'];
-const REQUEST_TYPE_OPTIONS = ['New Account', 'Update Profile', 'Close Account'];
+const PROFILE_STATUS_OPTIONS = ['Completed', 'Incomplete'];
 
 /* -------------------------------------------------------------------------- */
 /* Unchanged pieces, copied from the live directory                           */
@@ -262,7 +260,7 @@ export default function ResetFilterOptionsPage() {
   const [gender, setGender] = useState('Female');
   const [marital, setMarital] = useState('ALL');
   const [nationality, setNationality] = useState('British');
-  const [requestType, setRequestType] = useState('Close Account');
+  const [profileStatus, setProfileStatus] = useState('Incomplete');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchBy, setSearchBy] = useState('all');
   const [statusTab, setStatusTab] = useState('ALL');
@@ -272,7 +270,7 @@ export default function ResetFilterOptionsPage() {
     { id: 'gender', label: 'Gender', value: gender, set: setGender, options: GENDER_OPTIONS },
     { id: 'marital', label: 'Marital Status', value: marital, set: setMarital, options: MARITAL_OPTIONS },
     { id: 'nationality', label: 'Nationality', value: nationality, set: setNationality, options: NATIONALITY_OPTIONS },
-    { id: 'requestType', label: 'Request Type', value: requestType, set: setRequestType, options: REQUEST_TYPE_OPTIONS },
+    { id: 'profileStatus', label: 'Profile Status', value: profileStatus, set: setProfileStatus, options: PROFILE_STATUS_OPTIONS },
   ];
 
   const activeFilterCount = filters.filter((f) => f.value !== 'ALL').length;
@@ -283,7 +281,7 @@ export default function ResetFilterOptionsPage() {
     setGender('ALL');
     setMarital('ALL');
     setNationality('ALL');
-    setRequestType('ALL');
+    setProfileStatus('ALL');
     setSearchTerm('');
   };
 
@@ -413,7 +411,7 @@ export default function ResetFilterOptionsPage() {
             <div>
               <h2 className="text-[26px] font-semibold tracking-tight text-slate-900">Individual Directory</h2>
               <p className="mt-1 text-xs text-slate-500">
-                Manage individual client onboarding, document verification, authorization lifecycle, and trading
+                Manage individual client onboarding, document verification, and trading
                 profiles.
               </p>
             </div>

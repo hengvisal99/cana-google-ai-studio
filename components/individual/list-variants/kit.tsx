@@ -2,8 +2,6 @@
 
 import React from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
   CheckCircle2,
   Clock,
   Columns,
@@ -13,6 +11,7 @@ import {
   Globe,
   Heart,
   LayoutList,
+  Lock,
   RotateCw,
   Users,
 } from 'lucide-react';
@@ -23,11 +22,10 @@ import type { FilterKey, SearchByField, StatusKey } from './useDirectory';
 export type StatusTab = { id: StatusKey; label: string; icon: React.ElementType; color: string; solid: string };
 
 export const STATUS_TABS: StatusTab[] = [
-  { id: 'ALL', label: 'All Requests', icon: LayoutList, color: 'text-slate-500', solid: 'bg-slate-400' },
-  { id: 'Approved', label: 'Approved', icon: CheckCircle2, color: 'text-emerald-500', solid: 'bg-emerald-500' },
-  { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, color: 'text-amber-500', solid: 'bg-amber-500' },
-  { id: 'Pending', label: 'Pending', icon: Clock, color: 'text-blue-500', solid: 'bg-blue-500' },
-  { id: 'Rejected', label: 'Rejected', icon: AlertTriangle, color: 'text-rose-500', solid: 'bg-rose-500' },
+  { id: 'ALL', label: 'All Customers', icon: LayoutList, color: 'text-slate-500', solid: 'bg-slate-400' },
+  { id: 'Active', label: 'Active', icon: CheckCircle2, color: 'text-emerald-500', solid: 'bg-emerald-500' },
+  { id: 'Not Opened', label: 'Not Opened', icon: Clock, color: 'text-slate-500', solid: 'bg-slate-400' },
+  { id: 'Closed', label: 'Closed', icon: Lock, color: 'text-purple-500', solid: 'bg-purple-500' },
 ];
 
 export const TOOLBAR_ACTIONS = [
@@ -41,7 +39,7 @@ export const FIELD_ICONS: Record<FilterKey, React.ElementType> = {
   gender: Users,
   marital: Heart,
   nationality: Globe,
-  requestType: FileText,
+  profileStatus: FileText,
 };
 
 /** "All …" first, then the real options — the shape every field menu renders. */

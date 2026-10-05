@@ -34,6 +34,7 @@ import { DashboardScreen } from '@/components/dashboard/DashboardScreen';
 import { Customer360Screen } from '@/components/customer360/Customer360Screen';
 import { IndividualListScreen } from '@/components/individual/IndividualListScreen';
 import { IndividualInsertScreen } from '@/components/individual/IndividualInsertScreen';
+import { BulkRegistrationScreen } from '@/components/individual/BulkRegistrationScreen';
 import { IndividualUpdateScreen } from '@/components/individual/IndividualUpdateScreen';
 import { CustomerTypeScreen } from '@/components/customer/CustomerTypeScreen';
 import { FormFieldsScreen } from '@/components/form-fields/FormFieldsScreen';
@@ -43,16 +44,13 @@ import { ReportsScreen } from '@/components/reports/ReportsScreen';
 import { CustomerReportScreen } from '@/components/reports/CustomerReportScreen';
 import { IPOManagementScreen } from '@/components/ipo/IPOManagementScreen';
 import { TasksScreen } from '@/components/tasks/TasksScreen';
-import { PipelineScreen } from '@/components/pipeline/PipelineScreen';
 import { PortfolioScreen } from '@/components/portfolio/PortfolioScreen';
 import { SRPerformanceScreen } from '@/components/admin/SRPerformanceScreen';
-import { CSXLiveScreen } from '@/components/market/CSXLiveScreen';
 import { CasesScreen } from '@/components/cases/CasesScreen';
 import { MyWorkScreen } from '@/components/tasks/MyWorkScreen';
 import { GlobalSearch } from '@/components/shared/GlobalSearch';
 import type { CustomerCase, AppUserRole } from '@/types';
 import { INITIAL_CASES } from '@/lib/cases-data';
-import { INITIAL_LEADS } from '@/lib/pipeline-data';
 
 // Dialog Modal
 import { ViewIndividualDialog } from '@/components/shared/ViewIndividualDialog';
@@ -228,129 +226,24 @@ export default function Home() {
     }
   };
 
-  const handleAuthorizeIndividual = (
-    id: string,
-    action: 'authorize' | 'resubmit' | 'reject',
-    role: 'CSO' | 'SR' | 'Manager',
-    processedBy: string,
-    comment: string,
-    reason?: string
-  ) => {
-    setIndividuals((prev) =>
-      prev.map((ind) => {
-        if (ind.id !== id) return ind;
-
-        let nextStage = ind.currentWorkflowStage;
-        let nextStatus = ind.requestStatus;
-        let nextProfileStatus = ind.profileStatus;
-        let nextAccountStatus = ind.accountStatus;
-
-        const now = new Date();
-        const formattedDate = `${now.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
-        })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-
-        if (action === 'authorize') {
-          if (ind.currentWorkflowStage === 'CSO') {
-            nextStage = 'SR';
-            nextStatus = 'Pending';
-          } else if (ind.currentWorkflowStage === 'SR') {
-            nextStage = 'Manager';
-            nextStatus = 'Pending';
-          } else if (ind.currentWorkflowStage === 'Manager') {
-            nextStage = 'Approved';
-            nextStatus = 'Approved';
-            if (ind.requestType === 'Registration') {
-              nextProfileStatus = 'Completed';
-              nextAccountStatus = 'Active';
-            } else if (ind.requestType === 'Close Account') {
-              nextAccountStatus = 'Not Opened';
-            }
-          }
-        } else if (action === 'resubmit') {
-          nextStage = 'Resubmit';
-          nextStatus = 'Resubmit';
-        } else if (action === 'reject') {
-          nextStage = 'Rejected';
-          nextStatus = 'Rejected';
-        }
-
-        const newTimelineItem = {
-          id: `AUTH-${Date.now()}`,
-          requestType: ind.requestType,
-          stage: ind.requestType === 'Close Account'
-            ? `Close Account — ${role} ${action === 'authorize' ? 'Authorization' : action === 'resubmit' ? 'Resubmission Request' : 'Rejection'}`
-            : `${role} ${action === 'authorize' ? 'Authorization' : action === 'resubmit' ? 'Resubmission Request' : 'Rejection'}`,
-          status: action === 'authorize' ? ('Approved' as const) : action === 'resubmit' ? ('Resubmit' as const) : ('Rejected' as const),
-          dateTime: formattedDate,
-          processedBy,
-          role,
-          comment,
-          reason,
-        };
-
-        const updated = {
-          ...ind,
-          currentWorkflowStage: nextStage,
-          requestStatus: nextStatus,
-          profileStatus: nextProfileStatus,
-          accountStatus: nextAccountStatus,
-          authorizationHistory: [...ind.authorizationHistory, newTimelineItem],
-        };
-
-        if (viewDialogIndividual && viewDialogIndividual.id === id) {
-          setViewDialogIndividual(updated);
-        }
-
-        return updated;
-      })
-    );
-  };
-
   const handleCloseAccountIndividual = (
     id: string,
     closeDate: string,
     account: string,
-    reason: string,
-    processedBy: string
+    reason: string
   ) => {
     setIndividuals((prev) =>
       prev.map((ind) => {
         if (ind.id !== id) return ind;
 
-        const now = new Date();
-        const formattedDate = `${now.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
-        })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-
         const updated = {
           ...ind,
-          requestType: 'Close Account' as const,
-          requestStatus: 'Pending' as const,
-          currentWorkflowStage: 'SR' as const,
+          accountStatus: 'Closed' as const,
           closeAccountInfo: {
             closeDate,
             account,
             reason,
           },
-          authorizationHistory: [
-            ...ind.authorizationHistory,
-            {
-              id: `AUTH-${Date.now()}`,
-              requestType: 'Close Account' as const,
-              stage: 'Close Account Request — Initiated',
-              status: 'Submitted' as const,
-              dateTime: formattedDate,
-              processedBy,
-              role: 'CSO' as const,
-              comment: `Account closure initiated for ${account}.`,
-              reason,
-            },
-          ],
         };
 
         if (viewDialogIndividual && viewDialogIndividual.id === id) {
@@ -415,10 +308,10 @@ export default function Home() {
             individuals={individuals}
             onViewIndividual={handleViewIndividual}
             onNavigateToInsert={handleNavigateToInsert}
+            onNavigateToBulkInsert={() => setCurrentPage('individual-bulk')}
             onNavigateToUpdate={handleNavigateToUpdate}
             onNavigateToCustomer360={handleNavigateToCustomer360}
             onDeleteIndividual={handleDeleteIndividual}
-            onAuthorizeIndividual={handleAuthorizeIndividual}
             onCloseAccountIndividual={handleCloseAccountIndividual}
             onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
             customerTypeRecordIds={customerTypeRecords.map((record) => record.id)}
@@ -441,6 +334,16 @@ export default function Home() {
           />
         );
 
+      case 'individual-bulk':
+        return (
+          <BulkRegistrationScreen
+            individuals={individuals}
+            onBack={() => setCurrentPage('individual-list')}
+            onRegister={(records) => setIndividuals((prev) => [...records, ...prev])}
+            onViewDirectory={() => setCurrentPage('individual-list')}
+          />
+        );
+
       case 'individual-update':
         return updatingIndividual ? (
           <IndividualUpdateScreen
@@ -456,10 +359,10 @@ export default function Home() {
             individuals={individuals}
             onViewIndividual={handleViewIndividual}
             onNavigateToInsert={handleNavigateToInsert}
+            onNavigateToBulkInsert={() => setCurrentPage('individual-bulk')}
             onNavigateToUpdate={handleNavigateToUpdate}
             onNavigateToCustomer360={handleNavigateToCustomer360}
             onDeleteIndividual={handleDeleteIndividual}
-            onAuthorizeIndividual={handleAuthorizeIndividual}
             onCloseAccountIndividual={handleCloseAccountIndividual}
             onSaveCustomerTypeRecord={handleSaveCustomerTypeRecord}
             customerTypeRecordIds={customerTypeRecords.map((record) => record.id)}
@@ -509,11 +412,6 @@ export default function Home() {
           />
         );
         
-      case 'pipeline':
-        return (
-          <PipelineScreen onNavigate={handleNavigate} onConvertLead={handleNavigateToInsert} />
-        );
-        
       case 'portfolio':
         return (
           <PortfolioScreen />
@@ -525,11 +423,6 @@ export default function Home() {
           <SRPerformanceScreen />
         );
         
-      case 'csx-live':
-        return (
-          <CSXLiveScreen />
-        );
-
       case 'cases':
         return (
           <CasesScreen
@@ -584,7 +477,6 @@ export default function Home() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         individuals={individuals}
-        leads={INITIAL_LEADS}
         cases={cases}
         tasks={tasks}
         onNavigate={handleNavigate}
@@ -600,8 +492,6 @@ export default function Home() {
         onClose={() => setIsViewDialogOpen(false)}
         onNavigateToUpdate={handleNavigateToUpdate}
         onNavigateToCustomer360={handleNavigateToCustomer360}
-        onAuthorizeIndividual={handleAuthorizeIndividual}
-        onCloseAccountIndividual={handleCloseAccountIndividual}
       />
     </>
   );

@@ -43,11 +43,9 @@ import { Customer360SummarySection } from './Customer360SummarySection';
 import { Customer360ProfileHeader } from './Customer360ProfileHeader';
 
 // Customer 360 scope: an account is "opened" only when it is Active or Closed.
-const isActiveAccount = (ind: Individual) =>
-  ind.accountStatus === 'Active' || (!ind.accountStatus && ind.requestStatus === 'Approved');
+const isActiveAccount = (ind: Individual) => ind.accountStatus === 'Active';
 
-const isClosedAccount = (ind: Individual) =>
-  ind.accountStatus === 'Closed' || ind.requestType === 'Close Account';
+const isClosedAccount = (ind: Individual) => ind.accountStatus === 'Closed';
 
 // Remaining-days tone: rose when about to lapse, amber when renewal is due,
 // green when comfortably valid.
@@ -432,7 +430,7 @@ export function Customer360Screen({
             <div className="p-2.5 space-y-2.5 bg-slate-50/50 max-h-[calc(100vh-290px)] min-h-[460px] lg:max-h-none lg:min-h-0 lg:flex-1 overflow-y-auto c360-scroll c360-scroll-sidebar">
               {filteredCustomers.map((ind) => {
                 const isSelected = ind.id === activeIndividual.id;
-                const status = simulatedAccountStatus[ind.id] || ind.accountStatus || (ind.requestStatus === 'Approved' ? 'Active' : 'Not Opened');
+                const status = simulatedAccountStatus[ind.id] || ind.accountStatus || 'Not Opened';
                 const portVal = ind.totalDeposits > 0 ? ind.totalDeposits : 125000;
 
                 return (
@@ -937,8 +935,8 @@ export function Customer360Screen({
                           </span>
 
                           {/* Activity, then its qualifier inline: the reference id
-                              for product registrations, or the approver's role for
-                              the onboarding steps, which carry no reference. */}
+                              for product registrations, or the registering role for
+                              the onboarding step, which carries no reference. */}
                           <h4 className="mt-0.5 text-[13px] font-medium text-slate-900">
                             {act.activity}
                             {(act.referenceId || act.role) && (

@@ -10,7 +10,6 @@ import {
   type SegmentTone,
 } from '@/lib/customer-types';
 import type { CustomerTypeFieldValue, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
-import type { ApprovalAction } from '@/lib/customer-type-approval';
 import { customerName } from '../CustomerTypeForm';
 
 export interface CustomerTypeViewProps {
@@ -23,8 +22,6 @@ export interface CustomerTypeViewProps {
   onClose: () => void;
   /** Render inline (scratch page) instead of as a modal overlay */
   embedded?: boolean;
-  /** Approve / resubmit / reject a record awaiting review (types with requiresApproval) */
-  onDecide?: (record: CustomerTypeRecord, action: ApprovalAction) => void;
 }
 
 /** Active tab, the customer, and their records per type */

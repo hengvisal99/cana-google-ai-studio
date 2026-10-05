@@ -186,24 +186,5 @@ export function buildComplianceNotifications(individuals: Individual[]): AppNoti
     });
   });
 
-  const pending = individuals.filter(
-    (i) => i.requestStatus === 'Pending' && i.currentWorkflowStage !== 'Approved'
-  );
-  pending.slice(0, 5).forEach((ind, i) => {
-    notes.push({
-      id: `notif-approval-${i}`,
-      type: 'info',
-      category: 'Approval',
-      title: 'Approval Pending',
-      message: `${ind.fullNameEN ?? ind.givenNameEN}'s ${ind.requestType} is waiting at ${ind.currentWorkflowStage} stage.`,
-      relatedCustomerId: ind.id,
-      relatedCustomerName: ind.fullNameEN ?? ind.givenNameEN,
-      isRead: false,
-      createdAt: now,
-      actionLabel: 'View Customer',
-      actionPage: 'individual-list',
-    });
-  });
-
   return notes;
 }

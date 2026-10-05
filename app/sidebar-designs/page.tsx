@@ -229,8 +229,8 @@ function ContentPane({ canvas, activeId }: { canvas: string; activeId: string })
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             { label: 'Total customers', value: '12,480', delta: '+4.2%' },
-            { label: 'Pending review', value: '18', delta: '+3' },
-            { label: 'Approved today', value: '96', delta: '+12%' },
+            { label: 'New this week', value: '18', delta: '+3' },
+            { label: 'Active accounts', value: '96', delta: '+12%' },
           ].map((kpi) => (
             <div key={kpi.label} className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{kpi.label}</p>

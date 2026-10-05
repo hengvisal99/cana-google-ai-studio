@@ -1,6 +1,6 @@
 ﻿'use client';
 import React, { useState, useMemo } from 'react';
-import { BarChart3, FileDown, Users, UserCheck, UserPlus, Calendar, Search, Filter, ChevronDown, Printer, RefreshCw, TrendingUp, Activity, Shield, Layers, CheckCircle2 } from 'lucide-react';
+import { BarChart3, FileDown, Users, UserCheck, UserPlus, Calendar, Search, Filter, ChevronDown, Printer, RefreshCw, TrendingUp, Shield, Layers, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Individual, CustomerTypeRecord } from '@/types';
 
@@ -9,7 +9,7 @@ interface ReportsScreenProps {
   customerTypeRecords: CustomerTypeRecord[];
 }
 
-type ReportTab = 'customer' | 'kyc' | 'product' | 'activity';
+type ReportTab = 'customer' | 'kyc' | 'product';
 
 function exportCSV(filename: string, headers: string[], rows: (string|number)[][]) {
   const lines = [headers.join(','), ...rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))];
@@ -43,7 +43,6 @@ export function ReportsScreen({ individuals, customerTypeRecords }: ReportsScree
     { id: 'customer' as const, label: 'Customer Report', icon: Users },
     { id: 'kyc'      as const, label: 'KYC / Risk',      icon: Shield },
     { id: 'product'  as const, label: 'Product Adoption',icon: Layers },
-    { id: 'activity' as const, label: 'Activity Log',    icon: Activity },
   ];
 
   const handleExportCustomer = () => {
@@ -176,26 +175,6 @@ export function ReportsScreen({ individuals, customerTypeRecords }: ReportsScree
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-
-          {activeTab==='activity'&&(
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-slate-100">{['Customer','Request Type','Status','Current Stage','Last Updated','SR'].map(h=><th key={h} className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider pb-3 pr-4">{h}</th>)}</tr></thead>
-                <tbody className="divide-y divide-slate-50">
-                  {individuals.filter(i=>i.authorizationHistory?.length>0).slice(0,50).map(ind=>(
-                    <tr key={ind.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 pr-4"><p className="font-semibold text-slate-800">{ind.fullNameEN||ind.givenNameEN}</p><p className="text-xs text-slate-400">{ind.id}</p></td>
-                      <td className="py-3 pr-4 text-slate-600 text-xs">{ind.requestType}</td>
-                      <td className="py-3 pr-4"><span className={cn('px-2.5 py-1 rounded-lg text-xs font-semibold',ind.requestStatus==='Approved'?'bg-emerald-100 text-emerald-700':ind.requestStatus==='Rejected'?'bg-rose-100 text-rose-700':ind.requestStatus==='Resubmit'?'bg-orange-100 text-orange-700':'bg-amber-100 text-amber-700')}>{ind.requestStatus}</span></td>
-                      <td className="py-3 pr-4 text-slate-600 text-xs">{ind.currentWorkflowStage}</td>
-                      <td className="py-3 pr-4 text-slate-400 text-xs">{ind.authorizationHistory?.[ind.authorizationHistory.length-1]?.dateTime||'—'}</td>
-                      <td className="py-3 pr-4 text-slate-500 text-xs">{ind.tradingAccountInfo?.currentAssignedSR||'—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
         </div>

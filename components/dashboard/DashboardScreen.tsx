@@ -397,9 +397,6 @@ export function DashboardScreen({
 
   // ── Command Centre data ─────────────────────────────────────────────────────
   const briefing = useMemo(() => {
-    const pendingApprovals = individuals.filter(
-      (i) => i.requestStatus === 'Pending' && i.currentWorkflowStage !== 'Approved'
-    );
     const today = new Date();
     const overdueTasks = tasks.filter((t) => {
       if (t.status === 'Done') return false;
@@ -422,11 +419,10 @@ export function DashboardScreen({
       const daysLeft = isValid(closeDate) ? differenceInDays(closeDate, today) : null;
       return { ...ipo, daysLeft };
     });
-    return { pendingApprovals, overdueTasks, dueTodayTasks, openHighTasks, criticalExpiries, openIpos };
+    return { overdueTasks, dueTodayTasks, openHighTasks, criticalExpiries, openIpos };
   }, [individuals, tasks]);
 
   const totalUrgent =
-    briefing.pendingApprovals.length +
     briefing.overdueTasks.length +
     briefing.criticalExpiries.length;
 

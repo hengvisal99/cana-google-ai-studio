@@ -203,48 +203,14 @@ function buildCustomer(seed: CustomerSeed): Individual {
     tradingAccountInfo: {
       tradingAccountNumber: `TRD-${String(100000 + seed.seq * 9137).slice(0, 6)}`,
       accountDate: seed.createdAt,
-      accountCheckedBy: 'Dara Vong (SR)',
-      accountApprovedBy: seed.relationshipManager,
       email,
       currentAssignedSR: 'Dara Vong (SR)',
       phoneNumber: seed.mobile,
     },
 
-    // Statuses & Workflow
+    // Statuses
     profileStatus: 'Completed',
     accountStatus: seed.accountStatus,
-    requestType: isClosed ? 'Close Account' : 'Registration',
-    requestStatus: 'Approved',
-    currentWorkflowStage: isClosed ? 'Closed' : 'Approved',
-    authorizationHistory: [
-      {
-        id: `AUTH-${n}-1`,
-        stage: 'CSO',
-        status: 'Submitted',
-        dateTime: `${seed.createdAt} 09:30`,
-        processedBy: 'Sophal Kim',
-        role: 'CSO',
-        comment: 'Documents collected and verified at branch.',
-      },
-      {
-        id: `AUTH-${n}-2`,
-        stage: 'SR',
-        status: 'Approved',
-        dateTime: `${seed.createdAt} 14:05`,
-        processedBy: 'Dara Vong',
-        role: 'SR',
-        comment: 'KYC screening cleared.',
-      },
-      {
-        id: `AUTH-${n}-3`,
-        stage: 'Manager',
-        status: 'Approved',
-        dateTime: `${seed.createdAt} 16:40`,
-        processedBy: seed.relationshipManager,
-        role: 'Manager',
-        comment: isClosed ? 'Account opened; later closed at client request.' : 'Trading account activated.',
-      },
-    ],
     ...(isClosed && {
       closeAccountInfo: {
         closeDate: `${openedYear + 2}-06-30`,

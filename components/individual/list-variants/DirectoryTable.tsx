@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Check, Clock, X, MoreVertical, Eye, Edit3, Lock, Trash2, FileText, Tags, Mail } from 'lucide-react';
+import { MoreVertical, Eye, Edit3, Lock, Trash2, FileText, Tags, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AccountStatus, Individual } from '@/types';
 import { RowActionMenu, useRowActionMenu, type RowAction } from '@/components/shared/RowActionMenu';
@@ -111,14 +111,13 @@ export function DirectoryTable({
               <SortableHeader label="Full Name (EN / KH)" sortKey="name" sort={sort} onSort={toggleSort} className={cn('px-4 py-3 text-left font-semibold', s.headStrong)} />
               <SortableHeader label="Profile Status" sortKey="profileStatus" sort={sort} onSort={toggleSort} className="px-4 py-3" />
               <SortableHeader label="Account Status" sortKey="accountStatus" sort={sort} onSort={toggleSort} className="px-4 py-3" />
-              <SortableHeader label="Request" sortKey="request" sort={sort} onSort={toggleSort} className={cn('min-w-[160px] px-4 py-3 text-left font-semibold', s.headStrong)} />
               <th className="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
           <tbody className={s.body}>
             {sortedRows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400">
+                <td colSpan={5} className="py-12 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FileText className="h-8 w-8 text-slate-300" />
                     <p className="font-semibold text-slate-600">No record found</p>
@@ -167,10 +166,6 @@ export function DirectoryTable({
                     <AccountStatusBadge status={item.accountStatus} />
                   </td>
 
-                  <td className="px-4 py-3.5">
-                    <RequestBadge item={item} />
-                  </td>
-
                   <td className="px-4 py-3.5 text-right">
                     <button
                       type="button"
@@ -200,7 +195,6 @@ function sortValue(item: Individual, key: string): SortValue {
     case 'name': return item.fullNameEN || `${item.firstName} ${item.lastName}`;
     case 'profileStatus': return item.profileStatus;
     case 'accountStatus': return item.accountStatus || 'Not Opened';
-    case 'request': return item.requestStatus;
     default: return null;
   }
 }
@@ -251,43 +245,5 @@ function AccountStatusBadge({ status }: { status?: AccountStatus }) {
       <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
       Not Opened
     </span>
-  );
-}
-
-function RequestBadge({ item }: { item: Individual }) {
-  const isApproved = item.requestStatus === 'Approved' || item.currentWorkflowStage === 'Approved';
-  const isRejected = item.requestStatus === 'Rejected' || item.currentWorkflowStage === 'Rejected';
-  const isResubmit = item.requestStatus === 'Resubmit' || item.currentWorkflowStage === 'Resubmit';
-  const isPending = item.requestStatus === 'Pending' || (!isApproved && !isRejected && !isResubmit);
-
-  const requestType = item.requestType || 'Registration';
-  const stage = item.currentWorkflowStage || 'SR';
-
-  const [Icon, iconClass, label, showStage] = isApproved
-    ? [Check, 'text-emerald-600', 'Approved', false]
-    : isPending
-      ? [Clock, 'text-amber-600', 'Pending', true]
-      : isRejected
-        ? [X, 'text-rose-600', 'Rejected', true]
-        : [Clock, 'text-amber-600', 'Resubmit', true];
-
-  return (
-    <div className="flex select-none items-start gap-2.5 py-0.5 text-left">
-      <div className="mt-0.5 shrink-0">
-        <Icon className={cn('h-4 w-4', iconClass)} strokeWidth={isApproved || isRejected ? 2.5 : 2.2} />
-      </div>
-      <div className="flex flex-col">
-        <div className="flex items-center gap-1 leading-tight">
-          <span className="text-[13px] font-semibold text-slate-900">{label}</span>
-          {showStage && (
-            <>
-              <span className="text-xs font-semibold text-slate-400">·</span>
-              <span className="text-xs font-semibold text-slate-600">{stage}</span>
-            </>
-          )}
-        </div>
-        <span className="mt-0.5 text-[11px] font-normal leading-tight text-slate-500">{requestType}</span>
-      </div>
-    </div>
   );
 }

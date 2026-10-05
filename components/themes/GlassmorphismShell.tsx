@@ -11,7 +11,6 @@ import {
   Menu,
   ChevronDown,
   Compass,
-  Workflow,
   Settings,
   ShieldCheck,
   BarChart3,
@@ -20,7 +19,6 @@ import {
   Briefcase,
   ScanFace,
   Award,
-  Globe,
   Search,
   MessageSquare,
   Sparkles,
@@ -102,16 +100,15 @@ export function GlassmorphismShell({
   const scrollbarWidth = useScrollbarWidth(mainRef);
 
   const isCrmPage =
-    currentPage === 'pipeline' ||
     currentPage === 'individual-list' ||
     currentPage === 'individual-insert' ||
+    currentPage === 'individual-bulk' ||
     currentPage === 'individual-update' ||
     currentPage === 'customer-type' ||
     currentPage === 'customer-360';
 
   const isTradingPage =
     currentPage === 'portfolio' ||
-    currentPage === 'csx-live' ||
     currentPage === 'ipo-management';
 
   const isRiskPage =
@@ -217,7 +214,7 @@ export function GlassmorphismShell({
                   id="glass-nav-crm"
                   type="button"
                   onClick={() =>
-                    sidebarCollapsed ? onNavigate('pipeline') : setCrmMenuOpen(!crmMenuOpen)
+                    sidebarCollapsed ? onNavigate('individual-list') : setCrmMenuOpen(!crmMenuOpen)
                   }
                   aria-expanded={!sidebarCollapsed && crmMenuOpen}
                   className={cn(
@@ -240,7 +237,6 @@ export function GlassmorphismShell({
                 {!sidebarCollapsed && crmMenuOpen && (
                   <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
                     {[
-                      { label: 'Leads Pipeline', page: 'pipeline' as NavigationPage, icon: Workflow },
                       { label: 'Customers', page: 'individual-list' as NavigationPage, icon: User },
                       { label: 'Customer Product', page: 'customer-type' as NavigationPage, icon: Tags },
                       { label: 'Customer 360', page: 'customer-360' as NavigationPage, icon: Users },
@@ -252,12 +248,12 @@ export function GlassmorphismShell({
                         onClick={() => onNavigate(item.page)}
                         className={cn(
                           'relative w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left font-semibold transition-all duration-200',
-                          (currentPage === item.page || (item.page === 'individual-list' && (currentPage === 'individual-insert' || currentPage === 'individual-update')))
+                          (currentPage === item.page || (item.page === 'individual-list' && (currentPage === 'individual-insert' || currentPage === 'individual-bulk' || currentPage === 'individual-update')))
                             ? 'bg-blue-50 text-blue-700'
                             : 'text-slate-500 hover:text-slate-900 hover:bg-white/70'
                         )}
                       >
-                        {(currentPage === item.page || (item.page === 'individual-list' && (currentPage === 'individual-insert' || currentPage === 'individual-update'))) && (
+                        {(currentPage === item.page || (item.page === 'individual-list' && (currentPage === 'individual-insert' || currentPage === 'individual-bulk' || currentPage === 'individual-update'))) && (
                           <span className="absolute -left-[13px] h-4 w-[3px] rounded-full bg-blue-600" />
                         )}
                         <item.icon className="w-3.5 h-3.5 shrink-0" />
@@ -296,7 +292,6 @@ export function GlassmorphismShell({
                   <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
                     {[
                       { label: 'Portfolio', page: 'portfolio' as NavigationPage, icon: Briefcase },
-                      { label: 'CSX Live Market', page: 'csx-live' as NavigationPage, icon: Globe },
                       { label: 'IPO Management', page: 'ipo-management' as NavigationPage, icon: TrendingUp },
                     ].map((item) => (
                       <button
@@ -346,7 +341,7 @@ export function GlassmorphismShell({
                   <div className="ml-5.5 space-y-1 border-l border-slate-200/80 pl-3">
                     {[
                       { label: 'My Work', page: 'my-work' as NavigationPage, icon: Sparkles },
-                      { label: 'Approval Tasks', page: 'tasks' as NavigationPage, icon: CheckSquare },
+                      { label: 'Tasks', page: 'tasks' as NavigationPage, icon: CheckSquare },
                       { label: 'Customer Cases', page: 'cases' as NavigationPage, icon: MessageSquare, badge: openCasesCount > 0 ? `${openCasesCount}` : undefined },
                       { label: 'Compliance & AML', page: 'compliance' as NavigationPage, icon: ShieldCheck },
                     ].map((item) => (

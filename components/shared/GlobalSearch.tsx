@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, X, User, MessageSquare, CheckSquare, TrendingUp, ArrowRight, Clock, Slash } from 'lucide-react';
+import { Search, X, User, MessageSquare, CheckSquare, ArrowRight, Clock, Slash } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Individual, Lead, CustomerCase, Task, GlobalSearchResult, NavigationPage } from '@/types';
+import type { Individual, CustomerCase, Task, GlobalSearchResult, NavigationPage } from '@/types';
 
 interface GlobalSearchProps {
   isOpen: boolean;
   onClose: () => void;
   individuals: Individual[];
-  leads: Lead[];
   cases: CustomerCase[];
   tasks: Task[];
   onNavigate: (page: NavigationPage) => void;
@@ -18,7 +17,6 @@ interface GlobalSearchProps {
 
 const TYPE_CONFIG: Record<GlobalSearchResult['type'], { icon: React.ElementType; cls: string; label: string }> = {
   customer: { icon: User,           cls: 'bg-blue-100 text-blue-600',    label: 'Customer' },
-  lead:     { icon: TrendingUp,     cls: 'bg-emerald-100 text-emerald-600', label: 'Lead' },
   case:     { icon: MessageSquare,  cls: 'bg-purple-100 text-purple-600', label: 'Case' },
   task:     { icon: CheckSquare,    cls: 'bg-amber-100 text-amber-600',   label: 'Task' },
 };
@@ -29,7 +27,6 @@ export function GlobalSearch({
   isOpen,
   onClose,
   individuals,
-  leads,
   cases,
   tasks,
   onNavigate,
@@ -93,26 +90,6 @@ export function GlobalSearch({
       }
     });
 
-    // Leads
-    leads.forEach(lead => {
-      if (
-        lead.name.toLowerCase().includes(q) ||
-        lead.phone.includes(q) ||
-        (lead.email || '').toLowerCase().includes(q) ||
-        lead.assignedSR.toLowerCase().includes(q)
-      ) {
-        out.push({
-          id: `lead-${lead.id}`,
-          type: 'lead',
-          title: lead.name,
-          subtitle: `${lead.phone} · ${lead.stage} · SR: ${lead.assignedSR}`,
-          badge: lead.stage,
-          navigateTo: 'pipeline',
-          entityId: lead.id,
-        });
-      }
-    });
-
     // Cases
     cases.forEach(c => {
       if (
@@ -153,7 +130,7 @@ export function GlobalSearch({
     });
 
     return out.slice(0, 12);
-  }, [query, individuals, leads, cases, tasks]);
+  }, [query, individuals, cases, tasks]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, results.length - 1)); }
@@ -186,7 +163,7 @@ export function GlobalSearch({
             value={query}
             onChange={e => { setQuery(e.target.value); setActiveIdx(0); }}
             onKeyDown={handleKeyDown}
-            placeholder="Search customers, leads, cases, tasks..."
+            placeholder="Search customers, cases, tasks..."
             className="flex-1 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none bg-transparent"
             autoComplete="off"
           />
@@ -231,7 +208,7 @@ export function GlobalSearch({
           {query && results.length > 0 && (
             <div className="py-2">
               {/* Group by type */}
-              {(['customer', 'lead', 'case', 'task'] as GlobalSearchResult['type'][]).map(type => {
+              {(['customer', 'case', 'task'] as GlobalSearchResult['type'][]).map(type => {
                 const group = results.filter(r => r.type === type);
                 if (group.length === 0) return null;
                 const cfg = TYPE_CONFIG[type];

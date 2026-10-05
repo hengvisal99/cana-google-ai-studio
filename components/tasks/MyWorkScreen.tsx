@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import {
   CheckSquare, AlertTriangle, Clock, Calendar, FileText,
-  ShieldCheck, MessageSquare, User, ArrowRight, CheckCircle2,
+  ShieldCheck, MessageSquare, ArrowRight, CheckCircle2,
   Circle, Activity, Zap, Sparkles, Bell, TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,12 +83,6 @@ export function MyWorkScreen({
   const breachedCases = useMemo(() =>
     cases.filter(c => c.slaBreached && c.status !== 'Closed' && c.status !== 'Resolved'), [cases]);
 
-  const pendingApprovals = useMemo(() =>
-    individuals.filter(ind =>
-      ind.requestStatus === 'Pending' &&
-      (ind.currentWorkflowStage === 'Manager' || ind.currentWorkflowStage === 'SR')
-    ), [individuals]);
-
   const kycPending = useMemo(() =>
     individuals.filter(ind => ind.kycStatus === 'pending' || ind.kycStatus === 'under_review'), [individuals]);
 
@@ -119,12 +113,11 @@ export function MyWorkScreen({
           </div>
           <Sparkles className="w-8 h-8 text-blue-300 opacity-70" />
         </div>
-        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[
             { label: 'Tasks Today', value: todayTasks.length, alert: todayTasks.length > 0 },
             { label: 'Overdue Tasks', value: overdueTasks.length, alert: overdueTasks.length > 0 },
             { label: 'Open Cases', value: openCases.length, alert: breachedCases.length > 0 },
-            { label: 'Pending Approvals', value: pendingApprovals.length, alert: pendingApprovals.length > 3 },
           ].map(({ label, value, alert }) => (
             <div key={label} className={cn('rounded-2xl px-4 py-3', alert && value > 0 ? 'bg-white/20' : 'bg-white/10')}>
               <p className="text-blue-100 text-xs font-medium">{label}</p>
@@ -262,45 +255,6 @@ export function MyWorkScreen({
                 <button onClick={() => onNavigate('cases')}
                   className="text-xs text-blue-600 font-semibold w-full text-center py-2 hover:bg-blue-50 rounded-xl transition">
                   + {openCases.length - 5} more open cases →
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Pending Approvals */}
-        <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
-          <SectionHeader title="Pending Approvals" count={pendingApprovals.length} icon={ShieldCheck} tone="amber" />
-          {pendingApprovals.length === 0 ? (
-            <div className="text-center py-8">
-              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">No pending approvals.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {pendingApprovals.slice(0, 5).map(ind => {
-                const name = ind.fullNameEN || `${ind.givenNameEN} ${ind.surnameEN}`;
-                return (
-                  <button key={ind.id} onClick={() => {
-                    onSelectCustomer?.(ind.id);
-                    onNavigate('individual-list');
-                  }}
-                    className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-amber-50 transition text-left group">
-                    <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <User className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{name}</p>
-                      <p className="text-xs text-amber-600 font-medium">{ind.requestType} · {ind.currentWorkflowStage} stage</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 shrink-0 mt-1 transition" />
-                  </button>
-                );
-              })}
-              {pendingApprovals.length > 5 && (
-                <button onClick={() => onNavigate('individual-list')}
-                  className="text-xs text-blue-600 font-semibold w-full text-center py-2 hover:bg-blue-50 rounded-xl transition">
-                  + {pendingApprovals.length - 5} more approvals →
                 </button>
               )}
             </div>

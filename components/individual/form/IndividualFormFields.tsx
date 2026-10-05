@@ -123,8 +123,6 @@ export type IndividualFormValues = {
   investorStatus: 'Normal' | 'VIP' | 'Restricted';
   tradingAccountNumber: string;
   accountDate: string;
-  accountCheckedBy: string;
-  accountApprovedBy: string;
   currentAssignedSR: string;
 };
 
@@ -218,8 +216,6 @@ export function createEmptyFormValues(): IndividualFormValues {
     investorStatus: 'Normal',
     tradingAccountNumber: '',
     accountDate: '2026-09-15',
-    accountCheckedBy: 'Dara Vong (SR)',
-    accountApprovedBy: 'Vannak Lim (Manager)',
     currentAssignedSR: 'Dara Vong (SR)',
   };
 }
@@ -318,8 +314,6 @@ export function formValuesFromIndividual(individual: Individual): IndividualForm
     investorStatus: individual.investorIdInfo?.customerStatus || 'Normal',
     tradingAccountNumber: individual.tradingAccountInfo?.tradingAccountNumber || '',
     accountDate: individual.tradingAccountInfo?.accountDate || '2026-09-15',
-    accountCheckedBy: individual.tradingAccountInfo?.accountCheckedBy || 'Dara Vong (SR)',
-    accountApprovedBy: individual.tradingAccountInfo?.accountApprovedBy || 'Vannak Lim (Manager)',
     currentAssignedSR: individual.tradingAccountInfo?.currentAssignedSR || 'Dara Vong (SR)',
   };
 }
@@ -335,6 +329,7 @@ export function IndividualFormFields({
   errors,
   documents,
   setDocuments,
+  wide = false,
 }: {
   step: FormStepKey;
   values: IndividualFormValues;
@@ -342,8 +337,11 @@ export function IndividualFormFields({
   errors: { [key: string]: string };
   documents: SupportingDocument[];
   setDocuments: React.Dispatch<React.SetStateAction<SupportingDocument[]>>;
+  /** Four fields per row instead of three — for wider hosts like the bulk edit dialog. */
+  wide?: boolean;
 }) {
   const activeTab = step;
+  const grid3 = wide ? 'md:grid-cols-4' : 'md:grid-cols-3';
   const {
     surnameEN,
     givenNameEN,
@@ -432,8 +430,6 @@ export function IndividualFormFields({
     investorStatus,
     tradingAccountNumber,
     accountDate,
-    accountCheckedBy,
-    accountApprovedBy,
     currentAssignedSR,
   } = values;
 
@@ -524,8 +520,6 @@ export function IndividualFormFields({
   const setInvestorStatus = (value: IndividualFormValues['investorStatus']) => setValue('investorStatus', value);
   const setTradingAccountNumber = (value: IndividualFormValues['tradingAccountNumber']) => setValue('tradingAccountNumber', value);
   const setAccountDate = (value: IndividualFormValues['accountDate']) => setValue('accountDate', value);
-  const setAccountCheckedBy = (value: IndividualFormValues['accountCheckedBy']) => setValue('accountCheckedBy', value);
-  const setAccountApprovedBy = (value: IndividualFormValues['accountApprovedBy']) => setValue('accountApprovedBy', value);
   const setCurrentAssignedSR = (value: IndividualFormValues['currentAssignedSR']) => setValue('currentAssignedSR', value);
 
   // Upload state that only this markup needs
@@ -777,7 +771,7 @@ export function IndividualFormFields({
                 <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
                   Residential Address
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs', grid3)}>
                   <AddressFields
                     value={{
                       country,
@@ -1121,7 +1115,7 @@ export function IndividualFormFields({
                   Spouse Information
                 </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs', grid3)}>
                   <FormInput
                     label="Full Name (English / Khmer)"
                     value={spouseName}
@@ -1216,7 +1210,7 @@ export function IndividualFormFields({
                   Related Person / Emergency Contact
                 </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs', grid3)}>
                   <FormInput
                     label="Full Name"
                     value={relName}
@@ -1359,16 +1353,9 @@ export function IndividualFormFields({
                   />
 
                   <FormInput
-                    label="Assigned Reviewer"
+                    label="Current Assigned SR"
                     value={currentAssignedSR}
                     onChange={(e) => setCurrentAssignedSR(e.target.value)}
-                  />
-
-                  <FormInput
-                    label="Approved By"
-                    value={accountApprovedBy}
-                    onChange={(e) => setAccountApprovedBy(e.target.value)}
-                    placeholder="e.g. Vannak Lim (Manager)"
                   />
                 </div>
               </div>
@@ -1378,7 +1365,7 @@ export function IndividualFormFields({
                 <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block mb-5 border-l-[3px] border-blue-600 pl-2 leading-4">
                   Investor Profile & Appropriateness
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs', grid3)}>
                   <FormSelect
                     label="Customer Type"
                     required

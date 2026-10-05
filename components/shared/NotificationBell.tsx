@@ -22,7 +22,6 @@ const CAT_ICONS: Record<string, React.ElementType> = {
   'Document Expiry':   FileText,
   'Investor ID Expiry':IdCard,
   'KYC':               ShieldCheck,
-  'Approval':          CheckCircle2,
   'IPO':               ExternalLink,
   'Task':              CheckCircle2,
   'System':            Info,

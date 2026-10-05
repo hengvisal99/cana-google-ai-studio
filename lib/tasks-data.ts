@@ -54,18 +54,6 @@ export const INITIAL_TASKS: Task[] = [
     createdAt: '2026-09-24T14:00:00Z',
   },
   {
-    id: 'TASK-005',
-    title: 'Approve pending registration — 3 new accounts',
-    description: 'Three registration requests have been waiting at Manager stage for 5+ business days. Review and approve or request resubmission.',
-    assignedTo: 'Rattanak Pov',
-    assignedRole: 'Manager',
-    priority: 'Medium',
-    status: 'Open',
-    category: 'Approval',
-    dueDate: '2026-09-29',
-    createdAt: '2026-09-23T09:00:00Z',
-  },
-  {
     id: 'TASK-006',
     title: 'Call Wealth client — IPO ACLEDA interest',
     description: 'High Net Worth client expressed interest in ACLEDA Bank upcoming IPO. Arrange advisory meeting.',

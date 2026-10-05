@@ -2,8 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -16,6 +14,7 @@ import {
   RotateCw,
   Search,
   X,
+  Lock,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -64,10 +63,9 @@ const SEARCH_FIELDS = [
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'All', count: 18, icon: LayoutList, iconColor: 'text-blue-600' },
-  { id: 'Pending', label: 'Pending', count: 2, icon: Clock, iconColor: 'text-yellow-500' },
-  { id: 'Resubmit', label: 'Resubmit', count: 1, icon: AlertCircle, iconColor: 'text-orange-600' },
-  { id: 'Approved', label: 'Approved', count: 12, icon: CheckCircle2, iconColor: 'text-emerald-500' },
-  { id: 'Rejected', label: 'Rejected', count: 3, icon: AlertTriangle, iconColor: 'text-rose-500' },
+  { id: 'Active', label: 'Active', count: 13, icon: CheckCircle2, iconColor: 'text-emerald-500' },
+  { id: 'Not Opened', label: 'Not Opened', count: 3, icon: Clock, iconColor: 'text-slate-500' },
+  { id: 'Closed', label: 'Closed', count: 2, icon: Lock, iconColor: 'text-purple-500' },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -489,7 +487,7 @@ export default function RowAlignmentOptionsPage() {
                 <div>
                   <h2 className="text-[26px] font-semibold tracking-tight text-slate-900">Individual Directory</h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    Manage individual client onboarding, document verification, authorization lifecycle, and trading
+                    Manage individual client onboarding, document verification, and trading
                     profiles.
                   </p>
                 </div>
@@ -507,7 +505,7 @@ export default function RowAlignmentOptionsPage() {
                 <div>
                   <h2 className="text-[26px] font-semibold tracking-tight text-slate-900">Individual Directory</h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    Manage individual client onboarding, document verification, authorization lifecycle, and trading
+                    Manage individual client onboarding, document verification, and trading
                     profiles.
                   </p>
                 </div>

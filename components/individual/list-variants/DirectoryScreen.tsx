@@ -34,7 +34,7 @@ export function DirectoryScreen({ kit }: { kit: DesignKit }) {
           <div>
             <h2 className={kit.title}>Individual Directory</h2>
             <p className={kit.subtitle}>
-              Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.
+              Manage individual client onboarding, document verification, and trading profiles.
             </p>
           </div>
           <Toolbar

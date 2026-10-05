@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { motion } from 'motion/react';
 import {
   AlertTriangle,
-  CalendarX2,
   CheckCircle2,
   ChevronDown,
   Edit3,
@@ -19,26 +18,13 @@ import {
 import { cn } from '@/lib/utils';
 import { CheckBadge, LIFTED_ACTIVE, MENU_SURFACE, Popover } from '@/components/individual/DirectoryControls';
 import { CUSTOMER_TYPES, formatFieldValue, getCustomerType, getListFields } from '@/lib/customer-types';
-import {
-  canRequestClose,
-  decide,
-  nextStageLabel,
-  requestClose,
-  reviewerRole,
-  type ApprovalAction,
-} from '@/lib/customer-type-approval';
-import type { CustomerTypeApproval, CustomerTypeId, CustomerTypeRecord, Individual, RequestStatus } from '@/types';
-import { STATUS_TABS } from '@/components/individual/IndividualListScreen';
-import { ApproveDialogAuroraGlass } from '@/components/shared/ApproveDialogVariants';
-import { DecisionDialogMatchedMark } from '@/components/shared/DecisionDialogVariants';
-import { ApprovalStatus, CloseAccountDialog } from './CustomerTypeApproval';
+import type { CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
 import { FieldValue, customerName } from './CustomerTypeForm';
 import { CustomerTypePickerDialog } from './CustomerTypePickerDialog';
 import { CustomerTypeRecordDialog } from './CustomerTypeRecordDialog';
 import { CustomerTypeViewDialog } from './CustomerTypeViewDialog';
 import { RowActionMenu, useRowActionMenu, type RowAction } from '@/components/shared/RowActionMenu';
 import { SortableHeader, sortRows, useTableSort, type SortValue } from '@/components/shared/SortableHeader';
-import { BulkApproveBar, BulkApproveDialog, ROW_CHECKBOX } from '@/components/shared/BulkApprove';
 
 interface CustomerTypeScreenProps {
   records: CustomerTypeRecord[];
@@ -72,16 +58,11 @@ export function CustomerTypeScreen({
   const [activeTypeId, setActiveTypeId] = useState<CustomerTypeId>(CUSTOMER_TYPES[0].id);
   const [search, setSearch] = useState('');
   const [searchBy, setSearchBy] = useState<SearchByField>('all');
-  // Request-status filter, only on types with an approval workflow
-  const [statusTab, setStatusTab] = useState<'ALL' | RequestStatus>('ALL');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<CustomerTypeRecord | null>(null);
   const [picking, setPicking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  // Approval workflow (types with requiresApproval, e.g. Personal Representative)
-  const [decision, setDecision] = useState<{ record: CustomerTypeRecord; action: ApprovalAction } | null>(null);
-  const [closingRecord, setClosingRecord] = useState<CustomerTypeRecord | null>(null);
 
   // Keep the selected tab visible when the tab row is scrolled on narrow screens
   const activeTabRef = useRef<HTMLButtonElement>(null);
@@ -101,23 +82,12 @@ export function CustomerTypeScreen({
     return result;
   }, [records]);
 
-  const statusCounts = useMemo(() => {
-    const result: Record<'ALL' | RequestStatus, number> = { ALL: 0, Pending: 0, Resubmit: 0, Approved: 0, Rejected: 0 };
-    records.forEach((record) => {
-      if (record.typeId !== activeTypeId) return;
-      result.ALL += 1;
-      if (record.approval) result[record.approval.requestStatus] += 1;
-    });
-    return result;
-  }, [records, activeTypeId]);
-
   const { sort, toggle: toggleSort } = useTableSort();
 
   const rows = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = records
       .filter((record) => record.typeId === activeTypeId)
-      .filter((record) => !activeType.requiresApproval || statusTab === 'ALL' || record.approval?.requestStatus === statusTab)
       .filter((record) => {
         if (!query) return true;
         const customer = customersById.get(record.customerId);
@@ -138,12 +108,11 @@ export function CustomerTypeScreen({
 
     // Newest first until a column is sorted; a sort on a column the new tab lacks is ignored
     const fieldsByKey = new Map(listFields.map((field) => [field.key, field]));
-    const known = sort && (['customerId', 'customerName', 'request', 'updatedAt'].includes(sort.key) || fieldsByKey.has(sort.key));
+    const known = sort && (['customerId', 'customerName', 'updatedAt'].includes(sort.key) || fieldsByKey.has(sort.key));
     return sortRows(filtered, known ? sort : null, (record, key): SortValue => {
       const customer = customersById.get(record.customerId);
       if (key === 'customerId') return customer?.customerId ?? record.customerId;
       if (key === 'customerName') return customer ? customerName(customer) : null;
-      if (key === 'request') return record.approval?.requestStatus;
       if (key === 'updatedAt') return record.updatedAt;
       const field = fieldsByKey.get(key)!;
       const value = record.values[key];
@@ -152,7 +121,7 @@ export function CustomerTypeScreen({
       // ISO dates already sort as text; everything else sorts by what the cell shows
       return field.type === 'date' ? String(value) : formatFieldValue(field, value);
     });
-  }, [records, activeTypeId, activeType, statusTab, search, searchBy, customersById, listFields, sort]);
+  }, [records, activeTypeId, search, searchBy, customersById, listFields, sort]);
 
   const activeSearchField = SEARCH_FIELD_OPTIONS.find((option) => option.id === searchBy) ?? SEARCH_FIELD_OPTIONS[0];
 
@@ -178,72 +147,14 @@ export function CustomerTypeScreen({
     );
   };
 
-  const updateApproval = (record: CustomerTypeRecord, approval: CustomerTypeApproval, message: string) => {
-    onSaveRecord({ ...record, approval, updatedAt: new Date().toISOString() });
-    showToast(message);
-  };
-
-  const handleDecision = (reason = '') => {
-    if (!decision?.record.approval) return;
-    const { record, action } = decision;
-    const next = decide(record.approval!, action, reason);
-    setDecision(null);
-    updateApproval(
-      record,
-      next,
-      action === 'authorize'
-        ? next.requestStatus === 'Approved'
-          ? `${record.id} ${next.requestType === 'Close Account' ? 'closed' : 'approved'}.`
-          : `${record.id} sent to ${next.currentWorkflowStage} review.`
-        : action === 'resubmit'
-          ? `${record.id} sent back for resubmission.`
-          : `${record.id} rejected.`
-    );
-  };
-
-  // Bulk approve (approval types only): only pending requests at a review stage can be ticked
-  const canBulkApprove = Boolean(activeType.requiresApproval);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkApproving, setBulkApproving] = useState(false);
-  const approvableRows = useMemo(() => (canBulkApprove ? rows.filter(isApprovable) : []), [rows, canBulkApprove]);
-  // Rows filtered out or already moved on drop out of the selection
-  const selectedRows = approvableRows.filter((record) => selectedIds.has(record.id));
-  const allSelected = approvableRows.length > 0 && selectedRows.length === approvableRows.length;
-
-  const toggleSelected = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const toggleSelectAll = () =>
-    setSelectedIds(allSelected ? new Set() : new Set(approvableRows.map((record) => record.id)));
-
-  const handleBulkApprove = () => {
-    const now = new Date().toISOString();
-    selectedRows.forEach((record) => onSaveRecord({ ...record, approval: decide(record.approval!, 'authorize'), updatedAt: now }));
-    showToast(`${selectedRows.length} ${selectedRows.length === 1 ? 'record' : 'records'} approved.`);
-    setSelectedIds(new Set());
-    setBulkApproving(false);
-  };
-
   const rowMenu = useRowActionMenu();
   const menuRecord = rowMenu.menu ? rows.find((record) => record.id === rowMenu.menu!.rowId) : undefined;
 
-  /** Approve / resubmit / reject live in the view dialog; the menu only offers the next workflow request */
   const rowActions = (record: CustomerTypeRecord): RowAction[] => [
     { id: 'view', label: 'View', icon: Eye, iconClassName: 'text-slate-500', shortcut: 'V', group: 0, onSelect: () => setDialog({ mode: 'view', record }) },
     { id: 'edit', label: 'Edit', icon: Edit3, iconClassName: 'text-slate-500', shortcut: 'E', group: 0, onSelect: () => setDialog({ mode: 'edit', record }) },
-    ...(record.approval && canRequestClose(record.approval)
-      ? [{ id: 'close', label: 'Close Account', icon: CalendarX2, iconClassName: 'text-slate-500', shortcut: 'C', group: 1, onSelect: () => setClosingRecord(record) }]
-      : []),
     { id: 'delete', label: 'Delete', icon: Trash2, iconClassName: 'text-rose-500', shortcut: 'D', danger: true, group: 2, onSelect: () => setDeletingRecord(record) },
   ];
-
-  const decisionCustomer = decision ? customersById.get(decision.record.customerId) : undefined;
-  const closingCustomer = closingRecord ? customersById.get(closingRecord.customerId) : undefined;
 
   const ActiveIcon = activeType.icon;
 
@@ -295,8 +206,6 @@ export function CustomerTypeScreen({
                   type="button"
                   onClick={() => {
                     setActiveTypeId(type.id);
-                    setStatusTab('ALL');
-                    setSelectedIds(new Set());
                   }}
                   className={cn(
                     'group relative inline-flex h-[34px] shrink-0 cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[13px] transition-colors',
@@ -406,57 +315,6 @@ export function CustomerTypeScreen({
             </button>
           </div>
         </div>
-
-        {/* Row 3: request-status tabs, same as the customer directory */}
-        {activeType.requiresApproval && (
-          <div
-            id="customer-type-status-tabs"
-            className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl border border-slate-200/60 bg-slate-50 p-1"
-          >
-            {STATUS_TABS.map((tab) => {
-              const isActive = statusTab === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  id={`tab-customer-type-status-${tab.id.toLowerCase()}`}
-                  onClick={() => setStatusTab(tab.id)}
-                  className={cn(
-                    'group relative inline-flex h-[30px] cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-lg px-3.5 text-[13px] transition-colors',
-                    isActive ? 'font-semibold text-blue-600' : 'font-medium text-slate-600 hover:text-slate-900'
-                  )}
-                >
-                  {isActive && (
-                    <motion.span
-                      layoutId="customer-type-status-tab"
-                      className={cn('absolute inset-0 rounded-lg', LIFTED_ACTIVE)}
-                      transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
-                    />
-                  )}
-                  <Icon
-                    className={cn(
-                      'relative h-4 w-4 shrink-0 stroke-[2.2] transition-colors',
-                      // Status icons always carry their colour; the neutral "All" icon only turns blue when active
-                      isActive || tab.id !== 'ALL' ? tab.iconColor : 'text-slate-400 group-hover:text-slate-600'
-                    )}
-                  />
-                  <span className="relative">{tab.label}</span>
-                  <span
-                    className={cn(
-                      'relative min-w-[22px] rounded-full px-1.5 py-[3px] text-center text-[11px] font-semibold tabular-nums leading-none transition-colors',
-                      isActive
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'bg-slate-200/60 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700'
-                    )}
-                  >
-                    {statusCounts[tab.id]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* Table */}
@@ -465,23 +323,6 @@ export function CustomerTypeScreen({
           <table id="customer-type-table" className="w-full border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {canBulkApprove && (
-                  <th className="w-10 py-3 pl-4 pr-1">
-                    <input
-                      id="checkbox-customer-type-select-all"
-                      type="checkbox"
-                      checked={allSelected}
-                      ref={(el) => {
-                        if (el) el.indeterminate = selectedRows.length > 0 && !allSelected;
-                      }}
-                      onChange={toggleSelectAll}
-                      disabled={approvableRows.length === 0}
-                      aria-label="Select all pending requests"
-                      title="Select all pending requests"
-                      className={ROW_CHECKBOX}
-                    />
-                  </th>
-                )}
                 <SortableHeader label="Customer ID" sortKey="customerId" sort={sort} onSort={toggleSort} className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700" />
                 <SortableHeader label="Customer Name" sortKey="customerName" sort={sort} onSort={toggleSort} className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700" />
                 {listFields.map((field) => (
@@ -497,9 +338,6 @@ export function CustomerTypeScreen({
                     )}
                   />
                 ))}
-                {activeType.requiresApproval && (
-                  <SortableHeader label="Request" sortKey="request" sort={sort} onSort={toggleSort} className="min-w-[160px] whitespace-nowrap px-4 py-3 font-semibold text-slate-700" />
-                )}
                 <SortableHeader label="Last Updated" sortKey="updatedAt" sort={sort} onSort={toggleSort} className="whitespace-nowrap px-4 py-3" />
                 {/* Pinned so actions stay reachable when a type has many columns */}
                 <th className="sticky right-0 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.25)]">
@@ -510,7 +348,7 @@ export function CustomerTypeScreen({
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={listFields.length + (activeType.requiresApproval ? 6 : 4)} className="py-14 text-center">
+                  <td colSpan={listFields.length + 4} className="py-14 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <span className="grid h-11 w-11 place-items-center rounded-xl bg-slate-100 text-slate-400">
                         <ActiveIcon className="h-5 w-5" />
@@ -529,23 +367,9 @@ export function CustomerTypeScreen({
                       onContextMenu={(e) => rowMenu.openFromContextMenu(record.id, e)}
                       className={cn(
                         'group transition-[background-color] hover:bg-slate-50',
-                        (rowMenu.menu?.rowId === record.id || selectedIds.has(record.id)) && 'bg-slate-50'
+                        rowMenu.menu?.rowId === record.id && 'bg-slate-50'
                       )}
                     >
-                      {canBulkApprove && (
-                        <td className="py-3.5 pl-4 pr-1">
-                          <input
-                            id={`checkbox-customer-type-${record.id}`}
-                            type="checkbox"
-                            checked={selectedIds.has(record.id)}
-                            onChange={() => toggleSelected(record.id)}
-                            disabled={!isApprovable(record)}
-                            aria-label={`Select ${record.id}`}
-                            title={isApprovable(record) ? undefined : 'Only pending requests can be approved'}
-                            className={ROW_CHECKBOX}
-                          />
-                        </td>
-                      )}
                       <td className="whitespace-nowrap px-4 py-3.5 font-mono font-semibold text-slate-700">
                         {customer?.customerId ?? record.customerId}
                       </td>
@@ -566,18 +390,13 @@ export function CustomerTypeScreen({
                           <FieldValue field={field} value={record.values[field.key]} />
                         </td>
                       ))}
-                      {activeType.requiresApproval && (
-                        <td className="whitespace-nowrap px-4 py-3.5">
-                          <ApprovalStatus approval={record.approval} />
-                        </td>
-                      )}
                       <td className="whitespace-nowrap px-4 py-3.5 text-slate-500">
                         {format(new Date(record.updatedAt), 'dd MMM yyyy')}
                       </td>
                       <td
                         className={cn(
                           'sticky right-0 bg-white px-4 py-3.5 shadow-[-8px_0_12px_-10px_rgba(15,23,42,0.25)] transition-colors group-hover:bg-slate-50',
-                          (rowMenu.menu?.rowId === record.id || selectedIds.has(record.id)) && 'bg-slate-50'
+                          rowMenu.menu?.rowId === record.id && 'bg-slate-50'
                         )}
                       >
                         <div className="flex items-center justify-end">
@@ -609,25 +428,6 @@ export function CustomerTypeScreen({
         <RowActionMenu anchor={rowMenu.menu.anchor} actions={rowActions(menuRecord)} onClose={rowMenu.close} />
       )}
 
-      {selectedRows.length > 0 && !bulkApproving && (
-        <BulkApproveBar
-          idPrefix="customer-type"
-          count={selectedRows.length}
-          onClear={() => setSelectedIds(new Set())}
-          onApprove={() => setBulkApproving(true)}
-        />
-      )}
-
-      {bulkApproving && selectedRows.length > 0 && (
-        <BulkApproveDialog
-          idPrefix="customer-type"
-          count={selectedRows.length}
-          noun={['record', 'records']}
-          onCancel={() => setBulkApproving(false)}
-          onConfirm={handleBulkApprove}
-        />
-      )}
-
       {picking && (
         <CustomerTypePickerDialog
           customers={customers}
@@ -644,7 +444,6 @@ export function CustomerTypeScreen({
           records={records}
           customers={customers}
           onClose={() => setDialog(null)}
-          onDecide={(record, action) => setDecision({ record, action })}
         />
       )}
 
@@ -658,36 +457,6 @@ export function CustomerTypeScreen({
           existingIds={records.map((item) => item.id)}
           onClose={() => setDialog(null)}
           onSave={handleSave}
-        />
-      )}
-
-      {decision &&
-        (decision.action === 'authorize' ? (
-          <ApproveDialogAuroraGlass
-            customerName={decisionCustomer ? customerName(decisionCustomer) : decision.record.id}
-            customerId={decision.record.id}
-            nextStage={nextStageLabel(decision.record.approval?.currentWorkflowStage ?? 'Manager')}
-            onCancel={() => setDecision(null)}
-            onConfirm={() => handleDecision()}
-          />
-        ) : (
-          <DecisionDialogMatchedMark
-            action={decision.action}
-            onCancel={() => setDecision(null)}
-            onConfirm={(reason) => handleDecision(reason)}
-          />
-        ))}
-
-      {closingRecord?.approval && (
-        <CloseAccountDialog
-          recordId={closingRecord.id}
-          customerLabel={closingCustomer ? customerName(closingCustomer) : closingRecord.customerId}
-          onCancel={() => setClosingRecord(null)}
-          onSubmit={(cancelledDate) => {
-            const record = closingRecord;
-            setClosingRecord(null);
-            updateApproval(record, requestClose(record.approval!, cancelledDate), `Close account requested for ${record.id}.`);
-          }}
         />
       )}
 
@@ -730,8 +499,4 @@ export function CustomerTypeScreen({
       )}
     </div>
   );
-}
-
-function isApprovable(record: CustomerTypeRecord) {
-  return record.approval?.requestStatus === 'Pending' && reviewerRole(record.approval.currentWorkflowStage) !== null;
 }

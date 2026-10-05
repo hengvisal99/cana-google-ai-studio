@@ -217,21 +217,14 @@ export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
     processedBy: 'Ly Chanthy',
     role: 'CSO',
   },
-  // Original onboarding chain: how the customer came to have a customer type.
-  // No referenceId - the timeline falls back to showing the approver's role.
+  // Original onboarding: when the customer was registered.
+  // No referenceId - the timeline falls back to showing who registered them.
   {
     id: 'ACT-05',
-    dateTime: '10 Jul 2022, 12:00 AM',
-    activity: 'Registration Approved By Sok Dara',
-    processedBy: 'Sok Dara',
-    role: 'Manager',
-  },
-  {
-    id: 'ACT-06',
     dateTime: '08 Jul 2022, 12:00 AM',
-    activity: 'Registration Checked By Chan Sophea',
+    activity: 'Customer Registered By Chan Sophea',
     processedBy: 'Chan Sophea',
-    role: 'Senior',
+    role: 'CSO',
   },
   {
     id: 'ACT-07',
@@ -243,10 +236,8 @@ export const DEFAULT_ACTIVITIES: Customer360Activity[] = [
 ];
 
 /**
- * Timeline dates arrive in two different shapes: '07 Feb 2026, 12:00 AM' from
- * the seeded activities, and '2024-04-05 10:15 AM' from authorizationHistory.
- * Some records carry a workflow placeholder instead of a date - a stage that
- * has not been processed yet stores 'Queue' - which is not a date at all.
+ * Timeline dates are seeded as '07 Feb 2026, 12:00 AM'; anything else may not
+ * parse as a date at all.
  *
  * Returns null for anything unparseable so the comparator can order those
  * explicitly, rather than feeding NaN into it (a comparator that returns NaN
@@ -267,8 +258,7 @@ export function getCustomer360Details(individual: Individual): Customer360Data {
   const portfolioFormatted = `$${portfolioBase.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 
   // The timeline records how the customer came to have a customer type: the
-  // onboarding chain and the product registrations. Authorization workflow rows
-  // are deliberately not merged in.
+  // registration and the product registrations.
   const combinedActivities = [...DEFAULT_ACTIVITIES];
 
   // Newest first. Anything with an unparseable date leads the timeline rather

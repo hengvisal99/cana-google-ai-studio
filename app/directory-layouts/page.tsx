@@ -2,8 +2,6 @@
 
 import React from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -17,6 +15,7 @@ import {
   Search,
   Sparkles,
   X,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CheckBadge, FilterSelect, LIFTED_ACTIVE, MENU_SURFACE, Popover } from '@/components/individual/DirectoryControls';
@@ -31,15 +30,14 @@ import {
 
 const TITLE = 'Individual Directory';
 const SUBTITLE =
-  'Manage individual client onboarding, document verification, authorization lifecycle, and trading profiles.';
+  'Manage individual client onboarding, document verification, and trading profiles.';
 
 /** Same tabs, order and colours as the production list screen. */
 const STATUS_TABS: { id: StatusKey; label: string; icon: React.ElementType; iconColor: string }[] = [
   { id: 'ALL', label: 'All', icon: LayoutList, iconColor: 'text-blue-600' },
-  { id: 'Pending', label: 'Pending', icon: Clock, iconColor: 'text-yellow-500' },
-  { id: 'Resubmit', label: 'Resubmit', icon: AlertCircle, iconColor: 'text-orange-600' },
-  { id: 'Approved', label: 'Approved', icon: CheckCircle2, iconColor: 'text-emerald-500' },
-  { id: 'Rejected', label: 'Rejected', icon: AlertTriangle, iconColor: 'text-rose-500' },
+  { id: 'Active', label: 'Active', icon: CheckCircle2, iconColor: 'text-emerald-500' },
+  { id: 'Not Opened', label: 'Not Opened', icon: Clock, iconColor: 'text-slate-500' },
+  { id: 'Closed', label: 'Closed', icon: Lock, iconColor: 'text-purple-500' },
 ];
 
 type Directory = ReturnType<typeof useDirectory>;

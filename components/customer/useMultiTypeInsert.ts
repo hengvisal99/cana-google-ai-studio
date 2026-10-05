@@ -10,7 +10,6 @@ import {
   withComputedValues,
   type CustomerTypeValues,
 } from '@/lib/customer-types';
-import { newRegistration } from '@/lib/customer-type-approval';
 import type { CustomerTypeFieldValue, CustomerTypeId, CustomerTypeRecord, Individual } from '@/types';
 
 export interface MultiTypeInsertOptions {
@@ -123,7 +122,6 @@ export function useMultiTypeInsert({ individual, customers, existingIds, onSaveR
           customerId: customerKey ? String(finalValues[customerKey]) : customerId,
           typeId: id,
           values: finalValues,
-          approval: type.requiresApproval ? newRegistration() : undefined,
           createdAt: now,
           updatedAt: now,
         };

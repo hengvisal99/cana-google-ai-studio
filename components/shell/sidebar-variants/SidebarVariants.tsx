@@ -62,7 +62,6 @@ export const SIDEBAR_NAV: SidebarGroup[] = [
         label: 'CRM & Sales',
         icon: Users,
         children: [
-          { id: 'pipeline', label: 'Leads Pipeline' },
           { id: 'individual-list', label: 'Customers' },
           { id: 'customer-type', label: 'Customer Product' },
           { id: 'customer-360', label: 'Customer 360' },
@@ -74,7 +73,6 @@ export const SIDEBAR_NAV: SidebarGroup[] = [
         icon: TrendingUp,
         children: [
           { id: 'portfolio', label: 'Portfolio' },
-          { id: 'csx-live', label: 'CSX Live Market' },
           { id: 'ipo-management', label: 'IPO Management' },
         ],
       },
@@ -84,7 +82,7 @@ export const SIDEBAR_NAV: SidebarGroup[] = [
         icon: ShieldCheck,
         children: [
           { id: 'my-work', label: 'My Work' },
-          { id: 'tasks', label: 'Approval Tasks' },
+          { id: 'tasks', label: 'Tasks' },
           { id: 'cases', label: 'Customer Cases', badge: '5' },
           { id: 'compliance', label: 'Compliance & AML' },
         ],

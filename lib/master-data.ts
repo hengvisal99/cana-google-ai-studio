@@ -1,5 +1,4 @@
 import {
-  BadgeCheck,
   BookOpen,
   Briefcase,
   Building2,
@@ -14,7 +13,6 @@ import {
   Store,
   Tags,
   TrendingUp,
-  UserCheck,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -31,14 +29,12 @@ export type MasterDataCategoryId =
   | 'account-type'
   | 'securities-firm'
   | 'relationship'
-  | 'assigned-reviewer'
-  | 'approved-by'
   | 'customer-type'
   | 'risk-category'
   | 'securities-knowledge'
   | 'investment-experience';
 
-export type MasterDataGroupId = 'customer-profile' | 'banking' | 'classification' | 'staff';
+export type MasterDataGroupId = 'customer-profile' | 'banking' | 'classification';
 
 export interface MasterDataCategory {
   id: MasterDataCategoryId;
@@ -52,15 +48,11 @@ export interface MasterDataItem {
   categoryId: MasterDataCategoryId;
   name: string;
   nameKh: string;
-  /** Only for the staff categories (assigned reviewer, approved by) */
-  staffId?: string;
   active: boolean;
   updatedAt: string;
 }
 
 export const MASTER_DATA_GROUPS: { id: MasterDataGroupId; label: string }[] = [
-  // Our own people: these are the lists that carry a staff ID
-  { id: 'staff', label: 'Staff' },
   // Facts about the customer, however the forms happen to split them across tabs
   { id: 'customer-profile', label: 'Customer Profile' },
   { id: 'banking', label: 'Banking' },
@@ -69,8 +61,6 @@ export const MASTER_DATA_GROUPS: { id: MasterDataGroupId; label: string }[] = [
 ];
 
 export const MASTER_DATA_CATEGORIES: MasterDataCategory[] = [
-  { id: 'assigned-reviewer', groupId: 'staff', label: 'Assigned Reviewer', icon: UserCheck },
-  { id: 'approved-by', groupId: 'staff', label: 'Approved By', icon: BadgeCheck },
   { id: 'marital-status', groupId: 'customer-profile', label: 'Marital Status', icon: Heart },
   { id: 'residency', groupId: 'customer-profile', label: 'Residency', icon: Home },
   { id: 'id-type', groupId: 'customer-profile', label: 'ID Type', icon: IdCard },
@@ -88,27 +78,19 @@ export const MASTER_DATA_CATEGORIES: MasterDataCategory[] = [
   { id: 'investment-experience', groupId: 'classification', label: 'Investment Experience', icon: TrendingUp },
 ];
 
-/** The two staff lists: their items carry a staff ID on top of the name */
-export const STAFF_CATEGORY_IDS: MasterDataCategoryId[] = ['assigned-reviewer', 'approved-by'];
-
-export function hasStaffId(id: MasterDataCategoryId) {
-  return STAFF_CATEGORY_IDS.includes(id);
-}
-
 export function getMasterDataCategory(id: MasterDataCategoryId) {
   return MASTER_DATA_CATEGORIES.find((category) => category.id === id) ?? MASTER_DATA_CATEGORIES[0];
 }
 
 const seed = (
   categoryId: MasterDataCategoryId,
-  rows: [key: string, name: string, nameKh: string, active?: boolean, staffId?: string][]
+  rows: [key: string, name: string, nameKh: string, active?: boolean][]
 ): MasterDataItem[] =>
-  rows.map(([key, name, nameKh, active = true, staffId], index) => ({
+  rows.map(([key, name, nameKh, active = true], index) => ({
     id: `${categoryId}-${key}`,
     categoryId,
     name,
     nameKh,
-    staffId,
     active,
     updatedAt: new Date(Date.UTC(2026, 8, 20 - index)).toISOString(),
   }));
@@ -183,14 +165,6 @@ export const INITIAL_MASTER_DATA: MasterDataItem[] = [
     ['SIB', 'Sibling', 'បងប្អូន'],
     ['REL', 'Relative', 'សាច់ញាតិ'],
     ['FRD', 'Friend', 'មិត្តភក្តិ'],
-  ]),
-  ...seed('assigned-reviewer', [
-    ['SR01', 'Dara Vong (SR)', 'វង្ស ដារា', true, 'STF-1042'],
-    ['SR02', 'Chan Sophea (SR)', 'ចាន់ សុភា', true, 'STF-1088'],
-  ]),
-  ...seed('approved-by', [
-    ['MGR01', 'Vannak Lim (Manager)', 'លឹម វណ្ណៈ', true, 'STF-2011'],
-    ['MGR02', 'Sok Dara (Manager)', 'សុខ ដារា', true, 'STF-2034'],
   ]),
   ...seed('customer-type', [
     ['GEN', 'General', 'ទូទៅ'],

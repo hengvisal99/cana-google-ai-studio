@@ -242,8 +242,6 @@ export function IndividualUpdateScreen({
       tradingAccountInfo: {
         tradingAccountNumber: values.tradingAccountNumber.trim() || individual.tradingAccountInfo?.tradingAccountNumber || 'TRD-000000',
         accountDate: values.accountDate,
-        accountCheckedBy: values.accountCheckedBy,
-        accountApprovedBy: values.accountApprovedBy,
         email: values.email.trim(),
         currentAssignedSR: values.currentAssignedSR,
         phoneNumber: values.mobile.trim() || individual.phone,

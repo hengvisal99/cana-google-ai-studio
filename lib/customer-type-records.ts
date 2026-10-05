@@ -71,40 +71,14 @@ const ipo = (n: number, customerId: string, ipoNameId: string, quantity: number,
 };
 
 // Mock customer type records for the seeded individuals in lib/data.ts
-/** Personal Representative: registration goes through SR then Manager approval */
-const personalRep = (n: number, customerId: string, date: string, approved: boolean): CustomerTypeRecord => {
-  const submitted = {
-    id: `AUTH-PR-${n}-1`,
-    requestType: 'Registration' as const,
-    stage: 'Registration Submitted — CSO',
-    status: 'Submitted' as const,
-    dateTime: `${date} 09:00`,
-    processedBy: 'Sophea Keo (CSO)',
-    role: 'CSO' as const,
-    comment: 'Registration submitted for approval.',
-  };
-  const reviews = [
-    { id: `AUTH-PR-${n}-2`, stage: 'SR Authorization', processedBy: 'Dara Vong (SR)', role: 'SR' as const },
-    { id: `AUTH-PR-${n}-3`, stage: 'Manager Authorization', processedBy: 'Vannak Lim (Manager)', role: 'Manager' as const },
-  ].map((review) => ({
-    ...review,
-    requestType: 'Registration' as const,
-    status: 'Approved' as const,
-    dateTime: `${date} 15:00`,
-    comment: `Approved by ${review.processedBy}`,
-  }));
-  return {
-    id: `PR-${String(n).padStart(6, '0')}`,
-    customerId,
-    typeId: 'personal-representative',
-    values: { customerId, accountCheckedBy: 'Dara Vong (SR)', accountApprovedBy: 'Vannak Lim (Manager)' },
-    approval: approved
-      ? { requestType: 'Registration', requestStatus: 'Approved', currentWorkflowStage: 'Approved', history: [submitted, ...reviews] }
-      : { requestType: 'Registration', requestStatus: 'Pending', currentWorkflowStage: 'SR', history: [submitted] },
-    createdAt: at(date),
-    updatedAt: at(date),
-  };
-};
+const personalRep = (n: number, customerId: string, date: string): CustomerTypeRecord => ({
+  id: `PR-${String(n).padStart(6, '0')}`,
+  customerId,
+  typeId: 'personal-representative',
+  values: { customerId },
+  createdAt: at(date),
+  updatedAt: at(date),
+});
 
 export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
   {
@@ -296,8 +270,8 @@ export const INITIAL_CUSTOMER_TYPE_RECORDS: CustomerTypeRecord[] = [
   ipo(7, 'IND-9021', 'IPO-2026-003', 94, 3.5, '2026-08-20'),
   ipo(8, 'IND-9026', 'IPO-2026-003', 168, 3.5, '2026-08-18'),
   ipo(9, 'IND-9030', 'IPO-2026-003', 61, 3.5, '2026-08-25'),
-  personalRep(1, 'IND-9024', '2026-08-04', true),
-  personalRep(2, 'IND-9029', '2026-09-10', false),
+  personalRep(1, 'IND-9024', '2026-08-04'),
+  personalRep(2, 'IND-9029', '2026-09-10'),
 ];
 
 /**
@@ -317,6 +291,6 @@ export function sampleCustomerTypeRecord(typeId: CustomerTypeRecord['typeId'], c
     case 'ipo-customer':
       return ipo(0, customerId, 'IPO-2026-001', 1000, 2.5, '2026-04-20');
     case 'personal-representative':
-      return personalRep(0, customerId, '2026-08-04', true);
+      return personalRep(0, customerId, '2026-08-04');
   }
 }

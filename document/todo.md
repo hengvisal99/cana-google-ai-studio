@@ -4,7 +4,7 @@ create url to show me another 4 version dialog ui with the same layout customer 
 
 <!--  -->
 
-remove : csx , lead , 
+as team lead  ux ui Design an enterprise banking Bulk Customer Registration page that allows staff to register many customers by uploading an Excel file.
 
 customer : 
     
@@ -19,4 +19,4 @@ blacklist user alert before customer registration
 risk : monitoring a customer after registration to detect money laundering,
 
 report :
-    - tracking user for last transaction date , user for total balance , tracking user buy sell for daily transaction show as graph , traking user remaining balance 
+    - tracking user for last transaction date , user for total balance , tracking user buy sell for daily transaction show as graph , tracking user remaining balance 

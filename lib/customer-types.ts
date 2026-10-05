@@ -50,8 +50,6 @@ export interface CustomerTypeDefinition {
   description: string;
   icon: LucideIcon;
   fields: CustomerTypeField[];
-  /** Records go through registration approval and can request close account, like a customer */
-  requiresApproval?: boolean;
 }
 
 const toNumber = (value: CustomerTypeFieldValue | undefined) => Number(value) || 0;
@@ -106,28 +104,9 @@ export const CUSTOMER_TYPES: CustomerTypeDefinition[] = [
     id: 'personal-representative',
     idPrefix: 'PR',
     label: 'PR Customer',
-    description: 'Acts on the customer\'s behalf; needs approval.',
+    description: "Acts on the customer's behalf.",
     icon: UserCheck,
-    requiresApproval: true,
-    fields: [
-      CUSTOMER_FIELD,
-      {
-        key: 'accountCheckedBy',
-        label: 'Assigned Reviewer',
-        type: 'text',
-        required: true,
-        placeholder: 'e.g. Dara Vong (SR)',
-        showInList: true,
-      },
-      {
-        key: 'accountApprovedBy',
-        label: 'Approved By',
-        type: 'text',
-        required: true,
-        placeholder: 'e.g. Vannak Lim (Manager)',
-        showInList: true,
-      },
-    ],
+    fields: [CUSTOMER_FIELD],
   },
   {
     id: 'csx-screen',

@@ -2,26 +2,26 @@
 
 import { useMemo, useState } from 'react';
 import { INITIAL_INDIVIDUALS } from '@/lib/data';
-import type { Individual, RequestStatus } from '@/types';
+import type { AccountStatus, Individual } from '@/types';
 
-export type StatusKey = 'ALL' | RequestStatus;
-export type FilterKey = 'gender' | 'marital' | 'nationality' | 'requestType';
+export type StatusKey = 'ALL' | AccountStatus;
+export type FilterKey = 'gender' | 'marital' | 'nationality' | 'profileStatus';
 export type SearchByField = 'all' | 'customerName' | 'accountNo' | 'roName' | 'roId';
 
-export const FILTER_KEYS: FilterKey[] = ['gender', 'marital', 'nationality', 'requestType'];
+export const FILTER_KEYS: FilterKey[] = ['gender', 'marital', 'nationality', 'profileStatus'];
 
 export const FILTER_LABELS: Record<FilterKey, string> = {
   gender: 'Gender',
   marital: 'Marital Status',
   nationality: 'Nationality',
-  requestType: 'Request Type',
+  profileStatus: 'Profile Status',
 };
 
 export const FILTER_ALL_LABELS: Record<FilterKey, string> = {
   gender: 'All Genders',
   marital: 'All Marital Statuses',
   nationality: 'All Nationalities',
-  requestType: 'All Request Types',
+  profileStatus: 'All Profile Statuses',
 };
 
 /** Mirrors SEARCH_FIELD_OPTIONS in IndividualListScreen. */
@@ -38,7 +38,7 @@ const FILTER_VALUE: Record<FilterKey, (r: Individual) => string> = {
   gender: (r) => r.gender,
   marital: (r) => r.maritalStatus,
   nationality: (r) => r.nationality,
-  requestType: (r) => r.requestType,
+  profileStatus: (r) => r.profileStatus,
 };
 
 /** Same field matching as the production list screen. */
@@ -49,7 +49,7 @@ function matchesSearch(item: Individual, searchBy: SearchByField, query: string)
       : searchBy === 'accountNo'
         ? `${item.tradingAccountInfo?.tradingAccountNumber || ''} ${item.banking?.accountNumber || ''} ${item.banking?.savingAccount || ''} ${item.investorIdInfo?.investorIdNumber || ''}`
         : searchBy === 'roName'
-          ? `${item.tradingAccountInfo?.currentAssignedSR || ''} ${item.tradingAccountInfo?.accountCheckedBy || ''} ${item.tradingAccountInfo?.accountApprovedBy || ''}`
+          ? `${item.tradingAccountInfo?.currentAssignedSR || ''}`
           : searchBy === 'roId'
             ? `${item.tradingAccountInfo?.currentAssignedSR || ''} ${item.customerId || ''} ${item.id || ''} ${item.idNumber || ''}`
             : `${item.customerId || ''} ${item.id || ''} ${item.fullNameEN || ''} ${item.fullNameKH || ''} ${item.firstName || ''} ${item.lastName || ''} ${item.email || ''} ${item.tradingAccountInfo?.tradingAccountNumber || ''} ${item.tradingAccountInfo?.currentAssignedSR || ''} ${item.banking?.accountNumber || ''} ${item.idNumber || ''}`;
@@ -58,7 +58,7 @@ function matchesSearch(item: Individual, searchBy: SearchByField, query: string)
 
 const uniq = (values: string[]) => Array.from(new Set(values)).sort();
 
-const NO_FILTERS: Record<FilterKey, string> = { gender: 'ALL', marital: 'ALL', nationality: 'ALL', requestType: 'ALL' };
+const NO_FILTERS: Record<FilterKey, string> = { gender: 'ALL', marital: 'ALL', nationality: 'ALL', profileStatus: 'ALL' };
 
 /** Filtering state shared by every design, so only the visuals differ between them. */
 export function useDirectory(records: Individual[] = INITIAL_INDIVIDUALS) {
@@ -73,9 +73,9 @@ export function useDirectory(records: Individual[] = INITIAL_INDIVIDUALS) {
   );
 
   const counts = useMemo(() => {
-    const base: Record<StatusKey, number> = { ALL: records.length, Approved: 0, Resubmit: 0, Pending: 0, Rejected: 0 };
+    const base: Record<StatusKey, number> = { ALL: records.length, Active: 0, 'Not Opened': 0, Closed: 0 };
     records.forEach((r) => {
-      base[r.requestStatus] += 1;
+      base[r.accountStatus || 'Not Opened'] += 1;
     });
     return base;
   }, [records]);
@@ -84,7 +84,7 @@ export function useDirectory(records: Individual[] = INITIAL_INDIVIDUALS) {
     const q = query.trim().toLowerCase();
     return records.filter((r) => {
       if (FILTER_KEYS.some((k) => filters[k] !== 'ALL' && FILTER_VALUE[k](r) !== filters[k])) return false;
-      if (status !== 'ALL' && r.requestStatus !== status) return false;
+      if (status !== 'ALL' && (r.accountStatus || 'Not Opened') !== status) return false;
       return !q || matchesSearch(r, searchBy, q);
     });
   }, [records, status, query, searchBy, filters]);

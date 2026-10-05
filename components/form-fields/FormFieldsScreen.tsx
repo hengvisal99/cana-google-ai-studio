@@ -458,7 +458,7 @@ export function FormFieldsScreen() {
                     rows={2}
                     value="Profile completed by CSO on 14 Jan 2026."
                     readOnly
-                    hint="Written by the workflow"
+                    hint="Written by the system"
                   />
                 </div>
               </Row>
@@ -556,13 +556,13 @@ export function FormFieldsScreen() {
                 />
               </Row>
 
-              <Row name="Disabled" note="For dates the workflow locks.">
+              <Row name="Disabled" note="For dates the system locks.">
                 <FormDatePicker
-                  label="Approved On"
+                  label="Registered On"
                   value="2026-01-14"
                   onChange={() => undefined}
                   disabled
-                  hint="Set by the approval workflow"
+                  hint="Set at registration"
                 />
               </Row>
 
@@ -762,14 +762,14 @@ export function FormFieldsScreen() {
                 />
               </Row>
 
-              <Row name="Disabled" note="For values the workflow locks.">
+              <Row name="Disabled" note="For values the system locks.">
                 <FormSelect
                   label="Account Status"
                   options={['Active']}
                   value="Active"
                   onChange={() => undefined}
                   disabled
-                  hint="Locked after approval"
+                  hint="Locked after registration"
                 />
               </Row>
 

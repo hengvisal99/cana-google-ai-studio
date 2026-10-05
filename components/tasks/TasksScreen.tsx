@@ -27,7 +27,6 @@ const CATEGORY_COLORS: Record<TaskCategory,string> = {
   'IPO':               'bg-blue-100 text-blue-700',
   'Customer Follow-up':'bg-teal-100 text-teal-700',
   'Compliance':        'bg-rose-100 text-rose-700',
-  'Approval':          'bg-amber-100 text-amber-700',
   'Other':             'bg-slate-100 text-slate-600',
 };
 
@@ -68,7 +67,7 @@ function AddTaskModal({onSave,onClose}: AddTaskModalProps) {
         <div className="grid grid-cols-3 gap-3">
           <div><label className="text-xs font-semibold text-slate-500 block mb-1">Role</label><select value={form.assignedRole} onChange={e=>setForm(p=>({...p,assignedRole:e.target.value as 'CSO'|'SR'|'Manager'}))} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400/30"><option>CSO</option><option>SR</option><option>Manager</option></select></div>
           <div><label className="text-xs font-semibold text-slate-500 block mb-1">Priority</label><select value={form.priority} onChange={e=>setForm(p=>({...p,priority:e.target.value as TaskPriority}))} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400/30"><option>High</option><option>Medium</option><option>Low</option></select></div>
-          <div><label className="text-xs font-semibold text-slate-500 block mb-1">Category</label><select value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value as TaskCategory}))} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400/30"><option>KYC Review</option><option>IPO</option><option>Customer Follow-up</option><option>Compliance</option><option>Approval</option><option>Other</option></select></div>
+          <div><label className="text-xs font-semibold text-slate-500 block mb-1">Category</label><select value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value as TaskCategory}))} className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400/30"><option>KYC Review</option><option>IPO</option><option>Customer Follow-up</option><option>Compliance</option><option>Other</option></select></div>
         </div>
         <div className="flex justify-end gap-2 pt-2"><button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">Cancel</button><button onClick={save} className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition shadow-sm">Create Task</button></div>
       </div>
