@@ -4,7 +4,19 @@ create url to show me another 4 version dialog ui with the same layout customer 
 
 <!--  -->
 
+remove : csx , lead , 
 
-kyc , onboarding and account open happen during customer registration
+customer : 
+    
+    - get data only accept status from excel and upload data to fill form to register customer
+    - no approval 
+    - tracking user which section user modify show as history timeline or anything
 
-after kyc we will go to onboarding to wait for approval
+ipo: focus on user for self company , highest user ipo performance
+
+blacklist user alert before customer registration
+
+risk : monitoring a customer after registration to detect money laundering,
+
+report :
+    - tracking user for last transaction date , user for total balance , tracking user buy sell for daily transaction show as graph , traking user remaining balance 
